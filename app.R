@@ -10,12 +10,12 @@
 
 # Upload required libraries
 library(shiny)
-library(chromoMap)
 library(tidyverse)
 library(plyr)
 library(IntervalSurgeon)
 library(plotly)
 library(BioCircos)
+library(ggplot2)
 
 # Define UI 
 ui <- fluidPage(
@@ -688,7 +688,7 @@ server <- function(input, output) {
     
     # Add link start. Just populate certain chromosome name times the lenght of interception 
     chromosomes_start <- c(rep("Antismash",length(c(inter_a1, inter_a2, inter_a3))),
-                           rep("DeepBGC",length(c(inter_d_rre, inter_d_p))), rep("PRISM", length(inter_p_rre)
+                           rep("DeepBGC",length(c(inter_d_rre, inter_d_p))), rep("PRISM", length(inter_p_rre)))
     # Add link end. Just populate second ouput from the vectors, used above. 
     chromosomes_end <- c(rep("DeepBGC", length(inter_d_ref_n)),rep("RRE", length(inter_rre_ref_n)), 
                          rep("PRISM", length(inter_p_ref_n)),rep("RRE", length(inter_rre_d_n)), 
@@ -696,7 +696,7 @@ server <- function(input, output) {
     # Add links start positions as a start from datatframe. This vector is for chromosome start
     link_pos_start <- as.numeric(c(biocircos_anti$Start[c(inter_a1, inter_a2,inter_a3)], 
                                    biocircos_deep$nucl_start[c(inter_d_rre,inter_d_p)],
-                                   biocircos_prism$Start[inter_p_rre])
+                                   biocircos_prism$Start[inter_p_rre]))
     # Add links stop positions from a dataframe. For chromosome start variable
     link_pos_start_1 <- as.numeric(c(biocircos_anti$Stop[c(inter_a1, inter_a2,inter_a3)], 
                                      biocircos_deep$nucl_end[c(inter_d_rre,inter_d_p)],
