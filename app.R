@@ -16,7 +16,9 @@ library(IntervalSurgeon)
 library(plotly)
 library(BioCircos)
 library(ggplot2)
+library(reticulate)
 
+use_virtualenv("clinker")
 # Define UI 
 ui <- fluidPage(
   
@@ -48,6 +50,13 @@ ui <- fluidPage(
       # Chose step for barplot (as a threshold to draw a bar)
       sliderInput("plot_step", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
       sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 100, value = 0),
+      h3("Genes on chromosome plot:"),
+      selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
+                                                              "DeepBGC" = "DeepBGC",
+                                                              "RRE-Finder" = "RRE-Finder",
+                                                              "PRISM" = "PRISM"),
+                  selected = "Antismash"),
+                  
       # DeepBGC data filtering 
       h3("DeepBGC data filtering:"),
       # Different score filtering. Remain >= of set threshold
@@ -95,7 +104,8 @@ server <- function(input, output) {
                          inter_rre_ref_n = NULL,inter_rre_d_n = NULL, inter_a3 = NULL, inter_p_ref_n=NULL,
                          inter_d_p=NULL, inter_p_d_n = NULL, inter_p_rre = NULL, inter_rre_p_n = NULL, inter_d_rre_ID = NULL,
                          inter_d_p_ID = NULL,inter_d_ref_n_ID = NULL , biocircos_deep = NULL, deep_data_input = FALSE,
-                         anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, deep_data_biocircos = FALSE
+                         anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
+                         seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL
                          )
   
   # Observe antismash data input and save as reactive value
@@ -109,7 +119,7 @@ server <- function(input, output) {
     vals$anti_data_input = TRUE
   })
   
-  # Observe PRISM data input and save in rective dataframe
+  # Observe PRISM data input and save in reactive dataframe
   observeEvent(input$prism_data,{
     # Read data
     vals$prism_data <- read.csv(input$prism_data$datapath)
@@ -153,6 +163,14 @@ server <- function(input, output) {
   observeEvent(input$chr_len,{
     vals$chr_len <- input$chr_len
   })
+  
+# ------------------  
+  # Test python code
+  
+  
+#  system2(command = "clinker", args = "clinker/*gbk --plot", wait = F)
+
+# ------------------
   
   #Render output plots
 
@@ -307,108 +325,209 @@ server <- function(input, output) {
   # Render interactive plot, which shows bgcs of antismash, intercepted with chosen app. Also all app bgs. On hover shows all available information
   # For antismash and PRISM data showed only ID, Start, Stop, Type
   output$deep_reference <- renderPlotly({
-    # Require antismash, PRISM, deepbgc and RREFinder data to start
-    req(input$anti_data)
-    req(input$prism_data)
-    req(input$deep_data)
-    req(input$rre_data)
-
-    # Store master prism data in local variable
-    prism_data <- vals$prism_data
+#if (input$ref == "Antismash") {}
+#if (vals$anti_data_input == TRUE){}
+#if (vals$deep_data_input == TRUE){}
+#if (vals$rre_data_input == TRUE){}
+#if (vals$prism_data_input == TRUE){}
+    # GENERATE DATA
+    if (vals$anti_data_input == TRUE){
+      # Store antismash data in local variable, with column renaming
+      anti_data_chromo <-  vals$anti_data %>%
+        mutate(ID = Cluster, Chr = chromosome) %>%
+        dplyr::select(ID,Chr ,Start, Stop, Type)
+      # Extract only Start and Stop from antismash data into matrix
+      anti_inter <- vals$anti_data %>%
+        select(Start, Stop) %>%
+        as.matrix()
+      }
+    if (vals$deep_data_input == TRUE){
+      # Store deepbgc max score in a vector for chosen columns
+      score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
+      score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
+      score_c <- apply(vals$deep_data %>% select(c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")),1, function(x) max(x))
+      # Store DeepBGC data in local variable.
+      deep_data_chromo <- vals$deep_data %>%
+        mutate(score = apply(vals$deep_data %>%
+                               dplyr::select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene),1, function(x) max(x))) 
+      
+      # Add Cluster_type column, which store only the max name of the cluster type
+      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene))[apply(deep_data_chromo%>%dplyr::select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene),1, which.max) ]
+      
+      # Clean data, using, thesholds
+      deep_data_chromo <- deep_data_chromo%>%
+        # Change to "Under threshold"  Cluster_type column values, if they are under chosen theshold (no cluster type will be visualised)
+        mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "Under threshold")) %>%
+        # Add new columns and change product_class to Cluster_type
+        mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
+        filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
+               num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
+      # Store cleaned DeepBGC data into other variable to subset only Start and Stop
+      deep_inter <- deep_data_chromo
+      deep_inter <- deep_inter %>% 
+        select(nucl_start, nucl_end) %>%
+        as.matrix()
+    }
+    if (vals$rre_data_input == TRUE){
+      # Convert numeric columns in a dataframe as a numeric
+      vals$rre_data$Start <- as.numeric(vals$rre_data$Start) 
+      vals$rre_data$Stop <- as.numeric(vals$rre_data$Stop)
+      # Store rre data into local variable
+      rre_data <- data.frame(vals$rre_data)
+      # Start/Stop columns from rre data as matrix
+      rre_inter <- rre_data %>%
+        select(Start, Stop) %>%
+        as.matrix()
+      if (input$rre_width == TRUE) {
+        Stop_vals_RRE <- as.numeric(vals$rre_data$Stop)+50000
+      } else{
+        Stop_vals_RRE <- as.numeric(vals$rre_data$Stop)
+      }
+    }
+    if (vals$prism_data_input == TRUE){
+      # Store master prism data in local variable
+      prism_data <- vals$prism_data
+      # Start/Stop columns from prism data as matrix
+      prism_inter <- vals$prism_data %>%
+        select(Start,Stop) %>%
+        as.matrix()
+    }
     
-    # Store deepbgc max score in a vector for chosen columns
-    score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
-    score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
-    score_c <- apply(vals$deep_data %>% select(c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")),1, function(x) max(x))
+    get_prism_inter <- function(x,prism_inter,prism_data, letter ){
+      # Get an interception of prism and smth
+      interseption <- annotate(x,prism_inter)
+      inter <- unlist(interseption, use.names=FALSE)
+      data <- prism_data[inter,]
+      # Create a dataframe with antismash data, intercepted with PRISM, with all the additional info to visualize on hover
+      seg_df_3 <- data.frame(x=as.numeric(data$Start),
+                             y=rep(letter, length(data$Cluster)),
+                             xend=as.numeric(data$Stop),
+                             yend=rep(letter, length(data$Cluster)),
+                             Type = as.factor(data$Type),
+                             Software = rep("PRISM", length(data$Cluster)),
+                             ID = data$Cluster,
+                             Start = data$Start,
+                             Stop = data$Stop)
+      return(seg_df_3)
+    }
+    get_anti_inter <- function(x,anti_inter,anti_data_chromo, letter ){
+      # Get an interception of deepBGC and antismash data 
+      interseption <- annotate( x,anti_inter)
+      inter <- unlist(interseption, use.names=FALSE)
+      data <- anti_data_chromo[inter,]
+      seg_df_1 <- data.frame(x=as.numeric(  data$Start),
+                             y=rep(letter, length(data$ID)),
+                             xend=as.numeric(  data$Stop),
+                             yend=rep(letter, length(data$ID)),
+                             Type = as.factor(data$Type),
+                             Software = rep("Antismash", length(data$ID)),
+                             ID = data$ID,
+                             Start = data$Start,
+                             Stop = data$Stop)
+      return(seg_df_1)
+    }
+    get_deep_inter <- function(x,deep_inter,deep_data_chromo, letter ){
+      # Get an interception of deepBGC and antismash data 
+      interseption <- annotate(x, deep_inter)
+      inter <- unlist(interseption, use.names=FALSE)
+      data <- deep_data_chromo[inter,]
+      # Create a dataframe with antismash data, interce[ted with deepbgc with all the additional info to visualize on hover
+      seg_df_1 <-  data.frame(x=as.numeric(  data$nucl_start),
+                              y=rep(letter, length(data$ID)),
+                              xend=as.numeric(  data$nucl_end),
+                              yend=rep(letter, length(data$ID)),
+                              Type = as.factor(data$product_class),
+                              Software = rep("DeepBGC", length(data$ID)),
+                              ID = data$ID,
+                              Start = data$nucl_start,
+                              Stop = data$nucl_end,
+                              num_domains = data$num_domains,
+                              deepbgc_score = data$deepbgc_score,
+                              activity = data$product_activity)
+      return(seg_df_1)
+    }
+    get_RRE_inter <- function(x,rre_inter,rre_data, letter ){
+      # Get an interception of RREFinder and antismash 
+      interseption <- annotate(anti_inter, rre_inter)
+      inter <- unlist(interseption, use.names=FALSE)
+      data <- rre_data[inter,]
+      if (input$rre_width == TRUE) {
+        Stop_vals_RRE_in <- as.numeric(data$Stop)+50000
+      } else{
+        Stop_vals_RRE_in <- as.numeric(data$Stop)
+      }
+      # Create a dataframe with antismash data, intercepted with RREFinder, with all the additional info to visualize on hover
+      seg_df_2 <- data.frame(x=data$Start,
+                             y=rep(letter, length(data$Locus_tag)),
+                             xend=Stop_vals_RRE_in,
+                             yend=rep(letter, length(data$Locus_tag)),
+                             Type = rep("RiPP", length(data$Locus_tag)),
+                             Score = data$Score,
+                             Software = rep("RREFinder", length(data$Locus_tag)),
+                             ID = data$Locus_tag,
+                             Start = data$Start,
+                             Stop = data$Stop,
+                             E_value = data$E.value,
+                             P_value = data$P.value,
+                             RRE_start = data$RRE.start,
+                             RRE_stop = data$RRE.end,
+                             Probability = data$Probability)
+      return(seg_df_2)
+    }
     
-    # Store antismash data in local variable, with column renaming
-    anti_data_chromo <-  vals$anti_data %>%
-      mutate(ID = Cluster, Chr = chromosome) %>%
-      dplyr::select(ID,Chr ,Start, Stop, Type)
     
-    # Store DeepBGC data in local variable.
-    deep_data_chromo <- vals$deep_data %>%
-      mutate(score = apply(vals$deep_data %>%
-                             dplyr::select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene),1, function(x) max(x))) 
-    
-    # Add Cluster_type column, which store only the max name of the cluster type
-    deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene))[apply(deep_data_chromo%>%dplyr::select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene),1, which.max) ]
-    
-    # Clean data, using, thesholds
-    deep_data_chromo <- deep_data_chromo%>%
-      # Change to "Under threshold"  Cluster_type column values, if they are under chosen theshold (no cluster type will be visualised)
-      mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "Under threshold")) %>%
-      # Add new columns and change product_class to Cluster_type
-      mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
-      filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
-             num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
-    
-    # Store cleaned DeepBGC data into other variable to subset only Start and Stop
-    deep_inter <- deep_data_chromo
-    deep_inter <- deep_inter %>% 
-      select(nucl_start, nucl_end) %>%
-      as.matrix()
-    
-    # Extract only Start and Stop from antismash data into matrix
-    anti_inter <- vals$anti_data %>%
-      select(Start, Stop) %>%
-      as.matrix()
-    
-    # Convert numeric columns in a dataframe as a numeric
-    vals$rre_data$Start <- as.numeric(vals$rre_data$Start) 
-    vals$rre_data$Stop <- as.numeric(vals$rre_data$Stop)
-    # Store rre data into local variable
-    rre_data <- data.frame(vals$rre_data)
-    # Start/Stop columns from rre data as matrix
-    rre_inter <- rre_data %>%
-      select(Start, Stop) %>%
-      as.matrix()
-    # Start/Stop columns from prism data as matrix
-    prism_inter <- vals$prism_data %>%
-      select(Start,Stop) %>%
-      as.matrix()
-    # Get an interception of deepBGC and antismash data 
-    interseption <- annotate(deep_inter, anti_inter)
-    inter <- unlist(interseption, use.names=FALSE)
-    anti_data_d <- anti_data_chromo[inter,]
-    # Get an interception of RREFinder and antismash 
-    interseption <- annotate(rre_inter, anti_inter)
-    inter <- unlist(interseption, use.names=FALSE)
-    anti_data_r <- anti_data_chromo[inter,]
-    # GEt an interception of prism and antismash
-    interseption <- annotate(prism_inter, anti_inter)
-    inter <- unlist(interseption, use.names=FALSE)
-    anti_data_p <- anti_data_chromo[inter,]
-    # Get an interception of prism and DeepBGC
-    interseption <- annotate(prism_inter, deep_inter)
-    inter <- unlist(interseption, use.names=FALSE)
-    deep_data_p <- deep_data_chromo[inter,]
-
-    # Create a dataframe with antismash data with all the additional info to visualize on hover    
-    seg_df_ref <- data.frame(x=as.numeric(  anti_data_chromo$Start),
-                              y=rep("Z", length(anti_data_chromo$ID)),
-                              xend=as.numeric(  anti_data_chromo$Stop),
-                              yend=rep("Z", length(anti_data_chromo$ID)),
-                              Type = as.factor(anti_data_chromo$Type),
-                              Software = rep("Antismash", length(anti_data_chromo$ID)),
-                              ID = anti_data_chromo$ID,
-                              Start = anti_data_chromo$Start,
-                              Stop = anti_data_chromo$Stop)
-    # Create a dataframe with antismash data, interce[ted with deepbgc with all the additional info to visualize on hover
-    seg_df_anti <- data.frame(x=as.numeric(  anti_data_d$Start),
-                              y=rep("Y", length(anti_data_d$ID)),
-                              xend=as.numeric(  anti_data_d$Stop),
-                              yend=rep("Y", length(anti_data_d$ID)),
-                              Type = as.factor(anti_data_d$Type),
-                              Software = rep("Antismash", length(anti_data_d$ID)),
-                              ID = anti_data_d$ID,
-                              Start = anti_data_d$Start,
-                              Stop = anti_data_d$Stop)
-    # Create a dataframe with all deepbgc data + the additional info to visualize on hover
-    seg_df_deep <- data.frame(x=as.numeric(  deep_data_chromo$nucl_start),
-                              y=rep("X", length(deep_data_chromo$ID)),
+    # MAKE COMPUTATIONS
+    if (vals$anti_data_input == TRUE){
+      seg_ref_a <- data.frame(x=as.numeric(  anti_data_chromo$Start),
+                                 y=rep("Z", length(anti_data_chromo$ID)),
+                                 xend=as.numeric(  anti_data_chromo$Stop),
+                                 yend=rep("Z", length(anti_data_chromo$ID)),
+                                 Type = as.factor(anti_data_chromo$Type),
+                                 Software = rep("Antismash", length(anti_data_chromo$ID)),
+                                 ID = anti_data_chromo$ID,
+                                 Start = anti_data_chromo$Start,
+                                 Stop = anti_data_chromo$Stop)
+      seg_ref <- seg_ref_a
+      
+      if (input$ref == "Antismash") {
+        plot <- ggplot(anti_data_chromo, aes(x = as.numeric(Start), y = Chr)) + 
+        geom_segment(data=seg_ref, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+        if (vals$deep_data_input == TRUE){
+          seg_df_1 <-  get_deep_inter(anti_inter,deep_inter,deep_data_chromo, "Y" )
+          plot <- plot + geom_segment(data=seg_df_1,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                        ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
+                                                        deepbgc_score = deepbgc_score,activity = activity ),size =3)
+        }
+        if (vals$rre_data_input == TRUE){
+          seg_df_2 <- get_RRE_inter(anti_inter, rre_inter, rre_data, "X")
+          plot <- plot + geom_segment(data=seg_df_2, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
+                                                         ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
+                                                         P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
+                                                         Probability = Probability),size = 3)
+        }
+        if (vals$prism_data_input == TRUE){
+          seg_df_3 <- get_prism_inter(anti_inter, prism_inter, prism_data, "W")
+          plot <- plot +  geom_segment(data=seg_df_3, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                          ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+        }
+        plot <- plot +
+                   scale_y_discrete(labels = c("Z" = "Antismash","Y" = "D_vs_A", "X" = "RRE_vs_A", "W" = "P_vs_A")) +
+                   theme(axis.text.y = element_text(size = 10)) +
+                   ylab("")+
+                   xlab("Chromosome length")+
+                   ggtitle("Annotations' comparison to the reference")
+        to_plot <- ggplotly(plot, tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
+                                   "P_value", "RRE_start","RRE_stop", "Probability" ))
+        
+      }
+      vals$seg_df_ref_a <- seg_ref_a
+    }
+    if (vals$deep_data_input == TRUE){
+      # Create a dataframe with all deepbgc data + the additional info to visualize on hover
+      seg_ref_d <- data.frame(x=as.numeric(  deep_data_chromo$nucl_start),
+                              y=rep("Z", length(deep_data_chromo$ID)),
                               xend=as.numeric(  deep_data_chromo$nucl_end),
-                              yend=rep("X", length(deep_data_chromo$ID)),
+                              yend=rep("Z", length(deep_data_chromo$ID)),
                               Type = as.factor(deep_data_chromo$product_class),
                               Software = rep("DeepBGC", length(deep_data_chromo$ID)),
                               ID = deep_data_chromo$ID,
@@ -417,129 +536,181 @@ server <- function(input, output) {
                               num_domains = deep_data_chromo$num_domains,
                               deepbgc_score = deep_data_chromo$deepbgc_score,
                               activity = deep_data_chromo$product_activity)
-    # Create a dataframe with antismash data, intercepted with RREFinder, with all the additional info to visualize on hover
-    seg_df_anti_2 <- data.frame(x=as.numeric(  anti_data_r$Start),
-                                y=rep("W", length(anti_data_r$ID)),
-                                xend=as.numeric(anti_data_r$Stop),
-                                yend=rep("W", length(anti_data_r$ID)),
-                                Type = as.factor(anti_data_r$Type),
-                                Software = rep("Antismash", length(anti_data_r$ID)),
-                                ID = anti_data_r$ID,
-                                Start = anti_data_r$Start,
-                                Stop = anti_data_r$Stop)
-    
-    # Some logic of how wide RREFinder bgcs should be
-    if (input$rre_width == TRUE) {
-      # Create a dataframe with RREFinder data with all the additional info to visualize on hover + 50000 to Stop to make it look thick
-      seg_df_rre <- data.frame(x=vals$rre_data$Start,
-                               y=rep("V", length(vals$rre_data$Locus_tag)),
-                               xend=as.numeric(vals$rre_data$Stop)+50000,
-                               yend=rep("V", length(vals$rre_data$Locus_tag)),
-                               Type = rep("RiPP", length(vals$rre_data$Locus_tag)),
-                               Score = vals$rre_data$Score,
-                               Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
-                               ID = vals$rre_data$Locus_tag,
-                               Start = vals$rre_data$Start,
-                               Stop = vals$rre_data$Stop,
-                               E_value = vals$rre_data$E.value,
-                               P_value = vals$rre_data$P.value,
-                               RRE_start = vals$rre_data$RRE.start,
-                               RRE_stop = vals$rre_data$RRE.end,
-                               Probability = vals$rre_data$Probability)
+      seg_ref <- seg_ref_d
       
-    } else {
-      # Create a dataframe with antismash data with all the additional info to visualize on hover. Plot as it is
-       seg_df_rre <- data.frame(x=vals$rre_data$Start,
-                             y=rep("V", length(vals$rre_data$Locus_tag)),
-                             xend=as.numeric(vals$rre_data$Stop),
-                             yend=rep("V", length(vals$rre_data$Locus_tag)),
-                             Type = rep("RiPP", length(vals$rre_data$Locus_tag)),
-                             Score = vals$rre_data$Score,
-                             Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
-                             ID = vals$rre_data$Locus_tag,
-                             Start = vals$rre_data$Start,
-                             Stop = vals$rre_data$Stop,
-                             E_value = vals$rre_data$E.value,
-                             P_value = vals$rre_data$P.value,
-                             RRE_start = vals$rre_data$RRE.start,
-                             RRE_stop = vals$rre_data$RRE.end,
-                             Probability = vals$rre_data$Probability)
+      if (input$ref == "DeepBGC") {
+        plot <- ggplot(deep_data_chromo, aes(x = as.numeric(Start), y = Chr)) +
+        geom_segment(data=seg_ref,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                      ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
+                                      deepbgc_score = deepbgc_score,activity = activity ),size =3)
+      if (vals$anti_data_input == TRUE){
+        seg_df_1 <- get_anti_inter(deep_inter, anti_inter, anti_data_chromo, "X")
+        plot <- plot + geom_segment(data=seg_df_1, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                      ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      }
+      if (vals$rre_data_input == TRUE){
+        seg_df_2 <- get_RRE_inter(deep_inter, rre_inter, rre_data, "Y")
+        plot <- plot + geom_segment(data=seg_df_2, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
+                                                       ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
+                                                       P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
+                                                       Probability = Probability),size = 3)
+      }
+      if (vals$prism_data_input == TRUE){
+        seg_df_3<- get_prism_inter(deep_inter, prism_inter, prism_data, "W")
+        plot <- plot + geom_segment(data=seg_df_3, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                       ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      }
+       to_plot <- ggplotly(plot +
+                   scale_y_discrete(labels = c("Z" = "DeepBGC","X" = "A_vs_D", "Y" = "RRE_vs_D", "W" = "P_vs_D")) +
+                   theme(axis.text.y = element_text(size = 10)) +
+                   ylab("")+
+                   xlab("Chromosome length")+
+                   ggtitle("Annotations' comparison to the reference"), 
+                 # What actually to visualize in tooltip
+                 tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
+                             "P_value", "RRE_start","RRE_stop", "Probability" )
+        )
+      }
+     
+      vals$seg_df_ref_d <- data.frame(x=as.numeric(  deep_data_chromo$nucl_start),
+                                      y=rep("X", length(deep_data_chromo$ID)),
+                                      xend=as.numeric(  deep_data_chromo$nucl_end),
+                                      yend=rep("X", length(deep_data_chromo$ID)),
+                                      Type = as.factor(deep_data_chromo$product_class),
+                                      Software = rep("DeepBGC", length(deep_data_chromo$ID)),
+                                      ID = deep_data_chromo$ID,
+                                      Start = deep_data_chromo$nucl_start,
+                                      Stop = deep_data_chromo$nucl_end,
+                                      num_domains = deep_data_chromo$num_domains,
+                                      deepbgc_score = deep_data_chromo$deepbgc_score,
+                                      activity = deep_data_chromo$product_activity)
     }
-    # Create a dataframe with antismash data, intercepted with PRISM, with all the additional info to visualize on hover
-    seg_df_anti_3 <- data.frame(x=as.numeric( anti_data_p$Start),
-                                y=rep("U", length(anti_data_p$ID)),
-                                xend=as.numeric(anti_data_p$Stop),
-                                yend=rep("U", length(anti_data_p$ID)),
-                                Type = as.factor(anti_data_p$Type),
-                                Software = rep("Antismash", length(anti_data_p$ID)),
-                                ID = anti_data_p$ID,
-                                Start = anti_data_p$Start,
-                                Stop = anti_data_p$Stop)
+    if (vals$rre_data_input == TRUE){
+      seg_ref_r <- data.frame(x=vals$rre_data$Start,
+                              y=rep("Z", length(vals$rre_data$Locus_tag)),
+                              xend=Stop_vals_RRE,
+                              yend=rep("Z", length(vals$rre_data$Locus_tag)),
+                              Type = rep("RiPP", length(vals$rre_data$Locus_tag)),
+                              Score = vals$rre_data$Score,
+                              Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
+                              ID = vals$rre_data$Locus_tag,
+                              Start = vals$rre_data$Start,
+                              Stop = vals$rre_data$Stop,
+                              E_value = vals$rre_data$E.value,
+                              P_value = vals$rre_data$P.value,
+                              RRE_start = vals$rre_data$RRE.start,
+                              RRE_stop = vals$rre_data$RRE.end,
+                              Probability = vals$rre_data$Probability)
+      seg_ref <- seg_ref_r
+      if (input$ref == "RRE-Finder") {
+        plot <- ggplot(rre_data, aes(x = as.numeric(Start), y = Chr)) + 
+        geom_segment(data=seg_ref, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
+                                       ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
+                                       P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
+                                       Probability = Probability),size = 3)
+      if (vals$anti_data_input == TRUE){
+        seg_df_1 <- get_anti_inter(rre_inter, anti_inter, anti_data_chromo, "X")
+        plot <- plot + geom_segment(data=seg_df_1, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                       ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      }
+      if (vals$deep_data_input == TRUE){
+        seg_df_2 <- get_deep_inter(rre_inter, deep_inter, deep_data_chromo, "Y")
+        plot <- plot +  geom_segment(data=seg_df_2,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                       ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
+                                                       deepbgc_score = deepbgc_score,activity = activity ),size =3)
+      }
+      if (vals$prism_data_input == TRUE){
+        seg_df_3 <- get_prism_inter(rre_inter, prism_inter, prism_data, "W")
+        plot <- plot + geom_segment(data=seg_df_3, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                       ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3) 
+      }
+        to_plot <- ggplotly(plot +
+                   scale_y_discrete(labels = c("Z" = "RRE","X" = "A_vs_RRE", "Y" = "D_vs_RRE", "W" = "P_vs_RRE")) +
+                   theme(axis.text.y = element_text(size = 10)) +
+                   ylab("")+
+                   xlab("Chromosome length")+
+                   ggtitle("Annotations' comparison to the reference"), 
+                 # What actually to visualize in tooltip
+                 tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
+                             "P_value", "RRE_start","RRE_stop", "Probability" )
+        )
+      }
+      
+      vals$seg_df_ref_r <- data.frame(x=vals$rre_data$Start,
+                                      y=rep("Y", length(vals$rre_data$Locus_tag)),
+                                      xend=Stop_vals_RRE,
+                                      yend=rep("Y", length(vals$rre_data$Locus_tag)),
+                                      Type = rep("RiPP", length(vals$rre_data$Locus_tag)),
+                                      Score = vals$rre_data$Score,
+                                      Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
+                                      ID = vals$rre_data$Locus_tag,
+                                      Start = vals$rre_data$Start,
+                                      Stop = vals$rre_data$Stop,
+                                      E_value = vals$rre_data$E.value,
+                                      P_value = vals$rre_data$P.value,
+                                      RRE_start = vals$rre_data$RRE.start,
+                                      RRE_stop = vals$rre_data$RRE.end,
+                                      Probability = vals$rre_data$Probability)
+    }
+    if (vals$prism_data_input == TRUE){
+      # Create a dataframe with PRISM data with all the additional info to visualize on hover
+      seg_ref_p <- data.frame(x=as.numeric(prism_data$Start),
+                                y=rep("Z", length(prism_data$Cluster)),
+                                xend=as.numeric(prism_data$Stop),
+                                yend=rep("Z", length(prism_data$Cluster)),
+                                Type = as.factor(prism_data$Type),
+                                Software = rep("PRISM", length(prism_data$Cluster)),
+                                ID = prism_data$Cluster,
+                                Start = prism_data$Start,
+                                Stop = prism_data$Stop)
+      seg_ref <- seg_ref_p 
+      
+      if (input$ref == "PRISM") {
+      plot <- ggplot(prism_data, aes(x = as.numeric(Start), y = Chr)) +
+        geom_segment(data=seg_ref, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                       ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      if (vals$anti_data_input == TRUE){
+        seg_df_1 <- get_anti_inter(prism_inter, anti_inter, anti_data_chromo, "X")
+        plot <- plot + geom_segment(data=seg_df_1, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                       ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      }
+      if (vals$deep_data_input == TRUE){
+        seg_df_2 <- get_deep_inter(prism_inter, deep_inter, deep_data_chromo, "Y")
+        plot <- plot + geom_segment(data=seg_df_2,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                      ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
+                                                      deepbgc_score = deepbgc_score,activity = activity ),size =3)
+      }
+      if (vals$rre_data_input == TRUE){
+        seg_df_3 <- get_RRE_inter(prism_inter, rre_inter, rre_data, "W")
+        plot <- plot + geom_segment(data=seg_df_3, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
+                                                      ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
+                                                      P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
+                                                      Probability = Probability),size = 3)
+      }
+        # Create a dataframe with PRISM data with all the additional info to visualize on hover
+        to_plot <- ggplotly(plot +
+                   scale_y_discrete(labels = c("Z" = "PRISM","X" = "A_vs_P", "Y" = "D_vs_P", "W" = "RRE_vs_P")) +
+                   theme(axis.text.y = element_text(size = 10)) +
+                   ylab("")+
+                   xlab("Chromosome length")+
+                   ggtitle("Annotations' comparison to the reference"), 
+                 # What actually to visualize in tooltip
+                 tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
+                             "P_value", "RRE_start","RRE_stop", "Probability" )
+                 )
+      }
+      vals$seg_df_ref_p <- data.frame(x=as.numeric(prism_data$Start),
+                                      y=rep("W", length(prism_data$Cluster)),
+                                      xend=as.numeric(prism_data$Stop),
+                                      yend=rep("W", length(prism_data$Cluster)),
+                                      Type = as.factor(prism_data$Type),
+                                      Software = rep("PRISM", length(prism_data$Cluster)),
+                                      ID = prism_data$Cluster,
+                                      Start = prism_data$Start,
+                                      Stop = prism_data$Stop)
+    }
 
-    # Create a dataframe with deepbgc data, intercepted with PRISM, with all the additional info to visualize on hover
-    seg_df_deep_2 <- data.frame(x=as.numeric(  deep_data_p$nucl_start),
-                                y=rep("T", length(deep_data_p$ID)),
-                                xend=as.numeric(  deep_data_p$nucl_end),
-                                yend=rep("T", length(deep_data_p$ID)),
-                                Type = as.factor(deep_data_p$product_class),
-                                Software = rep("DeepBGC", length(deep_data_p$ID)),
-                                ID = deep_data_p$ID,
-                                Start = deep_data_p$nucl_start,
-                                Stop = deep_data_p$nucl_end,
-                                num_domains = deep_data_p$num_domains,
-                                deepbgc_score = deep_data_p$deepbgc_score,
-                                activity = deep_data_p$product_activity)
-    # Add ID column to PRISM (Not sure, but I think that was done in the preprocessing step. Delete?)
-    prism_data$ID <- prism_data$Cluster
-    # Create a dataframe with PRISM data with all the additional info to visualize on hover
-    seg_df_prism <- data.frame(x=as.numeric(prism_data$Start),
-                               y=rep("S", length(prism_data$Cluster)),
-                               xend=as.numeric(prism_data$Stop),
-                               yend=rep("S", length(prism_data$Cluster)),
-                               Type = as.factor(prism_data$Type),
-                               Software = rep("PRISM", length(prism_data$Cluster)),
-                               ID = prism_data$ID,
-                               Start = prism_data$Start,
-                               Stop = prism_data$Stop)
-    
-    # Convert chromosome info in antismash data to as factor for proper visualization
-    anti_data_chromo$Chr <- as.factor(anti_data_chromo$Chr)
-    #Add levels
-    levels(anti_data_chromo$Chr) <- c("A_vs_D", "D","A_vs_RRE" ,"RRE" )
-    
-    
-    ggplotly(ggplot(anti_data_chromo, aes(x = as.numeric(Start), y = Chr)) +
-              # Add all the dataframe info with all the metadata we want to display
-               geom_segment(data=seg_df_ref, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                  ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3) +
-               geom_segment(data=seg_df_anti, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                  ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3) + 
-               geom_segment(data=seg_df_deep, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                  ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
-                                                  deepbgc_score = deepbgc_score,activity = activity ), size = 3) +
-               geom_segment(data=seg_df_anti_2,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                   ID = ID, Start = Start, Stop = Stop, Type = Type),size =3) +
-               geom_segment(data=seg_df_rre, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
-                                                 ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
-                                                 P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
-                                                 Probability = Probability),size = 3)+
-               geom_segment(data=seg_df_anti_3,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                   ID = ID, Start = Start, Stop = Stop, Type = Type),size =3) +
-               geom_segment(data=seg_df_deep_2,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                   ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
-                                                   deepbgc_score = deepbgc_score,activity = activity ),size =3) +
-               geom_segment(data=seg_df_prism,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                  ID = ID, Start = Start, Stop = Stop, Type = Type),size =3) +
-              # Actually rename chromosomes. The initial name sare here for proper "top_to_bottom" (because names are sorted alphabetically from bottom_to_top) visualization.
-               scale_y_discrete(labels = c("Z" = "Antismash","Y" = "A_vs_D", "X" = "D", "W" = "A_vs_RRE","V"= "RRE",
-                                           "U" = "A_vs_PRISM", "T" = "D_vs_PRISM", "S" = "PRISM")) +
-               theme(axis.text.y = element_text(size = 10)) +
-               ylab("")+
-               xlab("Chromosome length")+
-               ggtitle("Annotations' comparison to the reference"), 
-               # What actually to visualize in tooltip
-             tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
-                         "P_value", "RRE_start","RRE_stop", "Probability" ))
+    to_plot
   })
   
   # Render Biocircos Plot for all-vs-all comparison
