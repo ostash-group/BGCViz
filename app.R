@@ -1073,47 +1073,77 @@ server <- function(input, output) {
   
   # Render barplot with number count of interception for BGC IDs
   output$barplot_rank <- renderPlotly({
-    # Begin to plot only if all data is uploaded
+    antismash_count <-  NULL
+    prism_count <- NULL
+    deep_count <- NULL
+    rre_count <- NULL
     
-    req(input$anti_data)
-    req(input$prism_data)
-    req(input$deep_data)
-    req(input$rre_data)
-    # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-    antismash_count <- count(as.factor(c(vals$inter_a1, vals$inter_a2, vals$inter_a3)))
-    prism_count <- count(as.factor(c(vals$inter_p_ref_n,vals$inter_p_d_n,vals$inter_p_rre )))
-    deep_count <- count(as.factor(c(vals$inter_d_ref_n_ID, vals$inter_d_rre_ID, vals$inter_d_p_ID)))
-    rre_count <- count(as.factor(c(vals$inter_rre_ref_n, vals$inter_rre_d_n, vals$inter_rre_p_n)))
-    # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
-    anti_anot <- vals$anti_data[vals$anti_data$Cluster %in% as.numeric(levels(antismash_count$x)),]
-    prism_anot <- vals$prism_data[vals$prism_data$Cluster %in% as.numeric(levels(prism_count$x)),]
-    rre_anot <- vals$rre_data[vals$rre_data$ID %in% as.numeric(levels(rre_count$x)),]
-    deep_anot <- vals$biocircos_deep[vals$biocircos_deep$ID %in% as.numeric(levels(deep_count$x)),]
-    # Add prefices to the ID to plot for a barplot.  
-    antismash_count$x <- sapply(antismash_count$x, function(x) paste("A: ", x))
-    prism_count$x <- sapply(prism_count$x, function(x) paste("P: ", x))
-    deep_count$x <- sapply(deep_count$x, function(x) paste("D: ", x))
-    rre_count$x <- sapply(rre_count$x, function(x) paste("RRE: ", x))
-    # Add label column to the dataframe, from which we will plot  
-    antismash_count$label <- rep("Antismash", length(antismash_count$x))
-    prism_count$label <- rep("PRISM", length(prism_count$x))
-    deep_count$label <- rep("DeepBGC", length(deep_count$x))
-    rre_count$label <- rep("RRE", length(rre_count$x))
-    # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-    antismash_count$Type <- anti_anot$Type
-    prism_count$Type <- prism_anot$Type
-    rre_count$Type <- rep("RiPP", length(rre_anot$Sequence))
-    deep_count$Type <- deep_anot$product_class
-    # Add Start positions (to visualize on hover)
-    antismash_count$Start <- anti_anot$Start
-    prism_count$Start <- prism_anot$Start
-    rre_count$Start <- rre_anot$Start
-    deep_count$Start <- deep_anot$nucl_start
-    # Add Stop positions (to visualize on hover)
-    antismash_count$Stop <- anti_anot$Stop
-    prism_count$Stop <- prism_anot$Stop
-    rre_count$Stop <- rre_anot$Stop
-    deep_count$Stop <- deep_anot$nucl_end
+    if (vals$anti_data_input == TRUE){
+      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
+      antismash_count <- count(as.factor(c(vals$inter_a1, vals$inter_a2, vals$inter_a3)))
+      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
+      anti_anot <- vals$anti_data[vals$anti_data$Cluster %in% as.numeric(levels(antismash_count$x)),]
+      # Add prefices to the ID to plot for a barplot.  
+      antismash_count$x <- sapply(antismash_count$x, function(x) paste("A: ", x))
+      # Add label column to the dataframe, from which we will plot  
+      antismash_count$label <- rep("Antismash", length(antismash_count$x))
+      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
+      antismash_count$Type <- anti_anot$Type
+      # Add Start positions (to visualize on hover)
+      antismash_count$Start <- anti_anot$Start
+      # Add Stop positions (to visualize on hover)
+      antismash_count$Stop <- anti_anot$Stop
+    }
+    if (vals$deep_data_input == TRUE){
+      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
+      deep_count <- count(as.factor(c(vals$inter_d_ref_n_ID, vals$inter_d_rre_ID, vals$inter_d_p_ID)))
+      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
+      deep_anot <- vals$biocircos_deep[vals$biocircos_deep$ID %in% as.numeric(levels(deep_count$x)),]
+      # Add prefices to the ID to plot for a barplot.  
+      deep_count$x <- sapply(deep_count$x, function(x) paste("D: ", x))
+      # Add label column to the dataframe, from which we will plot  
+      deep_count$label <- rep("DeepBGC", length(deep_count$x))
+      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
+      deep_count$Type <- deep_anot$product_class
+      # Add Start positions (to visualize on hover)
+      deep_count$Start <- deep_anot$nucl_start
+      # Add Stop positions (to visualize on hover)
+      deep_count$Stop <- deep_anot$nucl_end
+    }
+    if (vals$rre_data_input == TRUE){
+      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
+      rre_count <- count(as.factor(c(vals$inter_rre_ref_n, vals$inter_rre_d_n, vals$inter_rre_p_n)))
+      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
+      rre_anot <- vals$rre_data[vals$rre_data$ID %in% as.numeric(levels(rre_count$x)),]
+      # Add prefices to the ID to plot for a barplot.  
+      rre_count$x <- sapply(rre_count$x, function(x) paste("RRE: ", x))
+      # Add label column to the dataframe, from which we will plot  
+      rre_count$label <- rep("RRE", length(rre_count$x))
+      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
+      rre_count$Type <- rep("RiPP", length(rre_anot$Sequence))
+      # Add Start positions (to visualize on hover)
+      rre_count$Start <- rre_anot$Start
+      # Add Stop positions (to visualize on hover)
+      rre_count$Stop <- rre_anot$Stop
+    }
+    if (vals$prism_data_input == TRUE){
+      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
+      prism_count <- count(as.factor(c(vals$inter_p_ref_n,vals$inter_p_d_n,vals$inter_p_rre )))
+      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
+      prism_anot <- vals$prism_data[vals$prism_data$Cluster %in% as.numeric(levels(prism_count$x)),]
+      # Add prefices to the ID to plot for a barplot.  
+      prism_count$x <- sapply(prism_count$x, function(x) paste("P: ", x))
+      # Add label column to the dataframe, from which we will plot  
+      prism_count$label <- rep("PRISM", length(prism_count$x))
+      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
+      prism_count$Type <- prism_anot$Type
+      # Add Start positions (to visualize on hover)
+      prism_count$Start <- prism_anot$Start
+      # Add Stop positions (to visualize on hover)
+      prism_count$Stop <- prism_anot$Stop
+    }
+
+      
     # Integrate all those dataframe to the master one 
     ranking_data <- rbind(antismash_count,prism_count, deep_count,rre_count)
     # Fix column names in the master dataframe
@@ -1128,8 +1158,7 @@ server <- function(input, output) {
              
              
              tooltip=c("Type", "Start", "Stop")  )
-    
-    
+
     
   })
   
