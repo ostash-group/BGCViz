@@ -55,7 +55,7 @@ ui <- fluidPage(
                                                               "RRE-Finder" =  "R",
                                                               "PRISM" = "P"),
                   selected = 'A'),
-      h3("Comparison with DeepBGC plots:"),
+      h3(id="data_comparison_header","Comparison with DeepBGC plots:"),
       selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c("Antismash" = "A",
                                                                      "PRISM" = "P"),
                   selected = 'A'),
@@ -69,7 +69,7 @@ ui <- fluidPage(
       sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 100, value = 0),
       
       # DeepBGC data filtering 
-      h3("DeepBGC data filtering:"),
+      h3(id="data_filter_header","DeepBGC data filtering:"),
       # Different score filtering. Remain >= of set threshold
       sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
       sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
@@ -186,24 +186,28 @@ server <- function(input, output) {
       showElement(selector = "#plot_step")
       showElement(selector = "#plot_start")
       showElement(selector = "#score_a")
-      showElement(selector = "#score_b")
+      showElement(selector = "#score_d")
       showElement(selector = "#score_c")
       showElement(selector = "#domains_filter")
       showElement(selector = "#biodomain_filter")
       showElement(selector = "#gene_filter")
       showElement(selector = "#cluster_type")
+      showElement(selector = "#data_comparison_header")
+      showElement(selector = "#data_filter_header")
     } else{
       hideElement(selector = "#ref_comparison")
       hideElement(selector = "#score_type")
       hideElement(selector = "#plot_step")
       hideElement(selector = "#plot_start")
       hideElement(selector = "#score_a")
-      hideElement(selector = "#score_b")
+      hideElement(selector = "#score_d")
       hideElement(selector = "#score_c")
       hideElement(selector = "#domains_filter")
       hideElement(selector = "#biodomain_filter")
       hideElement(selector = "#gene_filter")
       hideElement(selector = "#cluster_type")
+      hideElement(selector = "#data_comparison_header")
+      hideElement(selector = "#data_filter_header")
     }
   })
   #Render output plots
