@@ -43,13 +43,13 @@ ui <- fluidPage(
                 "Upload RREFinder data"),
       # Numeric input of chromosome length of analyzed sequence
       numericInput("chr_len", "Please type chr len of an organism", value = 8773899),
-      h3("Genes on chromosome plot controls:"),
+      h3(id = "genes_on_chr","Genes on chromosome plot controls:"),
       selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
                                                               "DeepBGC" = "DeepBGC",
                                                               "RRE-Finder" = "RRE-Finder",
                                                               "PRISM" = "PRISM"),
                   selected = "Antismash"),
-      h3("Summarize options:"),
+      h3(id = "summarize","Summarize options:"),
       selectInput("group_by", "Group data by", choices = c("Antismash" = "A",
                                                               "DeepBGC" = "D",
                                                               "RRE-Finder" =  "R",
@@ -93,10 +93,10 @@ ui <- fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel(title = "Compare data with DeepBGC", value = 1 ,plotOutput("deep_barplot",height = "500px"), plotlyOutput("deep_rate")),
-        tabPanel("Annotation visualization and comparison",plotlyOutput("deep_reference_2", height = "500px"), 
+        tabPanel(title = "Annotation visualization and comparison", value = 4,plotlyOutput("deep_reference_2", height = "500px"), 
                  plotlyOutput("deep_reference", height = "500px")),
-        tabPanel("Biocircos plot", BioCircosOutput("biocircos", height = "1000px")),
-        tabPanel("Summarize interception",plotlyOutput("barplot_rank", height = "600px"),tableOutput("group_table")),
+        tabPanel(title = "Biocircos plot", value = 2, BioCircosOutput("biocircos", height = "1000px")),
+        tabPanel(title = "Summarize interception", value = 3,plotlyOutput("barplot_rank", height = "600px"),tableOutput("group_table")),
         type = "tabs", id = "main"
       )
   )
@@ -121,7 +121,8 @@ server <- function(input, output) {
                          inter_d_p=NULL, inter_p_d_n = NULL, inter_p_rre = NULL, inter_rre_p_n = NULL, inter_d_rre_ID = NULL,
                          inter_d_p_ID = NULL,inter_d_ref_n_ID = NULL , biocircos_deep = NULL, deep_data_input = FALSE,
                          anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
-                         seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL
+                         seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
+                         data_upload_count = 0
                          )
   
   # Observe antismash data input and save as reactive value
@@ -132,7 +133,8 @@ server <- function(input, output) {
     vals$anti_data$chromosome <-  rep("A", length(vals$anti_data$Cluster))
     # Save file
     write.csv(vals$anti_data, "anti_data.csv", row.names = F)
-    vals$anti_data_input = TRUE
+    vals$anti_data_input = TRUE 
+    vals$data_upload_count <- vals$data_upload_count +1
   })
   
   # Observe PRISM data input and save in reactive dataframe
@@ -146,6 +148,7 @@ server <- function(input, output) {
     # Save file
     write.csv(vals$prism_data, "prism_data.csv", row.names = F)
     vals$prism_data_input = TRUE
+    vals$data_upload_count <- vals$data_upload_count +1
   })
   
 # Read and clean DeepBGC data
@@ -158,6 +161,7 @@ server <- function(input, output) {
     vals$deep_data$ID <- seq(1:length(vals$deep_data$bgc_candidate_id))
     write.csv(vals$deep_data, "deep_data.csv", row.names = F)
     vals$deep_data_input = TRUE
+    vals$data_upload_count <- vals$data_upload_count +1
   })
   
   # Read RREFinder data
@@ -174,10 +178,19 @@ server <- function(input, output) {
     vals$rre_data$ID <- seq(1:length(vals$rre_data$Sequence))
     write.csv(vals$rre_data, "rre_data.csv", row.names = F)
     vals$rre_data_input = TRUE
+    vals$data_upload_count <- vals$data_upload_count +1
   })
   # Observe input of chromosome length
   observeEvent(input$chr_len,{
     vals$chr_len <- input$chr_len
+  })
+  
+  observeEvent(vals$rre_data_input, {
+    if (vals$rre_data_input == T){
+      showElement(selector = "#rre_width")
+    } else{
+      hideElement(selector = "#rre_width")
+    }
   })
   
   observeEvent(vals$deep_data_input,{
@@ -211,6 +224,31 @@ server <- function(input, output) {
       hideElement(selector = "#data_comparison_header")
       hideElement(selector = "#data_filter_header")
       hideTab(inputId = "main", target = "1")
+    }
+  })
+  
+  observeEvent(vals$data_upload_count, {
+    if (vals$data_upload_count <2){
+      hideTab("main", "2")
+      hideTab("main", "3")
+      hideElement(selector = "#summarize")
+      hideElement(selector = "#group_by")
+      hideElement(selector = "#count_all")
+    }else{
+      showTab("main", "2")
+      showTab("main", "3")
+      showElement(selector = "#summarize")
+      showElement(selector = "#group_by")
+      showElement(selector = "#count_all")
+    }
+    if (vals$data_upload_count <1){
+      hideTab("main", "4")
+      hideElement(selector = "#genes_on_chr")
+      hideElement(selector = "#ref")
+    }else{
+      showTab("main", "4")
+      showElement(selector = "#genes_on_chr")
+      showElement(selector = "#ref")
     }
   })
   
