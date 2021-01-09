@@ -17,6 +17,8 @@ library(plotly)
 library(BioCircos)
 library(ggplot2)
 library(reticulate)
+library(shinyjs)
+
 
 use_virtualenv("clinker")
 # Define UI 
@@ -26,6 +28,7 @@ ui <- fluidPage(
   titlePanel("BGCViz"),
   
   # Sidebar
+  useShinyjs(),
   sidebarLayout(
     sidebarPanel(
       # Data upload
@@ -56,7 +59,12 @@ ui <- fluidPage(
                                                               "RRE-Finder" = "RRE-Finder",
                                                               "PRISM" = "PRISM"),
                   selected = "Antismash"),
-                  
+      h3("Group data by column:"),
+      selectInput("group_by", "Choose reference column", choices = c("Antismash" = "A",
+                                                              "DeepBGC" = "D",
+                                                              "RRE-Finder" =  "R",
+                                                              "PRISM" = "P"),
+                  selected = 'A'),
       # DeepBGC data filtering 
       h3("DeepBGC data filtering:"),
       # Different score filtering. Remain >= of set threshold
@@ -78,12 +86,15 @@ ui <- fluidPage(
     
     # Show plots
     mainPanel(
-      plotOutput("deep_barplot",height = "500px"),
-      plotlyOutput("deep_rate"),
-      plotlyOutput("deep_reference", height = "500px"),
-      BioCircosOutput("biocircos", height = "1000px"),
-      plotlyOutput("barplot_rank", height = "600px")
-    )
+      tabsetPanel(
+        tabPanel("Compare antismash and DeepBGC",plotOutput("deep_barplot",height = "500px"), plotlyOutput("deep_rate")),
+        tabPanel("Annotation visualization and comparison",plotlyOutput("deep_reference_2", height = "500px"), 
+                 plotlyOutput("deep_reference", height = "500px")),
+        tabPanel("Biocircos plot", BioCircosOutput("biocircos", height = "1000px")),
+        tabPanel("Summarize interception",plotlyOutput("barplot_rank", height = "600px"),tableOutput("group_table")),
+        type = "tabs"
+      )
+  )
   )
 )
 
@@ -105,7 +116,7 @@ server <- function(input, output) {
                          inter_d_p=NULL, inter_p_d_n = NULL, inter_p_rre = NULL, inter_rre_p_n = NULL, inter_d_rre_ID = NULL,
                          inter_d_p_ID = NULL,inter_d_ref_n_ID = NULL , biocircos_deep = NULL, deep_data_input = FALSE,
                          anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
-                         seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL
+                         seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL
                          )
   
   # Observe antismash data input and save as reactive value
@@ -164,13 +175,6 @@ server <- function(input, output) {
     vals$chr_len <- input$chr_len
   })
   
-# ------------------  
-  # Test python code
-  
-  
-#  system2(command = "clinker", args = "clinker/*gbk --plot", wait = F)
-
-# ------------------
   
   #Render output plots
 
@@ -364,6 +368,7 @@ server <- function(input, output) {
                num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
       # Store cleaned DeepBGC data into other variable to subset only Start and Stop
       deep_inter <- deep_data_chromo
+      vals$deep_data_chromo <- deep_data_chromo
       deep_inter <- deep_inter %>% 
         select(nucl_start, nucl_end) %>%
         as.matrix()
@@ -713,6 +718,46 @@ server <- function(input, output) {
     to_plot
   })
   
+  output$deep_reference_2 <- renderPlotly({
+    anti_data_chromo <-  vals$anti_data %>%
+      mutate(ID = Cluster, Chr = chromosome) %>%
+      dplyr::select(ID,Chr ,Start, Stop, Type)
+    plot <- ggplot(anti_data_chromo, aes(x = as.numeric(Start), y = Chr))
+    if (vals$anti_data_input == TRUE){
+      plot <- plot + 
+        geom_segment(data=vals$seg_df_ref_a, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+    }
+    if (vals$deep_data_input == TRUE){
+      plot <- plot +
+        geom_segment(data=vals$seg_df_ref_d,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                      ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
+                                      deepbgc_score = deepbgc_score,activity = activity ),size =3)
+    }
+    if (vals$rre_data_input == TRUE){
+      plot <- plot + geom_segment(data=vals$seg_df_ref_r, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
+                                                    ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
+                                                    P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
+                                                    Probability = Probability),size = 3)
+    }
+    if (vals$prism_data_input == TRUE){
+      plot <- plot + geom_segment(data=vals$seg_df_ref_p, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                    ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      
+      
+    }
+    to_plot <- ggplotly(plot +
+                          scale_y_discrete(labels = c("Z" = "Antismash","X" = "DeepBGC", "Y" = "RRE", "W" = "PRISM")) +
+                          theme(axis.text.y = element_text(size = 10)) +
+                          ylab("")+
+                          xlab("Chromosome length")+
+                          ggtitle("All annotations"), 
+                        # What actually to visualize in tooltip
+                        tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
+                                    "P_value", "RRE_start","RRE_stop", "Probability" )
+    )
+    to_plot
+  })
+  
   # Render Biocircos Plot for all-vs-all comparison
   output$biocircos <- renderBioCircos({
     #BioCircos!
@@ -884,6 +929,9 @@ server <- function(input, output) {
         select(nucl_start, nucl_end) %>%
         as.matrix()
     }
+    
+    #CALCULATIONS
+    # -----------------------------------------
     
     # ANTISMASH
     if (vals$anti_data_input == TRUE){
@@ -1154,12 +1202,105 @@ server <- function(input, output) {
                theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 10),
                      axis.text.y = element_text(size = 14)) +
                ggtitle("Number of times cluster is annotated with other tool"),
-             
-             
-             
-             tooltip=c("Type", "Start", "Stop")  )
+             tooltip=c("Type", "Start", "Stop")  
+             )
 
     
+  })
+  
+  # Render table with data
+  output$group_table <- renderTable({
+    df_a <- data.frame(A=NA, D=NA, P=NA, R=NA)
+    if (vals$anti_data_input == TRUE){
+        df <- data.frame(seq(1:length(vals$anti_data$chromosome)))
+        colnames(df) <- c("ID")
+        df_tmp <- data.frame(A=NA, D=NA)
+        df_tmp1 <- data.frame(A=NA, P=NA)
+        df_tmp2 <- data.frame(A=NA, R=NA)
+        if (!is.null(vals$inter_d_ref_n)){
+          df_tmp <- data.frame(cbind(vals$inter_a1,vals$inter_d_ref_n))
+          colnames(df_tmp) <- c("A", "D")
+        }
+        if (!is.null(vals$inter_p_ref_n)){
+          df_tmp1 <- data.frame(cbind(vals$inter_a3,vals$inter_p_ref_n))
+          colnames(df_tmp1) <- c("A", "P")
+        }
+        
+        if(!is.null(vals$inter_rre_ref_n)){
+          df_tmp2 <- data.frame(cbind(vals$inter_a2,vals$inter_rre_ref_n))
+        colnames(df_tmp2) <- c("A", "R")
+        }
+        
+        
+     df_a <- merge(df, df_tmp, by.x="ID", by.y="A", all =T)
+     df_a <- merge(df_a, df_tmp1, by.x="ID", by.y="A", all = T)
+     df_a <- merge(df_a, df_tmp2, by.x="ID", by.y="A", all = T )
+     
+    }
+    df_d <- data.frame(D=NA, P=NA, R=NA)
+    if (vals$deep_data_input == TRUE){
+      df_tmp <- data_frame(D=NA, R=NA)
+      df_tmp1 <- data_frame(D=NA, P=NA)
+      if (!is.null(vals$inter_rre_d_n)){
+        df_tmp <- data.frame(cbind(vals$inter_d_rre, vals$inter_rre_d_n ))
+        colnames(df_tmp) <- c("D", "R")
+      }
+      if (!is.null(vals$inter_p_d_n)){
+        df_tmp1 <- data.frame(cbind(vals$inter_d_p ,vals$inter_p_d_n ))
+        colnames(df_tmp1) <- c("D", "P")
+      }
+      df_d <- merge(df_tmp, df_tmp1, by.x="D", by.y="D", all =T)
+    }
+    df_p <- data_frame(P=NA, R=NA)
+    if (vals$prism_data_input == TRUE){
+      df_p <- data_frame(P=NA, R=NA)
+      if (!is.null(vals$inter_rre_p_n)){
+      df_p <- data.frame(cbind(vals$inter_p_rre,vals$inter_rre_p_n ))
+      colnames(df_p) <- c("P", "R")
+      }
+    }
+    if (vals$rre_data_input == TRUE){
+      
+    }
+    df_1 <- merge(df_d,df_a, all=T)
+    df_2 <- merge(df_1, df_p, all=T)
+    colnames(df_2)[colnames(df_2) == 'ID'] <- 'A'
+    if (input$group_by=="A"){
+      data <- df_2 %>% group_by(A) %>% summarise(D=paste(D, collapse=","),
+                                                              R=paste(R, collapse=","),
+                                                              P=paste(P, collapse=","))
+    }else if (input$group_by=="P"){
+      data <- df_2 %>% group_by(P) %>% summarise(D=paste(D, collapse=","),
+                                                              R=paste(R, collapse=","),
+                                                              A=paste(A, collapse=","))
+    }else if (input$group_by=="R"){
+      data <- df_2 %>% group_by(R) %>% summarise(D=paste(D, collapse=","),
+                                                              A=paste(A, collapse=","),
+                                                              P=paste(P, collapse=","))
+    }else if (input$group_by=="D"){
+      data <- df_2 %>% group_by(D) %>% summarise(A=paste(A, collapse=","),
+                                                              R=paste(R, collapse=","),
+                                                              P=paste(P, collapse=","))
+    }
+    
+    if (vals$anti_data_input != TRUE){
+      data <- data %>%
+        select(-A)
+    }
+    if (vals$deep_data_input != TRUE){
+      data <- data %>%
+        select(-D)
+    }
+    if (vals$rre_data_input != TRUE){
+      data <- data %>%
+        select(-R)
+    }
+    if (vals$prism_data_input != TRUE){
+      data <- data %>%
+        select(-P)
+    }
+    
+    data
   })
   
   # Download used datasets (as for BioCircos)
