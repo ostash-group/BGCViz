@@ -260,15 +260,19 @@ server <- function(input, output) {
       # Get nember of non intercepted antismash data
       if (input$ref_comparison == 'A'){
         used_antismash <-  length(vals$anti_data$Cluster)-length(unlist(interseption))
+        cols <-  c("Only Antismash", "DeepBGC+Antismash", "Only DeepBGC")
+        title <-  ggtitle("Comparison of Antismash and DeepBGC annotations at given score threshold")
       } else if (input$ref_comparison == 'P'){
         used_antismash <-  length(vals$prism_data$Cluster)-length(unlist(interseption))
+        cols <- c("Only PRISM", "DeepBGC+PRISM", "Only DeepBGC")
+        title <- ggtitle("Comparison of PRISM and DeepBGC annotations at given score threshold")
       }
       
       # Number of only DeepBGC annotated clusters
       len_new <- length(new_vect)
       # Combine all vectors into one dataframe
       fullnes_of_annotation_1 <- data.frame(c(rep(c(as.character(dataframe_1)),3 )), 
-                                            c("Only Antismash", "DeepBGC+Antismash", "Only DeepBGC"), c(used_antismash, inter_bgc, len_new))
+                                            cols, c(used_antismash, inter_bgc, len_new))
       colnames(fullnes_of_annotation_1) <- c("Score", "Source", "Quantity")
       # Combine previously created empty dataframe with this one to store results
       fullnes_of_annotation <- rbind(fullnes_of_annotation, fullnes_of_annotation_1)
@@ -289,7 +293,7 @@ server <- function(input, output) {
       geom_bar(position="dodge", stat="identity")+
       geom_text(aes(label=Quantity), position=position_dodge(width=0.9), vjust=-0.25) +
       xlab(paste(input$score_type,"Score")) +
-      ggtitle("Comparison of Antismash and DeepBGC annotations at given score threshold") +
+      title +
       geom_label(aes(x=Inf,y=Inf,hjust=1,vjust=1,label=annotateText ), show.legend = F)
   })
   
@@ -325,23 +329,32 @@ server <- function(input, output) {
       pivot_wider(names_from = Source, values_from = Quantity)
     if (input$ref_comparison == 'A'){
       data <-  vals$anti_data
+      title <- ggtitle("Rates of DeepBGC/Antismash data annotation")
+      test <- test %>%
+        # Calculate rates. Novelty is nummber of clusters annotated only by deepbgc/ all clusters annotated by antismash + (antismash + deepbgc)
+          mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+Antismash` + test$`Only Antismash`), 
+                 #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+                 Annotation_rate = test$`DeepBGC+Antismash`/length(data$Cluster), 
+                 # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+                 Skip_rate = test$`Only Antismash`/length(data$Cluster))
     } else if (input$ref_comparison == 'P'){
       data <- vals$prism_data
+      title <- ggtitle("Rates of DeepBGC/PRISM data annotation")
+      test <- test %>%
+          mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+PRISM` + test$`Only PRISM`), 
+                 #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+                 Annotation_rate = test$`DeepBGC+PRISM`/length(data$Cluster), 
+                 # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+                 Skip_rate = test$`Only PRISM`/length(data$Cluster))
     }
     
     # Calculate rates and plot interactive plot with plotly
     ggplotly(test %>%
-                # Calculate rates. Novelty is nummber of clusters annotated only by deepbgc/ all clusters annotated by antismash + (antismash + deepbgc)
-               mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+Antismash` + test$`Only Antismash`), 
-                      #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
-                      Annotation_rate = test$`DeepBGC+Antismash`/length(data$Cluster), 
-                      # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
-                      Skip_rate = test$`Only Antismash`/length(data$Cluster)) %>%
                pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
                ggplot(aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
                geom_line(aes(color=Rates)) +
                geom_point(aes(shape=Rates), alpha = .4, size = 3) +
-               ggtitle("Rates of DeepBGC/Antismash data annotation") +
+               title +
                ylab("Rate") +
                xlab(paste(input$score_type,"Score threshold")),
              tooltip = c("Rate"))
