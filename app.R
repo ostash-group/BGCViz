@@ -92,12 +92,12 @@ ui <- fluidPage(
     # Show plots
     mainPanel(
       tabsetPanel(
-        tabPanel("Compare data with DeepBGC",plotOutput("deep_barplot",height = "500px"), plotlyOutput("deep_rate")),
+        tabPanel(title = "Compare data with DeepBGC", value = 1 ,plotOutput("deep_barplot",height = "500px"), plotlyOutput("deep_rate")),
         tabPanel("Annotation visualization and comparison",plotlyOutput("deep_reference_2", height = "500px"), 
                  plotlyOutput("deep_reference", height = "500px")),
         tabPanel("Biocircos plot", BioCircosOutput("biocircos", height = "1000px")),
         tabPanel("Summarize interception",plotlyOutput("barplot_rank", height = "600px"),tableOutput("group_table")),
-        type = "tabs"
+        type = "tabs", id = "main"
       )
   )
   )
@@ -158,7 +158,6 @@ server <- function(input, output) {
     vals$deep_data$ID <- seq(1:length(vals$deep_data$bgc_candidate_id))
     write.csv(vals$deep_data, "deep_data.csv", row.names = F)
     vals$deep_data_input = TRUE
-    showElement(selector = "#kmeans_help")
   })
   
   # Read RREFinder data
@@ -196,6 +195,7 @@ server <- function(input, output) {
       showElement(selector = "#cluster_type")
       showElement(selector = "#data_comparison_header")
       showElement(selector = "#data_filter_header")
+      showTab(inputId = "main", target = "1")
     } else{
       hideElement(selector = "#ref_comparison")
       hideElement(selector = "#score_type")
@@ -210,8 +210,10 @@ server <- function(input, output) {
       hideElement(selector = "#cluster_type")
       hideElement(selector = "#data_comparison_header")
       hideElement(selector = "#data_filter_header")
+      hideTab(inputId = "main", target = "1")
     }
   })
+  
   #Render output plots
 
   # Render barplot
