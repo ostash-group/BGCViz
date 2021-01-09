@@ -43,18 +43,22 @@ ui <- fluidPage(
                 "Upload RREFinder data"),
       # Numeric input of chromosome length of analyzed sequence
       numericInput("chr_len", "Please type chr len of an organism", value = 8773899),
-      h3("Genes on chromosome plot:"),
+      h3("Genes on chromosome plot controls:"),
       selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
                                                               "DeepBGC" = "DeepBGC",
                                                               "RRE-Finder" = "RRE-Finder",
                                                               "PRISM" = "PRISM"),
                   selected = "Antismash"),
-      h3("Group data by column:"),
-      selectInput("group_by", "Choose reference column", choices = c("Antismash" = "A",
+      h3("Summarize options:"),
+      selectInput("group_by", "Group data by", choices = c("Antismash" = "A",
                                                               "DeepBGC" = "D",
                                                               "RRE-Finder" =  "R",
                                                               "PRISM" = "P"),
                   selected = 'A'),
+      checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
+      h3("Improve visualization:"),
+      #Improve RREFinder annotated BCG visibility
+      checkboxInput("rre_width", "Add thickness (+50000) to RRE results visualization (do not alter any results)"),
       h3(id="data_comparison_header","Comparison with DeepBGC plots:"),
       selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c("Antismash" = "A",
                                                                      "PRISM" = "P"),
@@ -79,9 +83,7 @@ ui <- fluidPage(
       sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
       sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
       sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50),
-      h3("Improve visualization:"),
-      #Improve RREFinder annotated BCG visibility
-      checkboxInput("rre_width", "Add thickness (+50000) to RRE results visualization (can alter interception results)"),
+     
       # Donwload currently used datasets
       downloadButton("download","Download currently used datasets (as for Biocircos plot)" )
       
@@ -1286,10 +1288,42 @@ server <- function(input, output) {
   
   # Render table with data
   output$group_table <- renderTable({
+    if (vals$anti_data_input == TRUE){
+      if ((input$group_by=="A") & (input$count_all == T)){
+        df_f_a <- data.frame(seq(1:length(vals$anti_data$chromosome)))
+        colnames(df_f_a) <- c("ID")
+      } else{
+        df_f_a <- data.frame(ID=NA)
+      }
+    }
+    if (vals$deep_data_input == TRUE){
+      if ((input$group_by=="D") & (input$count_all == T)){
+        df_f_d <- data.frame(seq(1:length(vals$deep_data_chromo$ID)))
+        colnames(df_f_d) <- c("D")
+      } else{
+        df_f_d <- data.frame(D=NA)
+      }
+    }
+    df_f_r <- data.frame(R=NA)
+    if (vals$rre_data_input == TRUE){
+      if ((input$group_by=="R") & (input$count_all == T)){
+        df_f_r <- data.frame(seq(1:length(vals$rre_data$ID)))
+        colnames(df_f_r) <- c("R")
+      } else{
+        df_f_r <- data.frame(R=NA)
+      }
+    }
+    if (vals$prism_data_input == TRUE){
+        if ((input$group_by=="P") & (input$count_all == T)){
+          df_f_p <- data.frame(seq(1:length(vals$prism_data$Cluster)))
+          colnames(df_f_p) <- c("P")
+        } else{
+          df_f_p <- data.frame(P=NA)
+        }
+    }
+    
     df_a <- data.frame(A=NA, D=NA, P=NA, R=NA)
     if (vals$anti_data_input == TRUE){
-        df <- data.frame(seq(1:length(vals$anti_data$chromosome)))
-        colnames(df) <- c("ID")
         df_tmp <- data.frame(A=NA, D=NA)
         df_tmp1 <- data.frame(A=NA, P=NA)
         df_tmp2 <- data.frame(A=NA, R=NA)
@@ -1308,11 +1342,12 @@ server <- function(input, output) {
         }
         
         
-     df_a <- merge(df, df_tmp, by.x="ID", by.y="A", all =T)
+     df_a <- merge(df_f_a, df_tmp, by.x="ID", by.y="A", all =T)
      df_a <- merge(df_a, df_tmp1, by.x="ID", by.y="A", all = T)
      df_a <- merge(df_a, df_tmp2, by.x="ID", by.y="A", all = T )
      
     }
+    
     df_d <- data.frame(D=NA, P=NA, R=NA)
     if (vals$deep_data_input == TRUE){
       df_tmp <- data_frame(D=NA, R=NA)
@@ -1325,36 +1360,40 @@ server <- function(input, output) {
         df_tmp1 <- data.frame(cbind(vals$inter_d_p ,vals$inter_p_d_n ))
         colnames(df_tmp1) <- c("D", "P")
       }
-      df_d <- merge(df_tmp, df_tmp1, by.x="D", by.y="D", all =T)
+      df_d <- merge(df_f_d, df_tmp, by.x="D", by.y="D", all =T)
+      df_d <- merge(df_d, df_tmp1, by.x="D", by.y="D", all =T)
     }
+    
     df_p <- data_frame(P=NA, R=NA)
     if (vals$prism_data_input == TRUE){
       df_p <- data_frame(P=NA, R=NA)
+      df_tmp <- data_frame(P=NA, R=NA)
       if (!is.null(vals$inter_rre_p_n)){
-      df_p <- data.frame(cbind(vals$inter_p_rre,vals$inter_rre_p_n ))
-      colnames(df_p) <- c("P", "R")
+      df_tmp<- data.frame(cbind(vals$inter_p_rre,vals$inter_rre_p_n ))
+      colnames(df_tmp) <- c("P", "R")
       }
+      df_p <- merge(df_f_p, df_tmp, by.x="P", by.y="P", all =T)
     }
     if (vals$rre_data_input == TRUE){
-      
     }
     df_1 <- merge(df_d,df_a, all=T)
     df_2 <- merge(df_1, df_p, all=T)
-    colnames(df_2)[colnames(df_2) == 'ID'] <- 'A'
+    df_fin <- merge(df_2, df_f_r, all=T)
+    colnames(df_fin)[colnames(df_fin) == 'ID'] <- 'A'
     if (input$group_by=="A"){
-      data <- df_2 %>% group_by(A) %>% summarise(D=paste(D, collapse=","),
+      data <- df_fin %>% group_by(A) %>% summarise(D=paste(D, collapse=","),
                                                               R=paste(R, collapse=","),
                                                               P=paste(P, collapse=","))
     }else if (input$group_by=="P"){
-      data <- df_2 %>% group_by(P) %>% summarise(D=paste(D, collapse=","),
+      data <- df_fin %>% group_by(P) %>% summarise(D=paste(D, collapse=","),
                                                               R=paste(R, collapse=","),
                                                               A=paste(A, collapse=","))
     }else if (input$group_by=="R"){
-      data <- df_2 %>% group_by(R) %>% summarise(D=paste(D, collapse=","),
+      data <- df_fin %>% group_by(R) %>% summarise(D=paste(D, collapse=","),
                                                               A=paste(A, collapse=","),
                                                               P=paste(P, collapse=","))
     }else if (input$group_by=="D"){
-      data <- df_2 %>% group_by(D) %>% summarise(A=paste(A, collapse=","),
+      data <- df_fin %>% group_by(D) %>% summarise(A=paste(A, collapse=","),
                                                               R=paste(R, collapse=","),
                                                               P=paste(P, collapse=","))
     }
