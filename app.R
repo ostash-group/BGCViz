@@ -43,6 +43,10 @@ ui <- fluidPage(
                 "Upload RREFinder data"),
       # Numeric input of chromosome length of analyzed sequence
       numericInput("chr_len", "Please type chr len of an organism", value = 8773899),
+      h3("Choose the data:"),
+      selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c("Antismash" = "A",
+                                                                     "PRISM" = "P"),
+                  selected = 'A'),
       # Some controls for first two plots.
       h3("Controls for DeepBGC data exploration:"),
       # Score to use for thresholds
@@ -181,7 +185,6 @@ server <- function(input, output) {
   # Render barplot
   output$deep_barplot <- renderPlot({
     # Require deepBGC data and sntismash data to visualize plot
-    req(input$anti_data)
     req(input$deep_data)
     
     # Create empty dataframe to populate later
@@ -226,9 +229,18 @@ server <- function(input, output) {
         as.matrix()
       
       # Store antismash bgc start amd atop values as matrix
-      anti_inter <- vals$anti_data %>%
+      if (input$ref_comparison == 'A'){
+        anti_inter <- vals$anti_data %>%
         select(Start, Stop) %>%
         as.matrix()
+      } else if (input$ref_comparison == 'P'){
+        anti_inter <- vals$prism_data %>%
+          select(Start, Stop) %>%
+          as.matrix()
+      }
+      
+      
+     
       
       # Get the interception of two matrices
       interseption <- annotate(deep_inter, anti_inter) #Here we use IntervalSurgeon to get intersection list
@@ -246,7 +258,12 @@ server <- function(input, output) {
       # Get number for interception bgc
       inter_bgc <-  length(unlist(interseption))
       # Get nember of non intercepted antismash data
-      used_antismash <-  length(vals$anti_data$Cluster)-length(unlist(interseption))
+      if (input$ref_comparison == 'A'){
+        used_antismash <-  length(vals$anti_data$Cluster)-length(unlist(interseption))
+      } else if (input$ref_comparison == 'P'){
+        used_antismash <-  length(vals$prism_data$Cluster)-length(unlist(interseption))
+      }
+      
       # Number of only DeepBGC annotated clusters
       len_new <- length(new_vect)
       # Combine all vectors into one dataframe
@@ -279,7 +296,6 @@ server <- function(input, output) {
   # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data
   output$deep_rate <- renderPlotly({
     # Require DeepBGC and antismash data to begin plotting
-    req(input$anti_data)
     req(input$deep_data)
     
     # Store scores columns in vectors for DeepBGC data
@@ -307,15 +323,20 @@ server <- function(input, output) {
     # Store dataframe into variable. Widen it to calculate rates
     test <- fullnes_of_annotation %>%
       pivot_wider(names_from = Source, values_from = Quantity)
+    if (input$ref_comparison == 'A'){
+      data <-  vals$anti_data
+    } else if (input$ref_comparison == 'P'){
+      data <- vals$prism_data
+    }
     
     # Calculate rates and plot interactive plot with plotly
     ggplotly(test %>%
                 # Calculate rates. Novelty is nummber of clusters annotated only by deepbgc/ all clusters annotated by antismash + (antismash + deepbgc)
                mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+Antismash` + test$`Only Antismash`), 
                       #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
-                      Annotation_rate = test$`DeepBGC+Antismash`/length(vals$anti_data$Cluster), 
+                      Annotation_rate = test$`DeepBGC+Antismash`/length(data$Cluster), 
                       # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
-                      Skip_rate = test$`Only Antismash`/length(vals$anti_data$Cluster)) %>%
+                      Skip_rate = test$`Only Antismash`/length(data$Cluster)) %>%
                pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
                ggplot(aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
                geom_line(aes(color=Rates)) +
@@ -453,7 +474,7 @@ server <- function(input, output) {
     }
     get_RRE_inter <- function(x,rre_inter,rre_data, letter ){
       # Get an interception of RREFinder and antismash 
-      interseption <- annotate(anti_inter, rre_inter)
+      interseption <- annotate(x, rre_inter)
       inter <- unlist(interseption, use.names=FALSE)
       data <- rre_data[inter,]
       if (input$rre_width == TRUE) {
@@ -719,10 +740,22 @@ server <- function(input, output) {
   })
   
   output$deep_reference_2 <- renderPlotly({
-    anti_data_chromo <-  vals$anti_data %>%
-      mutate(ID = Cluster, Chr = chromosome) %>%
-      dplyr::select(ID,Chr ,Start, Stop, Type)
-    plot <- ggplot(anti_data_chromo, aes(x = as.numeric(Start), y = Chr))
+    if (vals$anti_data_input == TRUE){
+      data <-  vals$anti_data %>%
+        mutate(ID = Cluster, Chr = chromosome) %>%
+        dplyr::select(ID,Chr ,Start, Stop, Type)
+    }
+    if (vals$deep_data_input == TRUE){
+      data <- vals$deep_data_chromo
+    }
+    if (vals$rre_data_input == TRUE){
+      data <- data.frame(vals$rre_data)
+    }
+    if (vals$prism_data_input == TRUE){
+      data <- vals$prism_data
+    }
+    
+    plot <- ggplot(data, aes(x = as.numeric(Start), y = Chr))
     if (vals$anti_data_input == TRUE){
       plot <- plot + 
         geom_segment(data=vals$seg_df_ref_a, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
