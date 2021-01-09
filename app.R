@@ -43,20 +43,6 @@ ui <- fluidPage(
                 "Upload RREFinder data"),
       # Numeric input of chromosome length of analyzed sequence
       numericInput("chr_len", "Please type chr len of an organism", value = 8773899),
-      h3("Choose the data:"),
-      selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c("Antismash" = "A",
-                                                                     "PRISM" = "P"),
-                  selected = 'A'),
-      # Some controls for first two plots.
-      h3("Controls for DeepBGC data exploration:"),
-      # Score to use for thresholds
-      selectInput("score_type", "Choose score type to set threshold", choices = c("Activity score" = "Activity",
-                                                                                  "Cluster_type score" = "Cluster_Type",
-                                                                                  "DeepBGC score" = "DeepBGC"),
-                  selected = "Activity score"),
-      # Chose step for barplot (as a threshold to draw a bar)
-      sliderInput("plot_step", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
-      sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 100, value = 0),
       h3("Genes on chromosome plot:"),
       selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
                                                               "DeepBGC" = "DeepBGC",
@@ -69,6 +55,19 @@ ui <- fluidPage(
                                                               "RRE-Finder" =  "R",
                                                               "PRISM" = "P"),
                   selected = 'A'),
+      h3("Comparison with DeepBGC plots:"),
+      selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c("Antismash" = "A",
+                                                                     "PRISM" = "P"),
+                  selected = 'A'),
+      # Score to use for thresholds
+      selectInput("score_type", "Choose score type to set threshold", choices = c("Activity score" = "Activity",
+                                                                                  "Cluster_type score" = "Cluster_Type",
+                                                                                  "DeepBGC score" = "DeepBGC"),
+                  selected = "Activity score"),
+      # Chose step for barplot (as a threshold to draw a bar)
+      sliderInput("plot_step", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
+      sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 100, value = 0),
+      
       # DeepBGC data filtering 
       h3("DeepBGC data filtering:"),
       # Different score filtering. Remain >= of set threshold
@@ -91,7 +90,7 @@ ui <- fluidPage(
     # Show plots
     mainPanel(
       tabsetPanel(
-        tabPanel("Compare antismash and DeepBGC",plotOutput("deep_barplot",height = "500px"), plotlyOutput("deep_rate")),
+        tabPanel("Compare data with DeepBGC",plotOutput("deep_barplot",height = "500px"), plotlyOutput("deep_rate")),
         tabPanel("Annotation visualization and comparison",plotlyOutput("deep_reference_2", height = "500px"), 
                  plotlyOutput("deep_reference", height = "500px")),
         tabPanel("Biocircos plot", BioCircosOutput("biocircos", height = "1000px")),
@@ -157,6 +156,7 @@ server <- function(input, output) {
     vals$deep_data$ID <- seq(1:length(vals$deep_data$bgc_candidate_id))
     write.csv(vals$deep_data, "deep_data.csv", row.names = F)
     vals$deep_data_input = TRUE
+    showElement(selector = "#kmeans_help")
   })
   
   # Read RREFinder data
@@ -179,7 +179,33 @@ server <- function(input, output) {
     vals$chr_len <- input$chr_len
   })
   
-  
+  observeEvent(vals$deep_data_input,{
+    if (vals$deep_data_input == T){
+      showElement(selector = "#ref_comparison")
+      showElement(selector = "#score_type")
+      showElement(selector = "#plot_step")
+      showElement(selector = "#plot_start")
+      showElement(selector = "#score_a")
+      showElement(selector = "#score_b")
+      showElement(selector = "#score_c")
+      showElement(selector = "#domains_filter")
+      showElement(selector = "#biodomain_filter")
+      showElement(selector = "#gene_filter")
+      showElement(selector = "#cluster_type")
+    } else{
+      hideElement(selector = "#ref_comparison")
+      hideElement(selector = "#score_type")
+      hideElement(selector = "#plot_step")
+      hideElement(selector = "#plot_start")
+      hideElement(selector = "#score_a")
+      hideElement(selector = "#score_b")
+      hideElement(selector = "#score_c")
+      hideElement(selector = "#domains_filter")
+      hideElement(selector = "#biodomain_filter")
+      hideElement(selector = "#gene_filter")
+      hideElement(selector = "#cluster_type")
+    }
+  })
   #Render output plots
 
   # Render barplot
