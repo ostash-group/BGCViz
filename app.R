@@ -18,6 +18,7 @@ library(BioCircos)
 library(ggplot2)
 library(reticulate)
 library(shinyjs)
+library(rjson)
 
 
 use_virtualenv("clinker")
@@ -33,16 +34,26 @@ ui <- fluidPage(
     sidebarPanel(
       # Data upload
       h3("Data upload and necesary input:"),
+      h5("ANTISMASH:"),
+      checkboxInput("anti_input_options", "My data is a dataframe, not json results file from antismash"),
       fileInput("anti_data",
                 "Upload antismash data"),
+      selectInput("anti_contigs", "Your data contains one or several contigs?", choices = c("One" = "O",
+                                                              "Several" = "S"),
+                  selected = "O"),
+      h5("PRISM:"),
       fileInput("prism_data",
                 "Upload PRISM data"),
+      h5("DEEPBGC:"),
       fileInput("deep_data",
                 "Upload DeepBGC data"),
+      h5("RRE-FINDER:"),
       fileInput("rre_data",
                 "Upload RREFinder data"),
       # Numeric input of chromosome length of analyzed sequence
       numericInput("chr_len", "Please type chr len of an organism", value = 8773899),
+      h3(id = "anti_header","Antismash data options:"),
+      checkboxInput("anti_hybrid", "Visualize BGC with several types as 'Hybrid'"),
       h3(id = "genes_on_chr","Genes on chromosome plot controls:"),
       selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
                                                               "DeepBGC" = "DeepBGC",
@@ -105,7 +116,7 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
-  
+  options(shiny.maxRequestSize=100*1024^2)
   # Small function to make integers zeros
   is.integer0 <- function(x)
   {
@@ -128,7 +139,68 @@ server <- function(input, output) {
   # Observe antismash data input and save as reactive value
   observeEvent(input$anti_data,{
     # Read data
-    vals$anti_data <- read.csv(input$anti_data$datapath)
+    if (input$anti_input_options==T){
+      vals$anti_data <- read.csv(input$anti_data$datapath)
+    }else{
+       data <- fromJSON(file = input$anti_data$datapath)
+        types <- sapply(data$records, function(y){
+          lapply(y$features, function(x){
+            if (unlist(x$type == 'region')){
+              x$qualifiers$product
+            }
+          })
+        })
+        
+        if (input$anti_contigs == "O"){
+          types <-  Filter(Negate(is.null), types)
+        } else{
+          types <- sapply(types, function(x){
+          Filter(Negate(is.null), x)
+        })
+        }
+        if (input$anti_hybrid == T){
+          types <- sapply(types, function(x){
+          if (length(unlist(x))>1){
+            "Hybrid"
+          } else{
+            x
+          }
+        })
+        }
+        
+        types <- sapply(types, function(x){
+          if (length(unlist(x))>1){
+            tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
+            gsub(" ", "_", tmp)
+          }else{
+            x
+          }
+        })
+        
+        
+        location <- sapply(data$records, function(y){
+          unlist(sapply(y$features, function(x){
+            if (unlist(x$type == 'region')){
+              unlist(x$location)
+            }
+          })
+          )
+        })
+        
+        
+        location <- gsub("\\[", "", location)
+        location <- gsub("\\]", "", location)
+        location <- data.frame(location)
+        colnames(location) <- "split"
+        anti_data <- location %>%
+          separate(split, c("Start", "Stop")) %>%
+          transmute(ID = rownames(location), Start, Stop)
+        
+        anti_data <- cbind(anti_data, types)
+        colnames(anti_data) <- c("Cluster", "Start", "Stop", "Type")
+        vals$anti_data <- anti_data
+    }
+
     # Add chromosome column
     vals$anti_data$chromosome <-  rep("A", length(vals$anti_data$Cluster))
     # Save file
@@ -251,6 +323,15 @@ server <- function(input, output) {
       showElement(selector = "#ref")
     }
   })
+  
+  observeEvent(input$anti_input_options,{
+    if (input$anti_input_options==T){
+      hideElement(selector = "#anti_contigs")
+    } else{
+      showElement(selector = "#anti_contigs")
+    }
+  })
+  
   
   #Render output plots
 
