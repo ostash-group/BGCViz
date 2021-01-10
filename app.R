@@ -20,6 +20,8 @@ library(reticulate)
 library(shinyjs)
 library(rjson)
 library(stringr)
+library(RSQLite)
+
 
 
 use_virtualenv("clinker")
@@ -39,13 +41,13 @@ ui <- fluidPage(
       checkboxInput("anti_input_options", "My AnriSMASH data is a dataframe, not json results file from antismash"),
       fileInput("anti_data",
                 "Upload antismash data"),
-      selectInput("anti_contigs", "Your data contains one or several contigs?", choices = c("One" = "O",
-                                                              "Several" = "S"),
-                  selected = "O"),
       h5("PRISM:"),
       checkboxInput("prism_input_options", "My PRISM data is a dataframe, not json results file"),
       fileInput("prism_data",
                 "Upload PRISM data"),
+      h5("SEMPI:"),
+      fileInput("sempi_data",
+                "Upload SEMPI 2.0 data"),
       h5("DEEPBGC:"),
       fileInput("deep_data",
                 "Upload DeepBGC data"),
@@ -58,17 +60,21 @@ ui <- fluidPage(
       checkboxInput("anti_hybrid", "Visualize AntiSMASH BGC with several types as 'Hybrid'"),
       h3(id = "prism_header","PRISM data options:"),
       checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
+      h3(id = "sempi_header","SEMPI data options:"),
+      checkboxInput("sempi_hybrid", "Visualize SEMPI BGC with several types as 'Hybrid'"),
       h3(id = "genes_on_chr","Genes on chromosome plot controls:"),
       selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
                                                               "DeepBGC" = "DeepBGC",
                                                               "RRE-Finder" = "RRE-Finder",
-                                                              "PRISM" = "PRISM"),
+                                                              "PRISM" = "PRISM",
+                                                              "SEMPI" = "SEMPI"),
                   selected = "Antismash"),
       h3(id = "summarize","Summarize options:"),
       selectInput("group_by", "Group data by", choices = c("Antismash" = "A",
                                                               "DeepBGC" = "D",
                                                               "RRE-Finder" =  "R",
-                                                              "PRISM" = "P"),
+                                                              "PRISM" = "P",
+                                                           "SEMPI" = "S"),
                   selected = 'A'),
       checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
       h3("Improve visualization:"),
@@ -76,7 +82,8 @@ ui <- fluidPage(
       checkboxInput("rre_width", "Add thickness (+50000) to RRE results visualization (do not alter any results)"),
       h3(id="data_comparison_header","Comparison with DeepBGC plots:"),
       selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c("Antismash" = "A",
-                                                                     "PRISM" = "P"),
+                                                                     "PRISM" = "P",
+                                                                     "SEMPI" = "S"),
                   selected = 'A'),
       # Score to use for thresholds
       selectInput("score_type", "Choose score type to set threshold", choices = c("Activity score" = "Activity",
@@ -140,7 +147,9 @@ server <- function(input, output) {
                          inter_d_p_ID = NULL,inter_d_ref_n_ID = NULL , biocircos_deep = NULL, deep_data_input = FALSE,
                          anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
                          seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
-                         data_upload_count = 0, anti_type=NULL, prism_type=NULL
+                         data_upload_count = 0, anti_type=NULL, prism_type=NULL, sempi_data = NULL, sempi_data_input= FALSE,
+                         sempi_type = NULL, inter_s_ref_n = NULL, inter_a4 = NULL, inter_d_s = NULL, inter_s_d_n = NULL,
+                         inter_d_s_ID = NULL, inter_s_p_n = NULL, inter_p_s = NULL,  inter_s_rre_n = NULL, inter_ree_s = NULL
                          )
   
   # Observe antismash data input and save as reactive value
@@ -158,13 +167,7 @@ server <- function(input, output) {
           })
         })
         
-        if (input$anti_contigs == "O"){
-          types <-  Filter(Negate(is.null), types)
-        } else{
-          types <- sapply(types, function(x){
-          Filter(Negate(is.null), x)
-        })
-        }
+        types <-  Filter(Negate(is.null), types)
         
         vals$anti_type <- types
         types <- sapply(types, function(x){
@@ -207,6 +210,41 @@ server <- function(input, output) {
     # Save file
     write.csv(vals$anti_data, "anti_data.csv", row.names = F)
     vals$anti_data_input = TRUE 
+    vals$data_upload_count <- vals$data_upload_count +1
+  })
+  
+  observeEvent(input$sempi_data,{
+    conn <- dbConnect(RSQLite::SQLite(), input$sempi_data$datapath)
+    
+    dbListTables(conn)
+    
+    data <- dbGetQuery(conn, "SELECT * FROM tbl_segments")
+    
+    
+    data <- data %>%
+      filter(trackid==6)
+    
+    vals$sempi_type <- data$name
+
+      types <- sapply(data$name, function(x){
+        tmp <- str_trim(x)
+        tmp <- gsub(", ", "", tmp)
+        gsub(" ", "_", tmp)
+      })
+
+    sempi_data <- data.frame(cbind(seq(1:length(data$trackid)),data$start, data$end,as.character(types)))
+    colnames(sempi_data) <- c("Cluster", "Start", "Stop", "Type")
+    sempi_data$Cluster <- as.numeric(sempi_data$Cluster)
+    sempi_data$Start <- as.numeric(sempi_data$Start)
+    sempi_data$Stop <- as.numeric(sempi_data$Stop)
+    vals$sempi_data <- sempi_data
+    # Add chromosome info column
+    vals$sempi_data$chromosome <-  rep("S", length(vals$sempi_data$Cluster))
+    # Add ID column (same as Cluster)
+    vals$sempi_data$ID <- vals$sempi_data$Cluster
+    # Save file
+    write.csv(vals$sempi_data, "sempi_data.csv", row.names = F)
+    vals$sempi_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
   })
   
@@ -392,14 +430,6 @@ server <- function(input, output) {
   }
   })
   
-  observeEvent(input$anti_input_options,{
-    if (input$anti_input_options==T){
-      hideElement(selector = "#anti_contigs")
-    } else{
-      showElement(selector = "#anti_contigs")
-    }
-  })
-  
   observeEvent(vals$anti_data_input,{
     if ((vals$anti_data_input == T) & (input$anti_input_options==F)){
       showElement(selector = "#anti_header")
@@ -449,6 +479,29 @@ server <- function(input, output) {
       })
       vals$prism_data$Type <- types
     }
+  })
+  
+  observeEvent(input$sempi_hybrid, {
+    if (input$sempi_hybrid==T){
+      types <- str_split(vals$sempi_type, " ")
+      types <- str_split(types, "-")
+      types <- sapply(types, function(x){
+        if (length(unlist(x))>1){
+          "Hybrid"
+        } else{
+          x
+        }
+      })
+      
+      vals$sempi_data$Type <- types
+    } else {
+      types <- sapply(vals$sempi_type, function(x){
+        tmp <- str_trim(x)
+        tmp <- gsub(", ", "", tmp)
+        gsub(" ", "_", tmp)
+      })
+    vals$sempi_data$Type <- types
+  }
   })
   
   
@@ -509,7 +562,11 @@ server <- function(input, output) {
         anti_inter <- vals$prism_data %>%
           select(Start, Stop) %>%
           as.matrix()
-      }
+      } else if (input$ref_comparison == 'S'){
+    anti_inter <- vals$sempi_data %>%
+      select(Start, Stop) %>%
+      as.matrix()
+  } 
       
       
      
@@ -538,6 +595,10 @@ server <- function(input, output) {
         used_antismash <-  length(vals$prism_data$Cluster)-length(unlist(interseption))
         cols <- c("Only PRISM", "DeepBGC+PRISM", "Only DeepBGC")
         title <- ggtitle("Comparison of PRISM and DeepBGC annotations at given score threshold")
+      } else if (input$ref_comparison == 'S') {
+        used_antismash <-  length(vals$sempi_data$Cluster)-length(unlist(interseption))
+        cols <- c("Only SEMPI", "DeepBGC+SEMPI", "Only DeepBGC")
+        title <- ggtitle("Comparison of SEMPI and DeepBGC annotations at given score threshold")
       }
       
       # Number of only DeepBGC annotated clusters
@@ -618,6 +679,15 @@ server <- function(input, output) {
                  Annotation_rate = test$`DeepBGC+PRISM`/length(data$Cluster), 
                  # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
                  Skip_rate = test$`Only PRISM`/length(data$Cluster))
+    } else if (input$ref_comparison == 'S'){
+      data <- vals$sempi_data
+      title <- ggtitle("Rates of DeepBGC/SEMPI data annotation")
+      test <- test %>%
+        mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+SEMPI` + test$`Only SEMPI`), 
+               #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+               Annotation_rate = test$`DeepBGC+SEMPI`/length(data$Cluster), 
+               # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+               Skip_rate = test$`Only SEMPI`/length(data$Cluster))
     }
     
     # Calculate rates and plot interactive plot with plotly
@@ -638,8 +708,9 @@ server <- function(input, output) {
 #if (input$ref == "Antismash") {}
 #if (vals$anti_data_input == TRUE){}
 #if (vals$deep_data_input == TRUE){}
-#if (vals$rre_data_input == TRUE){}
 #if (vals$prism_data_input == TRUE){}
+#if (vals$rre_data_input == TRUE){}
+#if (vals$sempi_data_input == TRUE){}
     # GENERATE DATA
     if (vals$anti_data_input == TRUE){
       # Store antismash data in local variable, with column renaming
@@ -703,6 +774,14 @@ server <- function(input, output) {
         select(Start,Stop) %>%
         as.matrix()
     }
+    if (vals$sempi_data_input == TRUE){
+      # Store master prism data in local variable
+      sempi_data <- vals$sempi_data
+      # Start/Stop columns from prism data as matrix
+      sempi_inter <- vals$sempi_data %>%
+        select(Start,Stop) %>%
+        as.matrix()
+    }
     
     get_prism_inter <- function(x,prism_inter,prism_data, letter ){
       # Get an interception of prism and smth
@@ -720,6 +799,23 @@ server <- function(input, output) {
                              Start = data$Start,
                              Stop = data$Stop)
       return(seg_df_3)
+    }
+    get_sempi_inter <- function(x,sempi_inter,sempi_data, letter ){
+      # Get an interception of sempi and smth
+      interseption <- annotate(x,sempi_inter)
+      inter <- unlist(interseption, use.names=FALSE)
+      data <- sempi_data[inter,]
+      # Create a dataframe with antismash data, intercepted with PRISM, with all the additional info to visualize on hover
+      seg_df <- data.frame(x=as.numeric(data$Start),
+                             y=rep(letter, length(data$Cluster)),
+                             xend=as.numeric(data$Stop),
+                             yend=rep(letter, length(data$Cluster)),
+                             Type = as.factor(data$Type),
+                             Software = rep("SEMPI", length(data$Cluster)),
+                             ID = data$Cluster,
+                             Start = data$Start,
+                             Stop = data$Stop)
+      return(seg_df)
     }
     get_anti_inter <- function(x,anti_inter,anti_data_chromo, letter ){
       # Get an interception of deepBGC and antismash data 
@@ -786,6 +882,27 @@ server <- function(input, output) {
       return(seg_df_2)
     }
     
+    geom_anti <- function(data){
+      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+    }
+    geom_prism <- function(data){
+      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+    }
+    geom_deep <- function(data){
+      geom_segment(data=data,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                               ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
+                                                               deepbgc_score = deepbgc_score,activity = activity ),size =3)
+      }
+    geom_rre <- function(data){
+      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
+                                                           ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
+                                                           P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
+                                                           Probability = Probability),size = 3)
+      }
+    geom_sempi <- function(data){
+      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+    }
+    
     
     # MAKE COMPUTATIONS
     if (vals$anti_data_input == TRUE){
@@ -801,28 +918,33 @@ server <- function(input, output) {
       seg_ref <- seg_ref_a
       
       if (input$ref == "Antismash") {
-        plot <- ggplot(anti_data_chromo, aes(x = vals$chr_len, y = Chr)) + 
-        geom_segment(data=seg_ref, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+        plot <- ggplot(anti_data_chromo, aes(x = vals$chr_len, y = Chr)) + geom_anti(seg_ref)
         if (vals$deep_data_input == TRUE){
-          seg_df_1 <-  get_deep_inter(anti_inter,deep_inter,deep_data_chromo, "Y" )
-          plot <- plot + geom_segment(data=seg_df_1,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                        ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
-                                                        deepbgc_score = deepbgc_score,activity = activity ),size =3)
+          seg_df <-  get_deep_inter(anti_inter,deep_inter,deep_data_chromo, "Y" )
+          if (dim(seg_df[1]) > 0){
+          plot <- plot + geom_anti(seg_df)
+          }
         }
         if (vals$rre_data_input == TRUE){
-          seg_df_2 <- get_RRE_inter(anti_inter, rre_inter, rre_data, "X")
-          plot <- plot + geom_segment(data=seg_df_2, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
-                                                         ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
-                                                         P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
-                                                         Probability = Probability),size = 3)
+          seg_df <- get_RRE_inter(anti_inter, rre_inter, rre_data, "X")
+          if (dim(seg_df[1]) > 0){
+          plot <- plot + geom_rre(seg_df)
+          }
         }
         if (vals$prism_data_input == TRUE){
-          seg_df_3 <- get_prism_inter(anti_inter, prism_inter, prism_data, "W")
-          plot <- plot +  geom_segment(data=seg_df_3, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                          ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+          seg_df <- get_prism_inter(anti_inter, prism_inter, prism_data, "W")
+          if (dim(seg_df[1]) > 0){
+          plot <- plot +  geom_prism(seg_df)
+          }
+        }
+        if (vals$sempi_data_input == TRUE){
+          seg_df <- get_sempi_inter(anti_inter, sempi_inter, sempi_data, "V")
+          if (dim(seg_df[1]) > 0){
+          plot <- plot +  geom_sempi(seg_df)
+          }
         }
         plot <- plot +
-                   scale_y_discrete(labels = c("Z" = "Antismash","Y" = "D_vs_A", "X" = "RRE_vs_A", "W" = "P_vs_A")) +
+                   scale_y_discrete(labels = c("Z" = "Antismash","Y" = "D_vs_A", "X" = "RRE_vs_A", "W" = "P_vs_A", "V" = "S_vs_A")) +
                    theme(axis.text.y = element_text(size = 10)) +
                    ylab("")+
                    xlab("Chromosome length")+
@@ -850,29 +972,33 @@ server <- function(input, output) {
       seg_ref <- seg_ref_d
       
       if (input$ref == "DeepBGC") {
-        plot <- ggplot(deep_data_chromo, aes(x = vals$chr_len, y = Chr)) +
-        geom_segment(data=seg_ref,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                      ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
-                                      deepbgc_score = deepbgc_score,activity = activity ),size =3)
+        plot <- ggplot(deep_data_chromo, aes(x = vals$chr_len, y = Chr)) + geom_deep(seg_ref)
       if (vals$anti_data_input == TRUE){
-        seg_df_1 <- get_anti_inter(deep_inter, anti_inter, anti_data_chromo, "X")
-        plot <- plot + geom_segment(data=seg_df_1, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                      ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+        seg_df <- get_anti_inter(deep_inter, anti_inter, anti_data_chromo, "X")
+        if (dim(seg_df[1]) > 0){
+        plot <- plot + geom_anti(seg_df)
+        }
       }
       if (vals$rre_data_input == TRUE){
-        seg_df_2 <- get_RRE_inter(deep_inter, rre_inter, rre_data, "Y")
-        plot <- plot + geom_segment(data=seg_df_2, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
-                                                       ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
-                                                       P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
-                                                       Probability = Probability),size = 3)
+        seg_df <- get_RRE_inter(deep_inter, rre_inter, rre_data, "Y")
+        if (dim(seg_df[1]) > 0){
+        plot <- plot + geom_rre(seg_df)
+        }
       }
       if (vals$prism_data_input == TRUE){
-        seg_df_3<- get_prism_inter(deep_inter, prism_inter, prism_data, "W")
-        plot <- plot + geom_segment(data=seg_df_3, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                       ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+        seg_df<- get_prism_inter(deep_inter, prism_inter, prism_data, "W")
+        if (dim(seg_df[1]) > 0){
+        plot <- plot + geom_prism(seg_df)
+        }
       }
+      if (vals$sempi_data_input == TRUE){
+        seg_df<- get_sempi_inter(deep_inter, sempi_inter, sempi_data, "V")
+          if (dim(seg_df[1]) > 0){
+          plot <- plot + geom_sempi(seg_df)
+          }
+        }
        to_plot <- ggplotly(plot +
-                   scale_y_discrete(labels = c("Z" = "DeepBGC","X" = "A_vs_D", "Y" = "RRE_vs_D", "W" = "P_vs_D")) +
+                   scale_y_discrete(labels = c("Z" = "DeepBGC","X" = "A_vs_D", "Y" = "RRE_vs_D", "W" = "P_vs_D", "V" = "S_vs_D")) +
                    theme(axis.text.y = element_text(size = 10)) +
                    ylab("")+
                    xlab("Chromosome length")+
@@ -914,29 +1040,33 @@ server <- function(input, output) {
                               Probability = vals$rre_data$Probability)
       seg_ref <- seg_ref_r
       if (input$ref == "RRE-Finder") {
-        plot <- ggplot(rre_data, aes(x = vals$chr_len, y = Chr)) + 
-        geom_segment(data=seg_ref, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
-                                       ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
-                                       P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
-                                       Probability = Probability),size = 3)
+        plot <- ggplot(rre_data, aes(x = vals$chr_len, y = Chr)) + geom_rre(seg_ref)
       if (vals$anti_data_input == TRUE){
-        seg_df_1 <- get_anti_inter(rre_inter, anti_inter, anti_data_chromo, "X")
-        plot <- plot + geom_segment(data=seg_df_1, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                       ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+        seg_df <- get_anti_inter(rre_inter, anti_inter, anti_data_chromo, "X")
+        if (dim(seg_df[1]) > 0){
+        plot <- plot + geom_anti(seg_df)
+        }
       }
       if (vals$deep_data_input == TRUE){
-        seg_df_2 <- get_deep_inter(rre_inter, deep_inter, deep_data_chromo, "Y")
-        plot <- plot +  geom_segment(data=seg_df_2,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                       ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
-                                                       deepbgc_score = deepbgc_score,activity = activity ),size =3)
+        seg_df <- get_deep_inter(rre_inter, deep_inter, deep_data_chromo, "Y")
+        if (dim(seg_df[1]) > 0){
+        plot <- plot +  geom_deep(seg_df)
+        }
       }
       if (vals$prism_data_input == TRUE){
-        seg_df_3 <- get_prism_inter(rre_inter, prism_inter, prism_data, "W")
-        plot <- plot + geom_segment(data=seg_df_3, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                       ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3) 
+        seg_df <- get_prism_inter(rre_inter, prism_inter, prism_data, "W")
+        if (dim(seg_df[1]) > 0){
+        plot <- plot + geom_prism(seg_df)
+        }
       }
+        if (vals$sempi_data_input == TRUE){
+          seg_df <- get_sempi_inter(rre_inter, sempi_inter, sempi_data, "V")
+          if (dim(seg_df[1]) > 0){
+          plot <- plot + geom_sempi(seg_df)
+          }
+        }
         to_plot <- ggplotly(plot +
-                   scale_y_discrete(labels = c("Z" = "RRE","X" = "A_vs_RRE", "Y" = "D_vs_RRE", "W" = "P_vs_RRE")) +
+                   scale_y_discrete(labels = c("Z" = "RRE","X" = "A_vs_RRE", "Y" = "D_vs_RRE", "W" = "P_vs_RRE", "V" = "S_vs_RRE")) +
                    theme(axis.text.y = element_text(size = 10)) +
                    ylab("")+
                    xlab("Chromosome length")+
@@ -977,30 +1107,34 @@ server <- function(input, output) {
       seg_ref <- seg_ref_p 
       
       if (input$ref == "PRISM") {
-      plot <- ggplot(prism_data, aes(x = vals$chr_len, y = Chr)) +
-        geom_segment(data=seg_ref, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                       ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      plot <- ggplot(prism_data, aes(x = vals$chr_len, y = Chr)) + geom_prism(seg_ref)
       if (vals$anti_data_input == TRUE){
-        seg_df_1 <- get_anti_inter(prism_inter, anti_inter, anti_data_chromo, "X")
-        plot <- plot + geom_segment(data=seg_df_1, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                       ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+        seg_df <- get_anti_inter(prism_inter, anti_inter, anti_data_chromo, "X")
+        if (dim(seg_df[1]) > 0){
+        plot <- plot + geom_anti(seg_df)
+        }
       }
       if (vals$deep_data_input == TRUE){
-        seg_df_2 <- get_deep_inter(prism_inter, deep_inter, deep_data_chromo, "Y")
-        plot <- plot + geom_segment(data=seg_df_2,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                      ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
-                                                      deepbgc_score = deepbgc_score,activity = activity ),size =3)
+        seg_df <- get_deep_inter(prism_inter, deep_inter, deep_data_chromo, "Y")
+        if (dim(seg_df[1]) > 0){
+        plot <- plot + geom_deep(seg_df)
+        }
       }
       if (vals$rre_data_input == TRUE){
-        seg_df_3 <- get_RRE_inter(prism_inter, rre_inter, rre_data, "W")
-        plot <- plot + geom_segment(data=seg_df_3, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
-                                                      ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
-                                                      P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
-                                                      Probability = Probability),size = 3)
+        seg_df <- get_RRE_inter(prism_inter, rre_inter, rre_data, "W")
+        if (dim(seg_df[1]) > 0){
+        plot <- plot +geom_rre(seg_df)
+        }
+      }
+      if (vals$sempi_data_input == TRUE){
+        seg_df <- get_sempi_inter(prism_inter, sempi_inter, sempi_data, "V")
+        if (dim(seg_df[1]) > 0){
+        plot <- plot + geom_sempi(seg_df)
+        }
       }
         # Create a dataframe with PRISM data with all the additional info to visualize on hover
         to_plot <- ggplotly(plot +
-                   scale_y_discrete(labels = c("Z" = "PRISM","X" = "A_vs_P", "Y" = "D_vs_P", "W" = "RRE_vs_P")) +
+                   scale_y_discrete(labels = c("Z" = "PRISM","X" = "A_vs_P", "Y" = "D_vs_P", "W" = "RRE_vs_P", "V" = "S_vs_P")) +
                    theme(axis.text.y = element_text(size = 10)) +
                    ylab("")+
                    xlab("Chromosome length")+
@@ -1020,6 +1154,67 @@ server <- function(input, output) {
                                       Start = prism_data$Start,
                                       Stop = prism_data$Stop)
     }
+    if (vals$sempi_data_input == TRUE){
+      # Create a dataframe with sempi data with all the additional info to visualize on hover
+      seg_ref_s <- data.frame(x=as.numeric(sempi_data$Start),
+                              y=rep("Z", length(sempi_data$Cluster)),
+                              xend=as.numeric(sempi_data$Stop),
+                              yend=rep("Z", length(sempi_data$Cluster)),
+                              Type = as.factor(sempi_data$Type),
+                              Software = rep("SEMPI", length(sempi_data$Cluster)),
+                              ID = sempi_data$Cluster,
+                              Start = sempi_data$Start,
+                              Stop = sempi_data$Stop)
+      seg_ref <- seg_ref_s
+      
+      if (input$ref == "SEMPI") {
+        plot <- ggplot(sempi_data, aes(x = vals$chr_len, y = Chr)) + geom_sempi(seg_ref)
+        if (vals$anti_data_input == TRUE){
+          seg_df <- get_anti_inter(sempi_inter, anti_inter, anti_data_chromo, "X")
+          if (dim(seg_df[1]) > 0){
+          plot <- plot + geom_anti(seg_df)
+          }
+        }
+        if (vals$deep_data_input == TRUE){
+          seg_df <- get_deep_inter(sempi_inter, deep_inter, deep_data_chromo, "Y")
+          if (dim(seg_df[1]) > 0){
+          plot <- plot + geom_deep(seg_df)
+          }
+        }
+        if (vals$rre_data_input == TRUE){
+          seg_df <- get_RRE_inter(sempi_inter, rre_inter, rre_data, "W")
+          if (dim(seg_df[1]) > 0){
+          plot <- plot + geom_deep(seg_df)
+          }
+        }
+        if (vals$prism_data_input == TRUE){
+          seg_df <- get_prism_inter(sempi_inter, prism_inter, prism_data, "V")
+          if (dim(seg_df[1]) > 0){
+          plot <- plot + geom_prism(seg_df)
+          }
+        }
+        # Create a dataframe with PRISM data with all the additional info to visualize on hover
+        to_plot <- ggplotly(plot +
+                              scale_y_discrete(labels = c("Z" = "SEMPI","X" = "A_vs_S", "Y" = "D_vs_S", "W" = "RRE_vs_S", "V" = "P_vs_S")) +
+                              theme(axis.text.y = element_text(size = 10)) +
+                              ylab("")+
+                              xlab("Chromosome length")+
+                              ggtitle("Annotations' comparison to the reference"), 
+                            # What actually to visualize in tooltip
+                            tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
+                                        "P_value", "RRE_start","RRE_stop", "Probability" )
+        )
+      }
+      vals$seg_df_ref_s <- data.frame(x=as.numeric(sempi_data$Start),
+                                      y=rep("V", length(sempi_data$Cluster)),
+                                      xend=as.numeric(sempi_data$Stop),
+                                      yend=rep("V", length(sempi_data$Cluster)),
+                                      Type = as.factor(sempi_data$Type),
+                                      Software = rep("SEMPI", length(sempi_data$Cluster)),
+                                      ID = sempi_data$Cluster,
+                                      Start = sempi_data$Start,
+                                      Stop = sempi_data$Stop)
+    }
 
     to_plot
   })
@@ -1038,6 +1233,9 @@ server <- function(input, output) {
     }
     if (vals$prism_data_input == TRUE){
       data <- vals$prism_data
+    }
+    if (vals$sempi_data_input == TRUE){
+      data <- vals$sempi_data
     }
     
     plot <- ggplot(data, aes(x = vals$chr_len, y = Chr))
@@ -1063,8 +1261,14 @@ server <- function(input, output) {
       
       
     }
+    if (vals$sempi_data_input == TRUE){
+      plot <- plot + geom_segment(data=vals$seg_df_ref_s, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                              ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      
+      
+    }
     to_plot <- ggplotly(plot +
-                          scale_y_discrete(labels = c("Z" = "Antismash","X" = "DeepBGC", "Y" = "RRE", "W" = "PRISM")) +
+                          scale_y_discrete(labels = c("Z" = "Antismash","X" = "DeepBGC", "Y" = "RRE", "W" = "PRISM", "V" = "SEMPI")) +
                           theme(axis.text.y = element_text(size = 10)) +
                           ylab("")+
                           xlab("Chromosome length")+
@@ -1169,6 +1373,22 @@ server <- function(input, output) {
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels,biocircos_prism$Type )
     }
+    
+    #SEMPI
+    if (vals$sempi_data_input == TRUE){
+      # Store data in local variable
+      biocircos_sempi <- vals$sempi_data
+      #Make chromosome list for Biocircos plot. Use chr_len as an input
+      Biocircos_chromosomes[["SEMPI"]] <- vals$chr_len
+      #Add arcs. Quantity of arcs is length of dataframes
+      arcs_chromosomes <- c(arcs_chromosomes, rep("SEMPI", length(biocircos_sempi$Cluster)))
+      # Add arcs begin positions. (Start column)
+      arcs_begin <- c(arcs_begin, biocircos_sempi$Start )
+      # Stop position of arcs.
+      arcs_end <- c(arcs_end, biocircos_sempi$Stop )
+      # Add Arcs labels. Can add only one label...
+      arc_labels <- c(arc_labels,biocircos_sempi$Type )
+    }
 
 
 
@@ -1232,6 +1452,13 @@ server <- function(input, output) {
         as.matrix()
     }
     
+    #SEMPI
+    if (vals$sempi_data_input == TRUE){
+      # Store SEMPI data start/stop as matrix  for further interception calculation
+      sempi_inter <- biocircos_sempi %>%
+        select(Start, Stop) %>%
+        as.matrix()
+    }
     #RRE-FINDER
     if (vals$rre_data_input == TRUE){
       # Store RREFinder data start/stop as matrix  for futher interception calculation
@@ -1325,6 +1552,29 @@ server <- function(input, output) {
         label_1 <- c(label_1, sapply(inter_a2, function(x){x = paste("Antismash:", x, ",",biocircos_anti$Type[x])}))
         label_2 <- c(label_2, sapply(inter_rre_ref_n, function(x){x = paste("RRE:", x, ",", "RiPP")}))
       }
+      # Get interception of antismash with SEMPI
+      if (vals$sempi_data_input == TRUE){
+        inter_a1_t<- get_interception(sempi_inter, anti_inter)
+        inter_s_ref_n <- unlist(inter_a1_t[2])
+        inter_a4 <- unlist(inter_a1_t[1])
+        #Store values as reactive ones in order to use later
+        vals$inter_s_ref_n <- inter_s_ref_n
+        vals$inter_a4 <- inter_a4
+        # Add link start. Just populate certain chromosome name times the lenght of interception 
+        chromosomes_start <- c(chromosomes_start, rep("Antismash",length(c(inter_a4))))
+        # Add link end. Just populate second output from the vectors, used above. 
+        chromosomes_end <- c(chromosomes_end, rep("SEMPI", length(inter_s_ref_n)) )
+        # Add links start positions as a start from dataframe. This vector is for chromosome start
+        link_pos_start <- as.numeric(c(link_pos_start, biocircos_anti$Start[c(inter_a4)]))
+        # Add links start positions as a start from dataframe. For chromosome start variable
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_anti$Stop[c(inter_a4)]))
+        # Add links start position for a chromosome stop variable
+        link_pos_end <- as.numeric(c(link_pos_end, biocircos_sempi$Start[inter_s_ref_n]))
+        # Add links start position for a chromosome stop position
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2, biocircos_sempi$Stop[inter_s_ref_n] ))
+        label_1 <- c(label_1, sapply(inter_a4, function(x){x = paste("Antismash:", x, ",",biocircos_anti$Type[x])}))
+        label_2 <- c(label_2, sapply(inter_s_ref_n, function(x){x = paste("SEMPI:", x, ",", biocircos_sempi$Type[x])}))
+      }
       # Write csvs with locally used variables
       write.csv(biocircos_anti, "antismash_biocircos.csv", row.names = F)
     }
@@ -1381,6 +1631,31 @@ server <- function(input, output) {
         # Safe used local variables to the reactive ones
         vals$inter_d_p_ID <- biocircos_deep$ID[inter_d_p]
       }
+      # Get interception of DeepBGC with SEMPI
+      if (vals$sempi_data_input == TRUE){
+        inter_a1_t<- get_interception(sempi_inter, deep_inter)
+        inter_s_d_n <- unlist(inter_a1_t[2])
+        inter_d_s <- unlist(inter_a1_t[1])
+        #Store values as reactive ones in order to use later
+        vals$inter_d_s <- inter_d_s
+        vals$inter_s_d_n <- inter_s_d_n
+        # Add link start. Just populate certain chromosome name times the lenght of interception 
+        chromosomes_start <- c(chromosomes_start, rep("DeepBGC",length(c(inter_d_s))))
+        # Add link end. Just populate second output from the vectors, used above. 
+        chromosomes_end <- c(chromosomes_end, rep("SEMPI", length(inter_s_d_n)))
+        # Add links start positions as a start from dataframe. This vector is for chromosome start
+        link_pos_start <- as.numeric(c(link_pos_start, biocircos_deep$nucl_start[c(inter_d_s)]))
+        # Add links start positions as a start from dataframe. For chromosome start variable
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_deep$nucl_end[c(inter_d_s)]))
+        # Add links start position for a chromosome stop variable
+        link_pos_end <- as.numeric(c(link_pos_end,biocircos_sempi$Start[inter_s_d_n] ))
+        # Add links start position for a chromosome stop position
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,biocircos_sempi$Stop[inter_s_d_n] ))
+        label_1 <- c(label_1, sapply(c(inter_d_s), function(x){x = paste("DeepBGC:", x, ",",biocircos_deep$product_class[x])}))
+        label_2 <- c(label_2, sapply(inter_s_d_n, function(x){x = paste("SEMPI:", x, ",", biocircos_sempi$Type[x])}))
+        # Safe used local variables to the reactive ones
+        vals$inter_d_s_ID <- biocircos_deep$ID[inter_d_s]
+      }
       # Safe used local variables to the reactive ones
       vals$biocircos_deep <- biocircos_deep
       # Write csvs with locally used variables
@@ -1412,14 +1687,65 @@ server <- function(input, output) {
         label_1 <- c(label_1, sapply(inter_p_rre, function(x){x = paste("PRISM:", x, ",",biocircos_prism$Type[x])})) 
         label_2 <- c(label_2, sapply(inter_rre_p_n, function(x){x = paste("RRE", x, ",", "RiPP")}))
       }
+      # Get interception of PRISM with SEMPI
+      if (vals$sempi_data_input == TRUE){
+        inter_a1_t<- get_interception(sempi_inter, prism_inter)
+        inter_s_p_n <- unlist(inter_a1_t[2])
+        inter_p_s <- unlist(inter_a1_t[1])
+        #Store values as reactive ones in order to use later
+        vals$inter_p_s <- inter_p_s
+        vals$inter_s_p_n <- inter_s_p_n
+        # Add link start. Just populate certain chromosome name times the lenght of interception 
+        chromosomes_start <- c(chromosomes_start, rep("PRISM", length(inter_p_s)))
+        # Add link end. Just populate second output from the vectors, used above. 
+        chromosomes_end <- c(chromosomes_end, rep("SEMPI", length(inter_s_p_n)))
+        # Add links start positions as a start from dataframe. This vector is for chromosome start
+        link_pos_start <- as.numeric(c(link_pos_start, biocircos_prism$Start[inter_p_s] ))
+        # Add links start positions as a start from dataframe. For chromosome start variable
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_prism$Stop[inter_p_s] ))
+        # Add links start position for a chromosome stop variable
+        link_pos_end <- as.numeric(c(link_pos_end,  biocircos_sempi$Start[inter_s_p_n]))
+        # Add links start position for a chromosome stop position
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,biocircos_sempi$Stop[inter_s_p_n] ))
+        label_1 <- c(label_1, sapply(inter_p_s, function(x){x = paste("PRISM:", x, ",",biocircos_prism$Type[x])})) 
+        label_2 <- c(label_2, sapply(inter_s_p_n, function(x){x = paste("SEMPI", x, ",", biocircos_sempi$Type[x])}))
+      }
       # Write csvs with locally used variables
       write.csv(biocircos_prism, "prism_biocircos.csv", row.names = F)
     }
     
-    # RRE-FINDER (NO VALUE HERE)
+    # RRE-FINDER 
     if (vals$rre_data_input == TRUE){
+      # Get interception of RRE with SEMPI
+      if (vals$sempi_data_input == TRUE){
+        inter_a1_t<- get_interception(sempi_inter, rre_inter)
+        inter_s_rre_n <- unlist(inter_a1_t[2])
+        inter_rre_s <- unlist(inter_a1_t[1])
+        #Store values as reactive ones in order to use later
+        vals$inter_rre_s <- inter_rre_s
+        vals$inter_s_rre_n <- inter_s_rre_n
+        # Add link start. Just populate certain chromosome name times the lenght of interception 
+        chromosomes_start <- c(chromosomes_start, rep("RRE", length(inter_rre_s)))
+        # Add link end. Just populate second output from the vectors, used above. 
+        chromosomes_end <- c(chromosomes_end, rep("SEMPI", length(inter_s_rre_n)))
+        # Add links start positions as a start from dataframe. This vector is for chromosome start
+        link_pos_start <- as.numeric(c(link_pos_start, biocircos_rre$Start[inter_rre_s] ))
+        # Add links start positions as a start from dataframe. For chromosome start variable
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_rre$Stop[inter_rre_s] + 50000 ))
+        # Add links start position for a chromosome stop variable
+        link_pos_end <- as.numeric(c(link_pos_end,  biocircos_sempi$Start[inter_s_rre_n]))
+        # Add links start position for a chromosome stop position
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,biocircos_sempi$Stop[inter_s_rre_n]))
+        label_1 <- c(label_1, sapply(inter_rre_s, function(x){x = paste("RRE:", x, ",","RiPP")})) 
+        label_2 <- c(label_2, sapply(inter_s_rre_n, function(x){x = paste("SEMPI", x, ",", biocircos_sempi$Type[x])}))
+      }
       # Write csvs with locally used variables
       write.csv(biocircos_rre, "rre_biocircos.csv", row.names = F)
+    }
+    #SEMPI (NO VALUE)
+    if (vals$sempi_data_input == TRUE){
+      # Write csvs with locally used variables
+      write.csv(biocircos_sempi, "sempi_biocircos.csv", row.names = F)
     }
     
  
@@ -1443,10 +1769,11 @@ server <- function(input, output) {
     prism_count <- NULL
     deep_count <- NULL
     rre_count <- NULL
+    sempi_count <- NULL
     
     if (vals$anti_data_input == TRUE){
       # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      antismash_count <- count(as.factor(c(vals$inter_a1, vals$inter_a2, vals$inter_a3)))
+      antismash_count <- count(as.factor(c(vals$inter_a1, vals$inter_a2, vals$inter_a3, vals$inter_a4)))
       # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
       anti_anot <- vals$anti_data[vals$anti_data$Cluster %in% as.numeric(levels(antismash_count$x)),]
       # Add prefices to the ID to plot for a barplot.  
@@ -1462,7 +1789,7 @@ server <- function(input, output) {
     }
     if (vals$deep_data_input == TRUE){
       # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      deep_count <- count(as.factor(c(vals$inter_d_ref_n_ID, vals$inter_d_rre_ID, vals$inter_d_p_ID)))
+      deep_count <- count(as.factor(c(vals$inter_d_ref_n_ID, vals$inter_d_rre_ID, vals$inter_d_p_ID, vals$inter_d_s_ID)))
       # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
       deep_anot <- vals$biocircos_deep[vals$biocircos_deep$ID %in% as.numeric(levels(deep_count$x)),]
       # Add prefices to the ID to plot for a barplot.  
@@ -1478,7 +1805,7 @@ server <- function(input, output) {
     }
     if (vals$rre_data_input == TRUE){
       # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      rre_count <- count(as.factor(c(vals$inter_rre_ref_n, vals$inter_rre_d_n, vals$inter_rre_p_n)))
+      rre_count <- count(as.factor(c(vals$inter_rre_ref_n, vals$inter_rre_d_n, vals$inter_rre_p_n, vals$inter_rre_s)))
       # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
       rre_anot <- vals$rre_data[vals$rre_data$ID %in% as.numeric(levels(rre_count$x)),]
       # Add prefices to the ID to plot for a barplot.  
@@ -1494,7 +1821,7 @@ server <- function(input, output) {
     }
     if (vals$prism_data_input == TRUE){
       # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      prism_count <- count(as.factor(c(vals$inter_p_ref_n,vals$inter_p_d_n,vals$inter_p_rre )))
+      prism_count <- count(as.factor(c(vals$inter_p_ref_n,vals$inter_p_d_n,vals$inter_p_rre, vals$inter_p_s )))
       # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
       prism_anot <- vals$prism_data[vals$prism_data$Cluster %in% as.numeric(levels(prism_count$x)),]
       # Add prefices to the ID to plot for a barplot.  
@@ -1508,10 +1835,26 @@ server <- function(input, output) {
       # Add Stop positions (to visualize on hover)
       prism_count$Stop <- prism_anot$Stop
     }
+    if (vals$sempi_data_input == TRUE){
+      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
+      sempi_count <- count(as.factor(c(vals$inter_s_ref_n,vals$inter_s_d_n,vals$inter_s_rre_n, vals$inter_s_p_n )))
+      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
+      sempi_anot <- vals$sempi_data[vals$sempi_data$Cluster %in% as.numeric(levels(sempi_count$x)),]
+      # Add prefices to the ID to plot for a barplot.  
+      sempi_count$x <- sapply(sempi_count$x, function(x) paste("S: ", x))
+      # Add label column to the dataframe, from which we will plot  
+      sempi_count$label <- rep("SEMPI", length(sempi_count$x))
+      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
+      sempi_count$Type <- sempi_anot$Type
+      # Add Start positions (to visualize on hover)
+      sempi_count$Start <- sempi_anot$Start
+      # Add Stop positions (to visualize on hover)
+      sempi_count$Stop <- sempi_anot$Stop
+    }
 
       
     # Integrate all those dataframe to the master one 
-    ranking_data <- rbind(antismash_count,prism_count, deep_count,rre_count)
+    ranking_data <- rbind(antismash_count,prism_count, deep_count,rre_count, sempi_count)
     # Fix column names in the master dataframe
     colnames(ranking_data) <- c("Cluster", "Count", "Label", "Type", "Start", "Stop")
     # Plot
@@ -1531,9 +1874,9 @@ server <- function(input, output) {
     if (vals$anti_data_input == TRUE){
       if ((input$group_by=="A") & (input$count_all == T)){
         df_f_a <- data.frame(seq(1:length(vals$anti_data$chromosome)))
-        colnames(df_f_a) <- c("ID")
+        colnames(df_f_a) <- c("A")
       } else{
-        df_f_a <- data.frame(ID=NA)
+        df_f_a <- data.frame(A=NA)
       }
     }
     if (vals$deep_data_input == TRUE){
@@ -1545,6 +1888,7 @@ server <- function(input, output) {
       }
     }
     df_f_r <- data.frame(R=NA)
+    df_f_s <- data.frame(S=NA)
     if (vals$rre_data_input == TRUE){
       if ((input$group_by=="R") & (input$count_all == T)){
         df_f_r <- data.frame(seq(1:length(vals$rre_data$ID)))
@@ -1561,12 +1905,21 @@ server <- function(input, output) {
           df_f_p <- data.frame(P=NA)
         }
     }
+    if (vals$sempi_data_input == TRUE){
+      if ((input$group_by=="S") & (input$count_all == T)){
+        df_f_s <- data.frame(seq(1:length(vals$sempi_data$Cluster)))
+        colnames(df_f_s) <- c("S")
+      } else{
+        df_f_s <- data.frame(S=NA)
+      }
+    }
     
-    df_a <- data.frame(A=NA, D=NA, P=NA, R=NA)
+    df_a <- data.frame(A=NA, D=NA, P=NA, R=NA, S=NA)
     if (vals$anti_data_input == TRUE){
         df_tmp <- data.frame(A=NA, D=NA)
         df_tmp1 <- data.frame(A=NA, P=NA)
         df_tmp2 <- data.frame(A=NA, R=NA)
+        df_tmp3 <- data.frame(A=NA, S=NA)
         if (!is.null(vals$inter_d_ref_n)){
           df_tmp <- data.frame(cbind(vals$inter_a1,vals$inter_d_ref_n))
           colnames(df_tmp) <- c("A", "D")
@@ -1580,18 +1933,24 @@ server <- function(input, output) {
           df_tmp2 <- data.frame(cbind(vals$inter_a2,vals$inter_rre_ref_n))
         colnames(df_tmp2) <- c("A", "R")
         }
+        if(!is.null(vals$inter_s_ref_n)){
+          df_tmp3 <- data.frame(cbind(vals$inter_a4,vals$inter_s_ref_n))
+          colnames(df_tmp3) <- c("A", "S")
+        }
         
         
-     df_a <- merge(df_f_a, df_tmp, by.x="ID", by.y="A", all =T)
-     df_a <- merge(df_a, df_tmp1, by.x="ID", by.y="A", all = T)
-     df_a <- merge(df_a, df_tmp2, by.x="ID", by.y="A", all = T )
+     df_a <- merge(df_f_a, df_tmp, all =T)
+     df_a <- merge(df_a, df_tmp1, all = T)
+     df_a <- merge(df_a, df_tmp2, all = T )
+     df_a <- merge(df_a, df_tmp3, all = T )
      
     }
     
-    df_d <- data.frame(D=NA, P=NA, R=NA)
+    df_d <- data.frame(D=NA, P=NA, R=NA, S=NA)
     if (vals$deep_data_input == TRUE){
       df_tmp <- data_frame(D=NA, R=NA)
       df_tmp1 <- data_frame(D=NA, P=NA)
+      df_tmp2 <- data_frame(D=NA, S=NA)
       if (!is.null(vals$inter_rre_d_n)){
         df_tmp <- data.frame(cbind(vals$inter_d_rre, vals$inter_rre_d_n ))
         colnames(df_tmp) <- c("D", "R")
@@ -1600,42 +1959,72 @@ server <- function(input, output) {
         df_tmp1 <- data.frame(cbind(vals$inter_d_p ,vals$inter_p_d_n ))
         colnames(df_tmp1) <- c("D", "P")
       }
+      if (!is.null(vals$inter_s_d_n)){
+        df_tmp2 <- data.frame(cbind(vals$inter_d_s ,vals$inter_s_d_n ))
+        colnames(df_tmp2) <- c("D", "S")
+      }
       df_d <- merge(df_f_d, df_tmp, by.x="D", by.y="D", all =T)
       df_d <- merge(df_d, df_tmp1, by.x="D", by.y="D", all =T)
+      df_d <- merge(df_d, df_tmp2, by.x="D", by.y="D", all =T)
     }
     
-    df_p <- data_frame(P=NA, R=NA)
+    df_p <- data_frame(P=NA, R=NA, S=NA)
     if (vals$prism_data_input == TRUE){
-      df_p <- data_frame(P=NA, R=NA)
+      df_p <- data_frame(P=NA, R=NA, S=NA)
       df_tmp <- data_frame(P=NA, R=NA)
+      df_tmp2 <- data_frame(P=NA, S=NA)
       if (!is.null(vals$inter_rre_p_n)){
       df_tmp<- data.frame(cbind(vals$inter_p_rre,vals$inter_rre_p_n ))
       colnames(df_tmp) <- c("P", "R")
       }
+      if (!is.null(vals$inter_s_p_n)){
+        df_tmp2<- data.frame(cbind(vals$inter_p_s,vals$inter_s_p_n ))
+        colnames(df_tmp2) <- c("P", "S")
+      }
       df_p <- merge(df_f_p, df_tmp, by.x="P", by.y="P", all =T)
+      df_p <- merge(df_p, df_tmp2, by.x="P", by.y="P", all =T)
     }
+    
+    df_r <- data_frame( R=NA, S=NA)
     if (vals$rre_data_input == TRUE){
+      df_tmp <- data_frame(R=NA, S=NA)
+      if (!is.null(vals$inter_s_rre_n)){
+        df_tmp<- data.frame(cbind(vals$inter_rre_s, vals$inter_s_rre_n ))
+        colnames(df_tmp) <- c("R", "S")
+      }
+      df_r <- merge(df_f_r, df_tmp, by.x="R", by.y="R", all =T)
+    }
+    if (vals$sempi_data_input == TRUE){
     }
     df_1 <- merge(df_d,df_a, all=T)
     df_2 <- merge(df_1, df_p, all=T)
-    df_fin <- merge(df_2, df_f_r, all=T)
-    colnames(df_fin)[colnames(df_fin) == 'ID'] <- 'A'
+    df_3 <- merge(df_2, df_r, all=T)
+    df_fin <- merge(df_3, df_f_s, all=T)
     if (input$group_by=="A"){
       data <- df_fin %>% group_by(A) %>% summarise(D=paste(D, collapse=","),
                                                               R=paste(R, collapse=","),
-                                                              P=paste(P, collapse=","))
+                                                              P=paste(P, collapse=","),
+                                                   S=paste(S, collapse=","))
     }else if (input$group_by=="P"){
       data <- df_fin %>% group_by(P) %>% summarise(D=paste(D, collapse=","),
                                                               R=paste(R, collapse=","),
-                                                              A=paste(A, collapse=","))
+                                                              A=paste(A, collapse=","),
+                                                   S=paste(S, collapse=","))
     }else if (input$group_by=="R"){
       data <- df_fin %>% group_by(R) %>% summarise(D=paste(D, collapse=","),
                                                               A=paste(A, collapse=","),
-                                                              P=paste(P, collapse=","))
+                                                              P=paste(P, collapse=","),
+                                                   S=paste(S, collapse=","))
     }else if (input$group_by=="D"){
       data <- df_fin %>% group_by(D) %>% summarise(A=paste(A, collapse=","),
                                                               R=paste(R, collapse=","),
-                                                              P=paste(P, collapse=","))
+                                                              P=paste(P, collapse=","),
+                                                   S=paste(S, collapse=","))
+    } else if (input$group_by=="S"){
+      data <- df_fin %>% group_by(S) %>% summarise(A=paste(A, collapse=","),
+                                                   R=paste(R, collapse=","),
+                                                   P=paste(P, collapse=","),
+                                                   D=paste(D, collapse=","))
     }
     
     if (vals$anti_data_input != TRUE){
@@ -1653,6 +2042,10 @@ server <- function(input, output) {
     if (vals$prism_data_input != TRUE){
       data <- data %>%
         select(-P)
+    }
+    if (vals$sempi_data_input != TRUE){
+      data <- data %>%
+        select(-S)
     }
     
     data
