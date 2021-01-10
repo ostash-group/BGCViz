@@ -19,6 +19,7 @@ library(ggplot2)
 library(reticulate)
 library(shinyjs)
 library(rjson)
+library(stringr)
 
 
 use_virtualenv("clinker")
@@ -35,13 +36,14 @@ ui <- fluidPage(
       # Data upload
       h3("Data upload and necesary input:"),
       h5("ANTISMASH:"),
-      checkboxInput("anti_input_options", "My data is a dataframe, not json results file from antismash"),
+      checkboxInput("anti_input_options", "My AnriSMASH data is a dataframe, not json results file from antismash"),
       fileInput("anti_data",
                 "Upload antismash data"),
       selectInput("anti_contigs", "Your data contains one or several contigs?", choices = c("One" = "O",
                                                               "Several" = "S"),
                   selected = "O"),
       h5("PRISM:"),
+      checkboxInput("prism_input_options", "My PRISM data is a dataframe, not json results file"),
       fileInput("prism_data",
                 "Upload PRISM data"),
       h5("DEEPBGC:"),
@@ -53,7 +55,9 @@ ui <- fluidPage(
       # Numeric input of chromosome length of analyzed sequence
       numericInput("chr_len", "Please type chr len of an organism", value = 8773899),
       h3(id = "anti_header","Antismash data options:"),
-      checkboxInput("anti_hybrid", "Visualize BGC with several types as 'Hybrid'"),
+      checkboxInput("anti_hybrid", "Visualize AntiSMASH BGC with several types as 'Hybrid'"),
+      h3(id = "prism_header","PRISM data options:"),
+      checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
       h3(id = "genes_on_chr","Genes on chromosome plot controls:"),
       selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
                                                               "DeepBGC" = "DeepBGC",
@@ -123,7 +127,10 @@ server <- function(input, output) {
     is.integer(x) && length(x) == 0L
   }
   
-  
+  anti_listen <- reactive({
+    list( input$anti_hybrid, input$anti_input_options)
+  })
+    
   # Rective vals the app is using
   # Some dataframes that are used through the app + some vectors of untercepted values
   vals <- reactiveValues(deep_data = NULL, anti_data = NULL, rre_data=NULL, prism_data=NULL, chr_len = NULL, fullness = NULL,
@@ -133,7 +140,7 @@ server <- function(input, output) {
                          inter_d_p_ID = NULL,inter_d_ref_n_ID = NULL , biocircos_deep = NULL, deep_data_input = FALSE,
                          anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
                          seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
-                         data_upload_count = 0
+                         data_upload_count = 0, anti_type=NULL, prism_type=NULL
                          )
   
   # Observe antismash data input and save as reactive value
@@ -146,7 +153,7 @@ server <- function(input, output) {
         types <- sapply(data$records, function(y){
           lapply(y$features, function(x){
             if (unlist(x$type == 'region')){
-              x$qualifiers$product
+              tolower(x$qualifiers$product)
             }
           })
         })
@@ -158,16 +165,8 @@ server <- function(input, output) {
           Filter(Negate(is.null), x)
         })
         }
-        if (input$anti_hybrid == T){
-          types <- sapply(types, function(x){
-          if (length(unlist(x))>1){
-            "Hybrid"
-          } else{
-            x
-          }
-        })
-        }
         
+        vals$anti_type <- types
         types <- sapply(types, function(x){
           if (length(unlist(x))>1){
             tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
@@ -176,7 +175,6 @@ server <- function(input, output) {
             x
           }
         })
-        
         
         location <- sapply(data$records, function(y){
           unlist(sapply(y$features, function(x){
@@ -198,6 +196,9 @@ server <- function(input, output) {
         
         anti_data <- cbind(anti_data, types)
         colnames(anti_data) <- c("Cluster", "Start", "Stop", "Type")
+        anti_data$Cluster <- as.numeric(anti_data$Cluster)
+        anti_data$Start <- as.numeric(anti_data$Start)
+        anti_data$Stop <- as.numeric(anti_data$Stop)
         vals$anti_data <- anti_data
     }
 
@@ -212,7 +213,43 @@ server <- function(input, output) {
   # Observe PRISM data input and save in reactive dataframe
   observeEvent(input$prism_data,{
     # Read data
-    vals$prism_data <- read.csv(input$prism_data$datapath)
+    if (input$prism_input_options == T){
+      vals$prism_data <- read.csv(input$prism_data$datapath)
+    } else{
+      data <- fromJSON(file = input$prism_data$datapath)
+      
+      
+      types <- sapply(data$prism_results$clusters, function(x){
+        tolower(x$type)
+      })
+      
+      vals$prism_type <- types
+      types <- sapply(types, function(x){
+        if (length(unlist(x))>1){
+          tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
+          gsub(" ", "_", tmp)
+        }else{
+          x
+        }
+      })
+
+      start <- sapply(data$prism_results$clusters, function(x){
+        x$start
+        
+      })
+      end <- sapply(data$prism_results$clusters, function(x){
+        x$end
+        
+      })
+      
+      
+      prism_data <- data.frame(cbind(start, end, types))
+      prism_data <- prism_data %>%
+        transmute(Cluster=as.numeric(rownames(prism_data)), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
+      vals$prism_data <- prism_data
+      
+    }
+    
     # Add chromosome info column
     vals$prism_data$chromosome <-  rep("P", length(vals$prism_data$Cluster))
     # Add ID column (same as Cluster)
@@ -324,11 +361,93 @@ server <- function(input, output) {
     }
   })
   
+  observeEvent(input$anti_hybrid, {
+    if (input$anti_hybrid==T){
+    types <- sapply(vals$anti_type, function(x){
+      if (length(unlist(x))>1){
+        "Hybrid"
+      } else{
+        x
+      }
+    })
+    types <- sapply(types, function(x){
+      if (length(unlist(x))>1){
+        tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
+        gsub(" ", "_", tmp)
+      }else{
+        x
+      }
+    })
+    vals$anti_data$Type <- types
+    } else {
+      types <- sapply(vals$anti_type, function(x){
+        if (length(unlist(x))>1){
+          tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
+          gsub(" ", "_", tmp)
+        }else{
+          x
+        }
+      })
+    vals$anti_data$Type <- types
+  }
+  })
+  
   observeEvent(input$anti_input_options,{
     if (input$anti_input_options==T){
       hideElement(selector = "#anti_contigs")
     } else{
       showElement(selector = "#anti_contigs")
+    }
+  })
+  
+  observeEvent(vals$anti_data_input,{
+    if ((vals$anti_data_input == T) & (input$anti_input_options==F)){
+      showElement(selector = "#anti_header")
+      showElement(selector = "#anti_hybrid")
+    } else{
+      hideElement(selector = "#anti_header")
+      hideElement(selector = "#anti_hybrid")
+    }
+  })
+  
+  observeEvent(vals$prism_data_input,{
+    if ((vals$prism_data_input == T) & (input$prism_input_options==F)){
+      showElement(selector = "#prism_header")
+      showElement(selector = "#prism_hybrid")
+    } else{
+      hideElement(selector = "#prism_header")
+      hideElement(selector = "#prism_hybrid")
+    }
+  })
+  
+  observeEvent(input$prism_hybrid, {
+    if (input$prism_hybrid==T){
+    types <- sapply(vals$prism_type, function(x){
+      if (length(unlist(x))>1){
+        "Hybrid"
+      } else{
+        x
+      }
+    })
+    types <- sapply(types, function(x){
+      if (length(unlist(x))>1){
+        tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
+        gsub(" ", "_", tmp)
+      }else{
+        x
+      }
+    })
+    vals$prism_data$Type <- types
+    } else{
+      types <- sapply(vals$prism_type, function(x){
+        if (length(unlist(x))>1){
+          tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
+          gsub(" ", "_", tmp)
+        }else{
+          x
+        }
+      })
+      vals$prism_data$Type <- types
     }
   })
   
@@ -682,7 +801,7 @@ server <- function(input, output) {
       seg_ref <- seg_ref_a
       
       if (input$ref == "Antismash") {
-        plot <- ggplot(anti_data_chromo, aes(x = as.numeric(Start), y = Chr)) + 
+        plot <- ggplot(anti_data_chromo, aes(x = vals$chr_len, y = Chr)) + 
         geom_segment(data=seg_ref, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
         if (vals$deep_data_input == TRUE){
           seg_df_1 <-  get_deep_inter(anti_inter,deep_inter,deep_data_chromo, "Y" )
@@ -731,7 +850,7 @@ server <- function(input, output) {
       seg_ref <- seg_ref_d
       
       if (input$ref == "DeepBGC") {
-        plot <- ggplot(deep_data_chromo, aes(x = as.numeric(Start), y = Chr)) +
+        plot <- ggplot(deep_data_chromo, aes(x = vals$chr_len, y = Chr)) +
         geom_segment(data=seg_ref,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
                                       ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
                                       deepbgc_score = deepbgc_score,activity = activity ),size =3)
@@ -795,7 +914,7 @@ server <- function(input, output) {
                               Probability = vals$rre_data$Probability)
       seg_ref <- seg_ref_r
       if (input$ref == "RRE-Finder") {
-        plot <- ggplot(rre_data, aes(x = as.numeric(Start), y = Chr)) + 
+        plot <- ggplot(rre_data, aes(x = vals$chr_len, y = Chr)) + 
         geom_segment(data=seg_ref, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
                                        ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
                                        P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
@@ -858,7 +977,7 @@ server <- function(input, output) {
       seg_ref <- seg_ref_p 
       
       if (input$ref == "PRISM") {
-      plot <- ggplot(prism_data, aes(x = as.numeric(Start), y = Chr)) +
+      plot <- ggplot(prism_data, aes(x = vals$chr_len, y = Chr)) +
         geom_segment(data=seg_ref, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
                                        ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
       if (vals$anti_data_input == TRUE){
@@ -921,7 +1040,7 @@ server <- function(input, output) {
       data <- vals$prism_data
     }
     
-    plot <- ggplot(data, aes(x = as.numeric(Start), y = Chr))
+    plot <- ggplot(data, aes(x = vals$chr_len, y = Chr))
     if (vals$anti_data_input == TRUE){
       plot <- plot + 
         geom_segment(data=vals$seg_df_ref_a, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
@@ -971,7 +1090,7 @@ server <- function(input, output) {
       # Store data in local variable
       biocircos_anti <- vals$anti_data
       #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["Antismash"]] <- input$chr_len  
+      Biocircos_chromosomes[["Antismash"]] <- vals$chr_len  
       #Add arcs. Quantity of arcs is length of dataframes
       arcs_chromosomes <- c(arcs_chromosomes,rep("Antismash", length(biocircos_anti$Cluster)) )
       # Add arcs begin positions. (Start column)
@@ -1003,7 +1122,7 @@ server <- function(input, output) {
                score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
                num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
       #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["DeepBGC"]] <- input$chr_len
+      Biocircos_chromosomes[["DeepBGC"]] <- vals$chr_len
       #Add arcs. Quantity of arcs is length of dataframes
       arcs_chromosomes <- c(arcs_chromosomes, rep("DeepBGC", length(biocircos_deep$bgc_candidate_id)))
       # Add arcs begin positions. (Start column)
@@ -1020,7 +1139,7 @@ server <- function(input, output) {
       biocircos_rre$Start <- as.numeric(biocircos_rre$Start)
       biocircos_rre$Stop <- as.numeric(biocircos_rre$Stop)
       #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["RRE"]] <- input$chr_len
+      Biocircos_chromosomes[["RRE"]] <- vals$chr_len
       #Add arcs. Quantity of arcs is length of dataframes
       arcs_chromosomes <- c(arcs_chromosomes, rep("RRE", length(biocircos_rre$Locus_tag)))
       # Add arcs begin positions. (Start column)
@@ -1040,7 +1159,7 @@ server <- function(input, output) {
       # Store data in local variable
       biocircos_prism <- vals$prism_data
       #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["PRISM"]] <- input$chr_len
+      Biocircos_chromosomes[["PRISM"]] <- vals$chr_len
       #Add arcs. Quantity of arcs is length of dataframes
       arcs_chromosomes <- c(arcs_chromosomes, rep("PRISM", length(biocircos_prism$Cluster)))
       # Add arcs begin positions. (Start column)
