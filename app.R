@@ -38,7 +38,7 @@ ui <- fluidPage(
       # Data upload
       h3("Data upload and necesary input:"),
       h5("ANTISMASH:"),
-      checkboxInput("anti_input_options", "My AnriSMASH data is a dataframe, not json results file from antismash"),
+      checkboxInput("anti_input_options", "My AntiSMASH data is a dataframe, not json results file from antismash"),
       fileInput("anti_data",
                 "Upload antismash data"),
       h5("PRISM:"),
@@ -53,7 +53,7 @@ ui <- fluidPage(
                 "Upload DeepBGC data"),
       h5("RRE-FINDER:"),
       fileInput("rre_data",
-                "Upload RREFinder data"),
+                "Upload RRE-Finder data"),
       # Numeric input of chromosome length of analyzed sequence
       numericInput("chr_len", "Please type chr len of an organism", value = 8773899),
       h3(id = "anti_header","Antismash data options:"),
@@ -62,6 +62,11 @@ ui <- fluidPage(
       checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
       h3(id = "sempi_header","SEMPI data options:"),
       checkboxInput("sempi_hybrid", "Visualize SEMPI BGC with several types as 'Hybrid'"),
+      h3(id = "data_filter","Data filtering:"),
+      fileInput("rename_data",
+               "Upload dataframe for grouping"),
+      actionButton("rename", "Rename"),
+      actionButton("reset_name", "Reset"),
       h3(id = "genes_on_chr","Genes on chromosome plot controls:"),
       selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
                                                               "DeepBGC" = "DeepBGC",
@@ -80,6 +85,7 @@ ui <- fluidPage(
       h3("Improve visualization:"),
       #Improve RREFinder annotated BCG visibility
       checkboxInput("rre_width", "Add thickness (+50000) to RRE results visualization (do not alter any results)"),
+      checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
       h3(id="data_comparison_header","Comparison with DeepBGC plots:"),
       selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c("Antismash" = "A",
                                                                      "PRISM" = "P",
@@ -145,7 +151,7 @@ server <- function(input, output) {
                          anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
                          seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
                          data_upload_count = 0, anti_type=NULL, prism_type=NULL, sempi_data = NULL, sempi_data_input= FALSE,
-                         sempi_type = NULL,
+                         sempi_type = NULL, biocircos_color = NULL,
                          rre_interact = NULL, anti_interact = NULL, prism_interact = NULL, deep_interact = NULL,  
                          sempi_interact = NULL, df_a = NULL, df_d = NULL, df_p = NULL, df_r = NULL
                          )
@@ -154,7 +160,8 @@ server <- function(input, output) {
   observeEvent(input$anti_data,{
     # Read data
     if (input$anti_input_options==T){
-      vals$anti_data <- read.csv(input$anti_data$datapath)
+      anti_data <- read.csv(input$anti_data$datapath)
+      vals$biocircos_color = T
     }else{
        data <- fromJSON(file = input$anti_data$datapath)
         types <- sapply(data$records, function(y){
@@ -166,12 +173,11 @@ server <- function(input, output) {
         })
         
         types <-  Filter(Negate(is.null), types)
-        
-        vals$anti_type <- types
+
         types <- sapply(types, function(x){
           if (length(unlist(x))>1){
             tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
-            gsub(" ", "_", tmp)
+            gsub(" ", "__", tmp)
           }else{
             x
           }
@@ -200,11 +206,16 @@ server <- function(input, output) {
         anti_data$Cluster <- as.numeric(anti_data$Cluster)
         anti_data$Start <- as.numeric(anti_data$Start)
         anti_data$Stop <- as.numeric(anti_data$Stop)
-        vals$anti_data <- anti_data
+        vals$biocircos_color = F
     }
 
     # Add chromosome column
-    vals$anti_data$chromosome <-  rep("A", length(vals$anti_data$Cluster))
+    anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
+    # Type magic
+    anti_data$Type <- tolower(anti_data$Type)
+    anti_data['Type2'] <- tolower(anti_data$Type)
+    vals$anti_type <- anti_data$Type2
+    vals$anti_data <- anti_data
     # Save file
     write.csv(vals$anti_data, "anti_data.csv", row.names = F)
     vals$anti_data_input = TRUE 
@@ -221,13 +232,12 @@ server <- function(input, output) {
     
     data <- data %>%
       filter(trackid==6)
-    
-    vals$sempi_type <- data$name
+
 
       types <- sapply(data$name, function(x){
         tmp <- str_trim(x)
         tmp <- gsub(", ", "", tmp)
-        gsub(" ", "_", tmp)
+        gsub(" ", "__", tmp)
       })
 
     sempi_data <- data.frame(cbind(seq(1:length(data$trackid)),data$start, data$end,as.character(types)))
@@ -235,6 +245,9 @@ server <- function(input, output) {
     sempi_data$Cluster <- as.numeric(sempi_data$Cluster)
     sempi_data$Start <- as.numeric(sempi_data$Start)
     sempi_data$Stop <- as.numeric(sempi_data$Stop)
+    sempi_data$Type <- tolower(sempi_data$Type)
+    sempi_data['Type2'] <- tolower(sempi_data$Type)
+    vals$sempi_type <- sempi_data$Type2
     vals$sempi_data <- sempi_data
     # Add chromosome info column
     vals$sempi_data$chromosome <-  rep("S", length(vals$sempi_data$Cluster))
@@ -250,7 +263,8 @@ server <- function(input, output) {
   observeEvent(input$prism_data,{
     # Read data
     if (input$prism_input_options == T){
-      vals$prism_data <- read.csv(input$prism_data$datapath)
+      prism_data <- read.csv(input$prism_data$datapath)
+      vals$biocircos_color = T
     } else{
       data <- fromJSON(file = input$prism_data$datapath)
       
@@ -259,11 +273,10 @@ server <- function(input, output) {
         tolower(x$type)
       })
       
-      vals$prism_type <- types
       types <- sapply(types, function(x){
         if (length(unlist(x))>1){
           tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
-          gsub(" ", "_", tmp)
+          gsub(" ", "__", tmp)
         }else{
           x
         }
@@ -282,9 +295,12 @@ server <- function(input, output) {
       prism_data <- data.frame(cbind(start, end, types))
       prism_data <- prism_data %>%
         transmute(Cluster=as.numeric(rownames(prism_data)), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
-      vals$prism_data <- prism_data
-      
+      vals$biocircos_color = F
     }
+    prism_data$Type <- tolower(prism_data$Type)
+    prism_data['Type2'] <- tolower(prism_data$Type)
+    vals$prism_data <- prism_data
+    vals$prism_type <- prism_data$Type2
     
     # Add chromosome info column
     vals$prism_data$chromosome <-  rep("P", length(vals$prism_data$Cluster))
@@ -298,8 +314,12 @@ server <- function(input, output) {
   
 # Read and clean DeepBGC data
   observeEvent(input$deep_data, {
+    drop_cols <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
     # Read data
-    vals$deep_data <- read.delim(input$deep_data$datapath)
+    vals$deep_data <- read.delim(input$deep_data$datapath) %>%
+      mutate(pks=Polyketide, other = Other, nrps = NRP, alkaloid = Alkaloid, 
+             terpene = Terpene, saccharide = Saccharide, ripp = RiPP) %>%
+      select(-one_of(drop_cols))
     # Add chromosome info column
     vals$deep_data$chromosome <-  rep("D", length(vals$deep_data$bgc_candidate_id))
     # Add ID column as number seuquence of dataframe length
@@ -322,7 +342,7 @@ server <- function(input, output) {
     # Add ID column
     vals$rre_data$ID <- seq(1:length(vals$rre_data$Sequence))
     vals$rre_data <- data.frame(vals$rre_data)
-    vals$rre_data['Type'] <- 'RiPP'
+    vals$rre_data['Type'] <- 'ripp'
     write.csv(vals$rre_data, "rre_data.csv", row.names = F)
     vals$rre_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
@@ -400,35 +420,25 @@ server <- function(input, output) {
   })
   
   observeEvent(input$anti_hybrid, {
-    if (input$anti_hybrid==T){
-    types <- sapply(vals$anti_type, function(x){
-      if (length(unlist(x))>1){
-        "Hybrid"
-      } else{
-        x
-      }
-    })
-    types <- sapply(types, function(x){
-      if (length(unlist(x))>1){
-        tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
-        gsub(" ", "_", tmp)
-      }else{
-        x
-      }
-    })
-    vals$anti_data$Type <- types
-    } else {
-      types <- sapply(vals$anti_type, function(x){
+    hybrid_col <- function(data){
+      data_split <- str_split(data$Type2, "__")
+      types <- sapply(data_split, function(x){
         if (length(unlist(x))>1){
-          tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
-          gsub(" ", "_", tmp)
-        }else{
+          "hybrid"
+        } else{
           x
         }
       })
-    vals$anti_data$Type <- types
-  }
-  })
+      return(types)
+    }
+    
+    if (input$anti_hybrid==T){
+      vals$anti_data$Type2 <- hybrid_col(vals$anti_data)
+    }else {
+      vals$anti_data$Type2 <- vals$anti_type
+    }
+    
+    })
   
   observeEvent(vals$anti_data_input,{
     if ((vals$anti_data_input == T) & (input$anti_input_options==F)){
@@ -451,60 +461,88 @@ server <- function(input, output) {
   })
   
   observeEvent(input$prism_hybrid, {
-    if (input$prism_hybrid==T){
-    types <- sapply(vals$prism_type, function(x){
-      if (length(unlist(x))>1){
-        "Hybrid"
-      } else{
-        x
-      }
-    })
-    types <- sapply(types, function(x){
-      if (length(unlist(x))>1){
-        tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
-        gsub(" ", "_", tmp)
-      }else{
-        x
-      }
-    })
-    vals$prism_data$Type <- types
-    } else{
-      types <- sapply(vals$prism_type, function(x){
+    hybrid_col <- function(data){
+      data_split <- str_split(data$Type2, "__")
+      types <- sapply(data_split, function(x){
         if (length(unlist(x))>1){
-          tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
-          gsub(" ", "_", tmp)
-        }else{
-          x
-        }
-      })
-      vals$prism_data$Type <- types
-    }
-  })
-  
-  observeEvent(input$sempi_hybrid, {
-    if (input$sempi_hybrid==T){
-      types <- str_split(vals$sempi_type, " ")
-      types <- str_split(types, "-")
-      types <- sapply(types, function(x){
-        if (length(unlist(x))>1){
-          "Hybrid"
+          "hybrid"
         } else{
           x
         }
       })
-      
-      vals$sempi_data$Type <- types
-    } else {
-      types <- sapply(vals$sempi_type, function(x){
-        tmp <- str_trim(x)
-        tmp <- gsub(", ", "", tmp)
-        gsub(" ", "_", tmp)
-      })
-    vals$sempi_data$Type <- types
-  }
+      return(types)
+    }
+    
+    if (input$prism_hybrid==T){
+      vals$prism_data$Type2 <- hybrid_col(vals$prism_data)
+    }else {
+      vals$prism_data$Type2 <- vals$prism_type
+    }
   })
   
+  observeEvent(input$sempi_hybrid, {
+    hybrid_col <- function(data){
+      data_split <- str_split(data$Type2, "__")
+      types <- sapply(data_split, function(x){
+        if (length(unlist(x))>1){
+          "hybrid"
+        } else{
+          x
+        }
+      })
+      return(types)
+    }
+    
+    if (input$sempi_hybrid==T){
+      vals$sempi_data$Type2 <- hybrid_col(vals$sempi_data)
+    }else {
+      vals$sempi_data$Type2 <- vals$sempi_type
+    }
+  })
   
+  observeEvent(input$rename, {
+    rename_vector <- function(data, renamed_dataframe){
+      type <- str_split(data$Type, "__")
+      type_2 <- sapply(type, function(x){
+        sapply(x, function(y){
+          if (y %in% renamed_dataframe$Code){
+            renamed_dataframe$Group[renamed_dataframe$Code == y]
+          } else {
+            y
+          }
+          
+        })
+        
+      })
+      type_3 <- sapply(type_2, function(x){
+        dupl <-  x[!duplicated(x)]
+        paste(dupl, collapse = "__")
+      })
+      return(type_3)
+    }
+    
+    rename_data <- read.csv("rename.csv")
+    anti_data <- read.csv("anti_data.csv")
+    sempi_data <- read.csv("sempi_data.csv")
+    prism_data <- read.csv("prism_data.csv")
+
+    anti_data['Type2'] <- rename_vector(anti_data, rename_data)
+    sempi_data['Type2'] <- rename_vector(sempi_data, rename_data)
+    prism_data['Type2'] <- rename_vector(prism_data, rename_data)
+    
+    vals$anti_data <- anti_data
+    vals$sempi_data <- sempi_data
+    vals$prism_data <- prism_data
+    vals$biocircos_color = T
+      })
+  
+  observeEvent(input$reset_name, {
+
+    vals$anti_data['Type2']  <- vals$anti_data['Type']
+    vals$sempi_data['Type2'] <- vals$sempi_data['Type']
+    vals$ prism_data['Type2'] <- vals$ prism_data['Type']
+    vals$biocircos_color = FALSE
+  })
   #Render output plots
 
   # Render barplot
@@ -520,12 +558,12 @@ server <- function(input, output) {
     # Vectors of columns of score values in DeepBGC data for later subset
     score_activity <- c("antibacterial", "cytotoxic","inhibitor","antifungal")
     score_bgc <- c("deepbgc_score")
-    score_cluster_type <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
+    score_cluster_type <- c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")
     
     # Subset dataframe with scores' vectors. Get max value vectors
     score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
     score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
-    score_c <- apply(vals$deep_data %>% select(c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")),1, function(x) max(x))
+    score_c <- apply(vals$deep_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
     
     # Decide which score to use for basic thresholds on x axis
     if (input$score_type == "Activity") {
@@ -638,7 +676,7 @@ server <- function(input, output) {
     # Store scores columns in vectors for DeepBGC data
     score_activity <- c("antibacterial", "cytotoxic","inhibitor","antifungal")
     score_bgc <- c("deepbgc_score")
-    score_cluster_type <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
+    score_cluster_type <- c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")
     
     # Logic of what plot to draw on x axis 
     if (input$score_type == "Activity") {
@@ -716,7 +754,7 @@ server <- function(input, output) {
       # Store antismash data in local variable, with column renaming
       anti_data_chromo <-  vals$anti_data %>%
         mutate(ID = Cluster, Chr = chromosome) %>%
-        dplyr::select(ID,Chr ,Start, Stop, Type)
+        dplyr::select(ID,Chr ,Start, Stop, Type, Type2)
       # Extract only Start and Stop from antismash data into matrix
       anti_inter <- vals$anti_data %>%
         select(Start, Stop) %>%
@@ -726,14 +764,14 @@ server <- function(input, output) {
       # Store deepbgc max score in a vector for chosen columns
       score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
       score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
-      score_c <- apply(vals$deep_data %>% select(c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")),1, function(x) max(x))
+      score_c <- apply(vals$deep_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
       # Store DeepBGC data in local variable.
       deep_data_chromo <- vals$deep_data %>%
         mutate(score = apply(vals$deep_data %>%
-                               dplyr::select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene),1, function(x) max(x))) 
+                               dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
       
       # Add Cluster_type column, which store only the max name of the cluster type
-      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene))[apply(deep_data_chromo%>%dplyr::select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene),1, which.max) ]
+      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
       
       # Clean data, using, thesholds
       deep_data_chromo <- deep_data_chromo%>%
@@ -745,6 +783,7 @@ server <- function(input, output) {
                num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
       # Store cleaned DeepBGC data into other variable to subset only Start and Stop
       deep_inter <- deep_data_chromo
+      
       vals$deep_data_chromo <- deep_data_chromo
       deep_inter <- deep_inter %>% 
         select(nucl_start, nucl_end) %>%
@@ -794,6 +833,7 @@ server <- function(input, output) {
                              xend=as.numeric(data$Stop),
                              yend=rep(letter, length(data$Cluster)),
                              Type = as.factor(data$Type),
+                             Type2 = as.factor(data$Type2),
                              Software = rep("PRISM", length(data$Cluster)),
                              ID = data$Cluster,
                              Start = data$Start,
@@ -811,6 +851,7 @@ server <- function(input, output) {
                              xend=as.numeric(data$Stop),
                              yend=rep(letter, length(data$Cluster)),
                              Type = as.factor(data$Type),
+                              Type2 = as.factor(data$Type2),
                              Software = rep("SEMPI", length(data$Cluster)),
                              ID = data$Cluster,
                              Start = data$Start,
@@ -827,6 +868,7 @@ server <- function(input, output) {
                              xend=as.numeric(  data$Stop),
                              yend=rep(letter, length(data$ID)),
                              Type = as.factor(data$Type),
+                             Type2 = as.factor(data$Type2),
                              Software = rep("Antismash", length(data$ID)),
                              ID = data$ID,
                              Start = data$Start,
@@ -868,7 +910,7 @@ server <- function(input, output) {
                              y=rep(letter, length(data$Locus_tag)),
                              xend=Stop_vals_RRE_in,
                              yend=rep(letter, length(data$Locus_tag)),
-                             Type = rep("RiPP", length(data$Locus_tag)),
+                             Type = rep("ripp", length(data$Locus_tag)),
                              Score = data$Score,
                              Software = rep("RREFinder", length(data$Locus_tag)),
                              ID = data$Locus_tag,
@@ -883,10 +925,10 @@ server <- function(input, output) {
     }
     
     geom_anti <- function(data){
-      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
     geom_prism <- function(data){
-      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
     geom_deep <- function(data){
       geom_segment(data=data,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
@@ -900,7 +942,7 @@ server <- function(input, output) {
                                                            Probability = Probability),size = 3)
       }
     geom_sempi <- function(data){
-      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
     
     
@@ -911,6 +953,7 @@ server <- function(input, output) {
                                  xend=as.numeric(  anti_data_chromo$Stop),
                                  yend=rep("Z", length(anti_data_chromo$ID)),
                                  Type = as.factor(anti_data_chromo$Type),
+                                 Type2 = as.factor(anti_data_chromo$Type2),
                                  Software = rep("Antismash", length(anti_data_chromo$ID)),
                                  ID = anti_data_chromo$ID,
                                  Start = anti_data_chromo$Start,
@@ -1027,7 +1070,7 @@ server <- function(input, output) {
                               y=rep("Z", length(vals$rre_data$Locus_tag)),
                               xend=Stop_vals_RRE,
                               yend=rep("Z", length(vals$rre_data$Locus_tag)),
-                              Type = rep("RiPP", length(vals$rre_data$Locus_tag)),
+                              Type = rep("ripp", length(vals$rre_data$Locus_tag)),
                               Score = vals$rre_data$Score,
                               Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
                               ID = vals$rre_data$Locus_tag,
@@ -1081,7 +1124,7 @@ server <- function(input, output) {
                                       y=rep("Y", length(vals$rre_data$Locus_tag)),
                                       xend=Stop_vals_RRE,
                                       yend=rep("Y", length(vals$rre_data$Locus_tag)),
-                                      Type = rep("RiPP", length(vals$rre_data$Locus_tag)),
+                                      Type = rep("ripp", length(vals$rre_data$Locus_tag)),
                                       Score = vals$rre_data$Score,
                                       Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
                                       ID = vals$rre_data$Locus_tag,
@@ -1100,6 +1143,7 @@ server <- function(input, output) {
                                 xend=as.numeric(prism_data$Stop),
                                 yend=rep("Z", length(prism_data$Cluster)),
                                 Type = as.factor(prism_data$Type),
+                                Type2 = as.factor(prism_data$Type2),
                                 Software = rep("PRISM", length(prism_data$Cluster)),
                                 ID = prism_data$Cluster,
                                 Start = prism_data$Start,
@@ -1149,6 +1193,7 @@ server <- function(input, output) {
                                       xend=as.numeric(prism_data$Stop),
                                       yend=rep("W", length(prism_data$Cluster)),
                                       Type = as.factor(prism_data$Type),
+                                      Type2 = as.factor(prism_data$Type2),
                                       Software = rep("PRISM", length(prism_data$Cluster)),
                                       ID = prism_data$Cluster,
                                       Start = prism_data$Start,
@@ -1161,6 +1206,7 @@ server <- function(input, output) {
                               xend=as.numeric(sempi_data$Stop),
                               yend=rep("Z", length(sempi_data$Cluster)),
                               Type = as.factor(sempi_data$Type),
+                              Type2 = as.factor(sempi_data$Type2),
                               Software = rep("SEMPI", length(sempi_data$Cluster)),
                               ID = sempi_data$Cluster,
                               Start = sempi_data$Start,
@@ -1210,6 +1256,7 @@ server <- function(input, output) {
                                       xend=as.numeric(sempi_data$Stop),
                                       yend=rep("V", length(sempi_data$Cluster)),
                                       Type = as.factor(sempi_data$Type),
+                                      Type2 = as.factor(sempi_data$Type2),
                                       Software = rep("SEMPI", length(sempi_data$Cluster)),
                                       ID = sempi_data$Cluster,
                                       Start = sempi_data$Start,
@@ -1223,7 +1270,7 @@ server <- function(input, output) {
     if (vals$anti_data_input == TRUE){
       data <-  vals$anti_data %>%
         mutate(ID = Cluster, Chr = chromosome) %>%
-        dplyr::select(ID,Chr ,Start, Stop, Type)
+        dplyr::select(ID,Chr ,Start, Stop, Type, Type2)
     }
     if (vals$deep_data_input == TRUE){
       data <- vals$deep_data_chromo
@@ -1241,7 +1288,7 @@ server <- function(input, output) {
     plot <- ggplot(data, aes(x = vals$chr_len, y = Chr))
     if (vals$anti_data_input == TRUE){
       plot <- plot + 
-        geom_segment(data=vals$seg_df_ref_a, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+        geom_segment(data=vals$seg_df_ref_a, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
     if (vals$deep_data_input == TRUE){
       plot <- plot +
@@ -1256,13 +1303,13 @@ server <- function(input, output) {
                                                     Probability = Probability),size = 3)
     }
     if (vals$prism_data_input == TRUE){
-      plot <- plot + geom_segment(data=vals$seg_df_ref_p, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+      plot <- plot + geom_segment(data=vals$seg_df_ref_p, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
                                                     ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
       
       
     }
     if (vals$sempi_data_input == TRUE){
-      plot <- plot + geom_segment(data=vals$seg_df_ref_s, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+      plot <- plot + geom_segment(data=vals$seg_df_ref_s, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
                                                               ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
       
       
@@ -1310,12 +1357,12 @@ server <- function(input, output) {
       # Get vector of max values from chosen columns from deepbgc data
       score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
       score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
-      score_c <- apply(vals$deep_data %>% select(c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")),1, function(x) max(x))
+      score_c <- apply(vals$deep_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
       deep_data_chromo <- vals$deep_data %>%
         mutate(score = apply(vals$deep_data %>%
-                               select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene),1, function(x) max(x))) 
+                               select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
       # Cluster_type column. Here extract colnames, and assign max value to a new column
-      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene))[apply(deep_data_chromo%>%select(Alkaloid, NRP, Other, Polyketide, RiPP, Saccharide, Terpene),1, which.max) ]
+      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
       # If max score is under threshold, print "Under threshold"
       deep_data_chromo <- deep_data_chromo%>%
         mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "Under threshold"))
@@ -1385,6 +1432,7 @@ server <- function(input, output) {
       Biocircos_chromosomes[["SEMPI"]] <- vals$chr_len
       #Add arcs. Quantity of arcs is length of dataframes
       arcs_chromosomes <- c(arcs_chromosomes, rep("SEMPI", length(biocircos_sempi$Cluster)))
+      
       # Add arcs begin positions. (Start column)
       arcs_begin <- c(arcs_begin, biocircos_sempi$Start )
       # Stop position of arcs.
@@ -1886,7 +1934,7 @@ server <- function(input, output) {
       # Add label column to the dataframe, from which we will plot  
       rre_count$label <- rep("RRE", length(rre_count$x))
       # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-      rre_count$Type <- rep("RiPP", length(rre_anot$Sequence))
+      rre_count$Type <- rep("ripp", length(rre_anot$Sequence))
       # Add Start positions (to visualize on hover)
       rre_count$Start <- rre_anot$Start
       # Add Stop positions (to visualize on hover)
