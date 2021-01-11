@@ -141,15 +141,13 @@ server <- function(input, output) {
   # Rective vals the app is using
   # Some dataframes that are used through the app + some vectors of untercepted values
   vals <- reactiveValues(deep_data = NULL, anti_data = NULL, rre_data=NULL, prism_data=NULL, chr_len = NULL, fullness = NULL,
-                         inter_a1 = NULL, inter_a2 = NULL, inter_d_ref_n = NULL,inter_d_rre=NULL,
-                         inter_rre_ref_n = NULL,inter_rre_d_n = NULL, inter_a3 = NULL, inter_p_ref_n=NULL,
-                         inter_d_p=NULL, inter_p_d_n = NULL, inter_p_rre = NULL, inter_rre_p_n = NULL, inter_d_rre_ID = NULL,
-                         inter_d_p_ID = NULL,inter_d_ref_n_ID = NULL , biocircos_deep = NULL, deep_data_input = FALSE,
+                         biocircos_deep = NULL, deep_data_input = FALSE,
                          anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
                          seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
                          data_upload_count = 0, anti_type=NULL, prism_type=NULL, sempi_data = NULL, sempi_data_input= FALSE,
-                         sempi_type = NULL, inter_s_ref_n = NULL, inter_a4 = NULL, inter_d_s = NULL, inter_s_d_n = NULL,
-                         inter_d_s_ID = NULL, inter_s_p_n = NULL, inter_p_s = NULL,  inter_s_rre_n = NULL, inter_ree_s = NULL
+                         sempi_type = NULL,
+                         rre_interact = NULL, anti_interact = NULL, prism_interact = NULL, deep_interact = NULL,  
+                         sempi_interact = NULL, df_a = NULL, df_d = NULL, df_p = NULL, df_r = NULL
                          )
   
   # Observe antismash data input and save as reactive value
@@ -323,6 +321,8 @@ server <- function(input, output) {
     vals$rre_data$chromosome <- rep("RRE",length(vals$rre_data$Sequence))
     # Add ID column
     vals$rre_data$ID <- seq(1:length(vals$rre_data$Sequence))
+    vals$rre_data <- data.frame(vals$rre_data)
+    vals$rre_data['Type'] <- 'RiPP'
     write.csv(vals$rre_data, "rre_data.csv", row.names = F)
     vals$rre_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
@@ -1325,6 +1325,9 @@ server <- function(input, output) {
         filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , 
                score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
                num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
+      biocircos_deep['Start'] <- biocircos_deep$nucl_start
+      biocircos_deep['Stop'] <- biocircos_deep$nucl_end
+      biocircos_deep['Type'] <- biocircos_deep$product_class
       #Make chromosome list for Biocircos plot. Use chr_len as an input
       Biocircos_chromosomes[["DeepBGC"]] <- vals$chr_len
       #Add arcs. Quantity of arcs is length of dataframes
@@ -1339,7 +1342,7 @@ server <- function(input, output) {
     
     #RRE-FINDER
     if (vals$rre_data_input == TRUE){
-      biocircos_rre <- vals$rre_data
+      biocircos_rre <- data.frame(vals$rre_data)
       biocircos_rre$Start <- as.numeric(biocircos_rre$Start)
       biocircos_rre$Stop <- as.numeric(biocircos_rre$Stop)
       #Make chromosome list for Biocircos plot. Use chr_len as an input
@@ -1478,102 +1481,144 @@ server <- function(input, output) {
     #CALCULATIONS
     # -----------------------------------------
     
+    
+    add_biocircos_data <- function(data1_inter, data2_inter, data1, data2, data1_label, data2_label){
+      inter_a1_t<- get_interception(data1_inter, data2_inter)
+      inter_s_rre_n <- unlist(inter_a1_t[2])
+      inter_rre_s <- unlist(inter_a1_t[1])
+      # Add link start. Just populate certain chromosome name times the lenght of interception 
+      chromosomes_start <- c(rep(data2_label, length(inter_rre_s)))
+      # Add link end. Just populate second output from the vectors, used above. 
+      chromosomes_end <- c(rep(data1_label, length(inter_s_rre_n)))
+      # Add links start positions as a start from dataframe. This vector is for chromosome start
+      link_pos_start <- as.numeric(c(data2$Start[inter_rre_s] ))
+      # Add links start positions as a start from dataframe. For chromosome start variable
+      link_pos_start_1 <- as.numeric(c(data2$Stop[inter_rre_s] + 50000 ))
+      # Add links start position for a chromosome stop variable
+      link_pos_end <- as.numeric(c( data1$Start[inter_s_rre_n]))
+      # Add links start position for a chromosome stop position
+      link_pos_end_2 <- as.numeric(c(data1$Stop[inter_s_rre_n]))
+      label_1 <- c(sapply(inter_rre_s, function(x){x = paste(paste0(data2_label,":"), x, ",", data2$Type[x])})) 
+      label_2 <- c(sapply(inter_s_rre_n, function(x){x = paste(paste0(data1_label, ":"), x, ",", data1$Type[x])}))
+      return(list(inter_rre_s, inter_s_rre_n, chromosomes_start, chromosomes_end, link_pos_start, link_pos_start_1, link_pos_end, 
+                  link_pos_end_2, label_1, label_2))
+    }
+    
+    rre_interact <- c()
+    anti_interact <- c()
+    prism_interact <- c()
+    deep_interact <- c()
+    sempi_interact <- c()
+    
+    df_a <- data.frame(A=NA, D=NA, P=NA, R=NA, S=NA)
+    df_d <- data.frame(D=NA, P=NA, R=NA, S=NA)
+    df_p = data_frame(P=NA, R=NA, S=NA)
+    df_r =data_frame(R=NA, S=NA)
+    
     # ANTISMASH
     if (vals$anti_data_input == TRUE){
+      
       # Get interception of antismash with PRISM
       if (vals$prism_data_input == TRUE){
-        inter_a1_t<- get_interception(prism_inter, anti_inter)
-        inter_p_ref_n <- unlist(inter_a1_t[2])
-        inter_a3 <- unlist(inter_a1_t[1])
-        #Store values as reactive ones in order to use later
-        vals$inter_p_ref_n <- inter_p_ref_n
-        vals$inter_a3 <- inter_a3
+        output <- add_biocircos_data(prism_inter, anti_inter, biocircos_prism, biocircos_anti, "PRISM", "Antismash")
+        vals$inter_p_ref_n <- output[[2]]
+        vals$inter_a3 <- output[[1]]
+        anti_interact <- c(anti_interact,output[[1]] )
+        prism_interact <- c(prism_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("A", "P")
+        df_a <- merge(df_a, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, rep("Antismash",length(c(inter_a3))))
+        chromosomes_start <- c(chromosomes_start, output[[3]])
         # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, rep("PRISM", length(inter_p_ref_n)) )
+        chromosomes_end <- c(chromosomes_end, output[[4]] )
         # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, biocircos_anti$Start[c(inter_a3)]))
+        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
         # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_anti$Stop[c(inter_a3)]))
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
         # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, biocircos_prism$Start[inter_p_ref_n]))
+        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
         # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2, biocircos_prism$Stop[inter_p_ref_n] ))
-        label_1 <- c(label_1, sapply(inter_a3, function(x){x = paste("Antismash:", x, ",",biocircos_anti$Type[x])}))
-        label_2 <- c(label_2, sapply(inter_p_ref_n, function(x){x = paste("PRISM:", x, ",", biocircos_prism$Type[x])}))
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+        label_1 <- c(label_1, output[[9]])
+        label_2 <- c(label_2, output[[10]])
       }
       # Get interception of antismash with deepbgc
       if (vals$deep_data_input == TRUE){
-        inter_a1_t<- get_interception(deep_inter,anti_inter )
-        inter_d_ref_n <- unlist(inter_a1_t[2])
-        inter_a1 <- unlist(inter_a1_t[1])
-        # Store values as reactive ones in order to use later
-        vals$inter_a1 <- inter_a1
-        vals$inter_d_ref_n <- inter_d_ref_n
+        output <- add_biocircos_data(deep_inter, anti_inter, biocircos_deep, biocircos_anti, "DeepBGC", "Antismash")
+        vals$inter_d_ref_n <- output[[2]]
+        vals$inter_a1  <- output[[1]]
+        deep_interact <- c(deep_interact,output[[2]] )
+        anti_interact <- c(anti_interact,output[[1]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("A", "D")
+        df_a <- merge(df_a, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, rep("Antismash",length(c(inter_a1))) )
+        chromosomes_start <- c(chromosomes_start, output[[3]])
         # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end,rep("DeepBGC", length(inter_d_ref_n)) )
+        chromosomes_end <- c(chromosomes_end, output[[4]] )
         # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, biocircos_anti$Start[c(inter_a1)]))
+        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
         # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_anti$Stop[c(inter_a1)]))
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
         # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, biocircos_deep$nucl_start[inter_d_ref_n]))
+        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
         # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2, biocircos_deep$nucl_end[inter_d_ref_n]))
-        # Add labels
-        label_1 <- c(label_1, sapply(inter_a1, function(x){x = paste("Antismash:", x, ",",biocircos_anti$Type[x])}))
-        label_2 <- c(label_2, sapply(inter_d_ref_n, function(x){x = paste("DeepBGC:", x,",", biocircos_deep$product_class[x])}))
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+        label_1 <- c(label_1, output[[9]])
+        label_2 <- c(label_2, output[[10]])
         # Safe used local variables to the reactive ones
-        vals$inter_d_ref_n_ID <- biocircos_deep$ID[inter_d_ref_n]
+        vals$inter_d_ref_n_ID <- biocircos_deep$ID[output[[2]]]
       } 
       # Get interception of antismash with RREFinder
       if (vals$rre_data_input == TRUE){
-        inter_a1_t<- get_interception(rre_inter, anti_inter )
-        inter_rre_ref_n <- unlist(inter_a1_t[2])
-        inter_a2 <- unlist(inter_a1_t[1])
-        #Store values as reactive ones in order to use later
-        vals$inter_a2 <- inter_a2
-        vals$inter_rre_ref_n <- inter_rre_ref_n
+        output <- add_biocircos_data(rre_inter, anti_inter, biocircos_rre, biocircos_anti, "RRE", "Antismash")
+        vals$inter_rre_ref_n <- output[[2]]
+        vals$inter_a2  <- output[[1]]
+        rre_interact <- c(rre_interact,output[[2]] )
+        anti_interact <- c(anti_interact,output[[1]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("A", "R")
+        df_a <- merge(df_a, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, rep("Antismash",length(c(inter_a2))))
+        chromosomes_start <- c(chromosomes_start, output[[3]])
         # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end,rep("RRE", length(inter_rre_ref_n)) )
+        chromosomes_end <- c(chromosomes_end, output[[4]] )
         # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, biocircos_anti$Start[c(inter_a2)]))
+        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
         # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_anti$Stop[c(inter_a2)]))
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
         # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, biocircos_rre$Start[inter_rre_ref_n] ))
+        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
         # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2, biocircos_rre$Start[inter_rre_ref_n]+50000))
-        label_1 <- c(label_1, sapply(inter_a2, function(x){x = paste("Antismash:", x, ",",biocircos_anti$Type[x])}))
-        label_2 <- c(label_2, sapply(inter_rre_ref_n, function(x){x = paste("RRE:", x, ",", "RiPP")}))
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+        label_1 <- c(label_1, output[[9]])
+        label_2 <- c(label_2, output[[10]])
       }
       # Get interception of antismash with SEMPI
       if (vals$sempi_data_input == TRUE){
-        inter_a1_t<- get_interception(sempi_inter, anti_inter)
-        inter_s_ref_n <- unlist(inter_a1_t[2])
-        inter_a4 <- unlist(inter_a1_t[1])
-        #Store values as reactive ones in order to use later
-        vals$inter_s_ref_n <- inter_s_ref_n
-        vals$inter_a4 <- inter_a4
+        output <- add_biocircos_data(sempi_inter, anti_inter, biocircos_sempi, biocircos_anti, "SEMPI", "Antismash")
+        vals$inter_s_ref_n <- output[[2]]
+        vals$inter_a4  <- output[[1]]
+        anti_interact <- c(anti_interact,output[[1]] )
+        sempi_interact <- c(sempi_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("A", "S")
+        df_a <- merge(df_a, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, rep("Antismash",length(c(inter_a4))))
+        chromosomes_start <- c(chromosomes_start, output[[3]])
         # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, rep("SEMPI", length(inter_s_ref_n)) )
+        chromosomes_end <- c(chromosomes_end, output[[4]] )
         # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, biocircos_anti$Start[c(inter_a4)]))
+        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
         # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_anti$Stop[c(inter_a4)]))
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
         # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, biocircos_sempi$Start[inter_s_ref_n]))
+        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
         # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2, biocircos_sempi$Stop[inter_s_ref_n] ))
-        label_1 <- c(label_1, sapply(inter_a4, function(x){x = paste("Antismash:", x, ",",biocircos_anti$Type[x])}))
-        label_2 <- c(label_2, sapply(inter_s_ref_n, function(x){x = paste("SEMPI:", x, ",", biocircos_sempi$Type[x])}))
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+        label_1 <- c(label_1, output[[9]])
+        label_2 <- c(label_2, output[[10]])
       }
       # Write csvs with locally used variables
       write.csv(biocircos_anti, "antismash_biocircos.csv", row.names = F)
@@ -1581,80 +1626,87 @@ server <- function(input, output) {
     
     # DEEPBGC 
     if (vals$deep_data_input == TRUE){
+     
       # Get interception of DeepBGC with rrefinder
       if (vals$rre_data_input == TRUE){
-        inter_a1_t<- get_interception(rre_inter, deep_inter )
-        inter_rre_d_n <- unlist(inter_a1_t[2])
-        inter_d_rre <- unlist(inter_a1_t[1])
-        #Store values as reactive ones in order to use later
-        vals$inter_d_rre <- inter_d_rre
-        vals$inter_rre_d_n <- inter_rre_d_n
+        output <- add_biocircos_data(rre_inter, deep_inter, biocircos_rre, biocircos_deep, "RRE", "DeepBGC")
+        vals$inter_rre_d_n <- output[[2]]
+        vals$inter_d_rre  <- output[[1]]
+        rre_interact <- c(rre_interact,output[[2]] )
+        deep_interact <- c(deep_interact,output[[1]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("D", "R")
+        df_d <- merge(df_d, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, rep("DeepBGC",length(c(inter_d_rre))) )
+        chromosomes_start <- c(chromosomes_start, output[[3]])
         # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, rep("RRE", length(inter_rre_d_n)))
+        chromosomes_end <- c(chromosomes_end, output[[4]] )
         # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, biocircos_deep$nucl_start[c(inter_d_rre)]))
+        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
         # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1,biocircos_deep$nucl_end[c(inter_d_rre)]))
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
         # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, biocircos_rre$Start[inter_rre_d_n]))
+        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
         # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2, biocircos_rre$Start[inter_rre_d_n]+50000 ))
-        label_1 <- c(label_1, sapply(c(inter_d_rre), function(x){x = paste("DeepBGC:", x, ",",biocircos_deep$product_class[x])}))
-        label_2 <- c(label_2, sapply(inter_rre_d_n, function(x){x = paste("RRE:", x, ",", "RiPP")}))
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+        label_1 <- c(label_1, output[[9]])
+        label_2 <- c(label_2, output[[10]])
         # Safe used local variables to the reactive ones
-        vals$inter_d_rre_ID <- biocircos_deep$ID[inter_d_rre]
+        vals$inter_d_rre_ID <- biocircos_deep$ID[output[[1]]]
       }
       # Get interception of DeepBGC with PRISM
       if (vals$prism_data_input == TRUE){
-        inter_a1_t<- get_interception(prism_inter, deep_inter)
-        inter_p_d_n <- unlist(inter_a1_t[2])
-        inter_d_p <- unlist(inter_a1_t[1])
-        #Store values as reactive ones in order to use later
-        vals$inter_d_p <- inter_d_p
-        vals$inter_p_d_n <- inter_p_d_n
+        output <- add_biocircos_data(prism_inter, deep_inter, biocircos_prism, biocircos_deep, "PRISM", "DeepBGC")
+        vals$inter_p_d_n <- output[[2]]
+        vals$inter_d_p  <- output[[1]]
+        deep_interact <- c(deep_interact,output[[1]] )
+        prism_interact <- c(prism_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("D", "P")
+        df_d <- merge(df_d, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, rep("DeepBGC",length(c(inter_d_p))))
+        chromosomes_start <- c(chromosomes_start, output[[3]])
         # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, rep("PRISM", length(inter_p_d_n)))
+        chromosomes_end <- c(chromosomes_end, output[[4]] )
         # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, biocircos_deep$nucl_start[c(inter_d_p)]))
+        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
         # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_deep$nucl_end[c(inter_d_p)]))
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
         # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end,biocircos_prism$Start[inter_p_d_n] ))
+        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
         # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,biocircos_prism$Stop[inter_p_d_n] ))
-        label_1 <- c(label_1, sapply(c(inter_d_p), function(x){x = paste("DeepBGC:", x, ",",biocircos_deep$product_class[x])}))
-        label_2 <- c(label_2, sapply(inter_p_d_n, function(x){x = paste("PRISM:", x, ",", biocircos_prism$Type[x])}))
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+        label_1 <- c(label_1, output[[9]])
+        label_2 <- c(label_2, output[[10]])
         # Safe used local variables to the reactive ones
-        vals$inter_d_p_ID <- biocircos_deep$ID[inter_d_p]
+        vals$inter_d_p_ID <- biocircos_deep$ID[output[[1]]]
       }
       # Get interception of DeepBGC with SEMPI
       if (vals$sempi_data_input == TRUE){
-        inter_a1_t<- get_interception(sempi_inter, deep_inter)
-        inter_s_d_n <- unlist(inter_a1_t[2])
-        inter_d_s <- unlist(inter_a1_t[1])
-        #Store values as reactive ones in order to use later
-        vals$inter_d_s <- inter_d_s
-        vals$inter_s_d_n <- inter_s_d_n
+        output <- add_biocircos_data(sempi_inter, deep_inter, biocircos_sempi, biocircos_deep, "SEMPI", "DeepBGC")
+        vals$inter_s_d_n <- output[[2]]
+        vals$inter_d_s  <- output[[1]]
+        deep_interact <- c(deep_interact,output[[1]] )
+        sempi_interact <- c(sempi_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("D", "S")
+        df_d <- merge(df_d, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, rep("DeepBGC",length(c(inter_d_s))))
+        chromosomes_start <- c(chromosomes_start, output[[3]])
         # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, rep("SEMPI", length(inter_s_d_n)))
+        chromosomes_end <- c(chromosomes_end, output[[4]] )
         # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, biocircos_deep$nucl_start[c(inter_d_s)]))
+        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
         # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_deep$nucl_end[c(inter_d_s)]))
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
         # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end,biocircos_sempi$Start[inter_s_d_n] ))
+        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
         # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,biocircos_sempi$Stop[inter_s_d_n] ))
-        label_1 <- c(label_1, sapply(c(inter_d_s), function(x){x = paste("DeepBGC:", x, ",",biocircos_deep$product_class[x])}))
-        label_2 <- c(label_2, sapply(inter_s_d_n, function(x){x = paste("SEMPI:", x, ",", biocircos_sempi$Type[x])}))
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+        label_1 <- c(label_1, output[[9]])
+        label_2 <- c(label_2, output[[10]])
         # Safe used local variables to the reactive ones
-        vals$inter_d_s_ID <- biocircos_deep$ID[inter_d_s]
+        vals$inter_d_s_ID <- biocircos_deep$ID[output[[1]]]
       }
       # Safe used local variables to the reactive ones
       vals$biocircos_deep <- biocircos_deep
@@ -1664,84 +1716,93 @@ server <- function(input, output) {
     
     # PRISM
     if (vals$prism_data_input == TRUE){
+     
       # Get interception of PRISM with rrefinder
       if (vals$rre_data_input == TRUE){
-        inter_a1_t<- get_interception(rre_inter, prism_inter)
-        inter_rre_p_n <- unlist(inter_a1_t[2])
-        inter_p_rre <- unlist(inter_a1_t[1])
-        #Store values as reactive ones in order to use later
-        vals$inter_p_rre <- inter_p_rre
-        vals$inter_rre_p_n <- inter_rre_p_n
+        output <- add_biocircos_data(rre_inter, prism_inter, biocircos_rre, biocircos_prism, "RRE", "PRISM")
+        vals$inter_rre_p_n <- output[[2]]
+        vals$inter_p_rre  <- output[[1]]
+        rre_interact <- c(rre_interact,output[[2]] )
+        prism_interact <- c(prism_interact,output[[1]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("P", "R")
+        df_p <- merge(df_p, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, rep("PRISM", length(inter_p_rre)))
+        chromosomes_start <- c(chromosomes_start, output[[3]])
         # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, rep("RRE", length(inter_rre_p_n)))
+        chromosomes_end <- c(chromosomes_end, output[[4]] )
         # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, biocircos_prism$Start[inter_p_rre] ))
+        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
         # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_prism$Stop[inter_p_rre] ))
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
         # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end,  biocircos_rre$Start[inter_rre_p_n]))
+        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
         # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,biocircos_rre$Start[inter_rre_p_n]+50000 ))
-        label_1 <- c(label_1, sapply(inter_p_rre, function(x){x = paste("PRISM:", x, ",",biocircos_prism$Type[x])})) 
-        label_2 <- c(label_2, sapply(inter_rre_p_n, function(x){x = paste("RRE", x, ",", "RiPP")}))
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+        label_1 <- c(label_1, output[[9]])
+        label_2 <- c(label_2, output[[10]])
       }
       # Get interception of PRISM with SEMPI
       if (vals$sempi_data_input == TRUE){
-        inter_a1_t<- get_interception(sempi_inter, prism_inter)
-        inter_s_p_n <- unlist(inter_a1_t[2])
-        inter_p_s <- unlist(inter_a1_t[1])
-        #Store values as reactive ones in order to use later
-        vals$inter_p_s <- inter_p_s
-        vals$inter_s_p_n <- inter_s_p_n
+        output <- add_biocircos_data(sempi_inter, prism_inter, biocircos_sempi, biocircos_prism, "SEMPI", "PRISM")
+        vals$inter_s_p_n <- output[[2]]
+        vals$inter_p_s  <- output[[1]]
+        prism_interact <- c(prism_interact,output[[1]] )
+        sempi_interact <- c(sempi_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("P", "S")
+        df_p <- merge(df_p, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, rep("PRISM", length(inter_p_s)))
+        chromosomes_start <- c(chromosomes_start, output[[3]])
         # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, rep("SEMPI", length(inter_s_p_n)))
+        chromosomes_end <- c(chromosomes_end, output[[4]] )
         # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, biocircos_prism$Start[inter_p_s] ))
+        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
         # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_prism$Stop[inter_p_s] ))
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
         # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end,  biocircos_sempi$Start[inter_s_p_n]))
+        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
         # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,biocircos_sempi$Stop[inter_s_p_n] ))
-        label_1 <- c(label_1, sapply(inter_p_s, function(x){x = paste("PRISM:", x, ",",biocircos_prism$Type[x])})) 
-        label_2 <- c(label_2, sapply(inter_s_p_n, function(x){x = paste("SEMPI", x, ",", biocircos_sempi$Type[x])}))
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+        label_1 <- c(label_1, output[[9]])
+        label_2 <- c(label_2, output[[10]])
       }
       # Write csvs with locally used variables
       write.csv(biocircos_prism, "prism_biocircos.csv", row.names = F)
     }
-    
+     
     # RRE-FINDER 
     if (vals$rre_data_input == TRUE){
+      
       # Get interception of RRE with SEMPI
       if (vals$sempi_data_input == TRUE){
-        inter_a1_t<- get_interception(sempi_inter, rre_inter)
-        inter_s_rre_n <- unlist(inter_a1_t[2])
-        inter_rre_s <- unlist(inter_a1_t[1])
-        #Store values as reactive ones in order to use later
-        vals$inter_rre_s <- inter_rre_s
-        vals$inter_s_rre_n <- inter_s_rre_n
+        output <- add_biocircos_data(sempi_inter, rre_inter, biocircos_sempi, biocircos_rre, "SEMPI", "RRE")
+        vals$inter_s_rre_n <- output[[2]]
+        vals$inter_rre_s  <- output[[1]]
+        rre_interact <- c(rre_interact,output[[1]] )
+        sempi_interact <- c(sempi_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("R", "S")
+        df_r <- merge(df_r, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, rep("RRE", length(inter_rre_s)))
+        chromosomes_start <- c(chromosomes_start, output[[3]])
         # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, rep("SEMPI", length(inter_s_rre_n)))
+        chromosomes_end <- c(chromosomes_end, output[[4]] )
         # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, biocircos_rre$Start[inter_rre_s] ))
+        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
         # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, biocircos_rre$Stop[inter_rre_s] + 50000 ))
+        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
         # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end,  biocircos_sempi$Start[inter_s_rre_n]))
+        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
         # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,biocircos_sempi$Stop[inter_s_rre_n]))
-        label_1 <- c(label_1, sapply(inter_rre_s, function(x){x = paste("RRE:", x, ",","RiPP")})) 
-        label_2 <- c(label_2, sapply(inter_s_rre_n, function(x){x = paste("SEMPI", x, ",", biocircos_sempi$Type[x])}))
+        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+        label_1 <- c(label_1, output[[9]])
+        label_2 <- c(label_2, output[[10]])
       }
       # Write csvs with locally used variables
       write.csv(biocircos_rre, "rre_biocircos.csv", row.names = F)
     }
+    
     #SEMPI (NO VALUE)
     if (vals$sempi_data_input == TRUE){
       # Write csvs with locally used variables
@@ -1753,12 +1814,24 @@ server <- function(input, output) {
    
     # Combine labels with mapply to one list
     link_labels <- mapply(function(x,y)  paste(x, y, sep = " | "), label_1, label_2 )
+    
+    vals$df_a <- df_a
+    vals$df_d <- df_d
+    vals$df_p <- df_p
+    vals$df_r <- df_r
+    vals$rre_interact <- rre_interact
+    vals$anti_interact <- anti_interact
+    vals$prism_interact <- prism_interact
+    vals$deep_interact <- deep_interact
+    vals$sempi_interact <- sempi_interact
     # Add links and labels to the track list for subsequent visualization 
     tracklist = tracklist + BioCircosLinkTrack('myLinkTrack', chromosomes_start, link_pos_start, 
                                                link_pos_start_1, chromosomes_end, link_pos_end, 
                                                link_pos_end_2, maxRadius = 0.85, labels = link_labels,
                                                displayLabel = FALSE)
 
+    
+    
     # Plot BioCircos
     BioCircos(tracklist, genome = Biocircos_chromosomes, genomeTicksScale = 1e+6)
   })
@@ -1773,7 +1846,7 @@ server <- function(input, output) {
     
     if (vals$anti_data_input == TRUE){
       # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      antismash_count <- count(as.factor(c(vals$inter_a1, vals$inter_a2, vals$inter_a3, vals$inter_a4)))
+      antismash_count <- count(as.factor(c( vals$anti_interact)))
       # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
       anti_anot <- vals$anti_data[vals$anti_data$Cluster %in% as.numeric(levels(antismash_count$x)),]
       # Add prefices to the ID to plot for a barplot.  
@@ -1789,7 +1862,7 @@ server <- function(input, output) {
     }
     if (vals$deep_data_input == TRUE){
       # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      deep_count <- count(as.factor(c(vals$inter_d_ref_n_ID, vals$inter_d_rre_ID, vals$inter_d_p_ID, vals$inter_d_s_ID)))
+      deep_count <- count(as.factor(c( vals$deep_interact)))
       # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
       deep_anot <- vals$biocircos_deep[vals$biocircos_deep$ID %in% as.numeric(levels(deep_count$x)),]
       # Add prefices to the ID to plot for a barplot.  
@@ -1805,7 +1878,7 @@ server <- function(input, output) {
     }
     if (vals$rre_data_input == TRUE){
       # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      rre_count <- count(as.factor(c(vals$inter_rre_ref_n, vals$inter_rre_d_n, vals$inter_rre_p_n, vals$inter_rre_s)))
+      rre_count <- count(as.factor(c( vals$rre_interact)))
       # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
       rre_anot <- vals$rre_data[vals$rre_data$ID %in% as.numeric(levels(rre_count$x)),]
       # Add prefices to the ID to plot for a barplot.  
@@ -1821,7 +1894,7 @@ server <- function(input, output) {
     }
     if (vals$prism_data_input == TRUE){
       # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      prism_count <- count(as.factor(c(vals$inter_p_ref_n,vals$inter_p_d_n,vals$inter_p_rre, vals$inter_p_s )))
+      prism_count <- count(as.factor(c(vals$prism_interact)))
       # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
       prism_anot <- vals$prism_data[vals$prism_data$Cluster %in% as.numeric(levels(prism_count$x)),]
       # Add prefices to the ID to plot for a barplot.  
@@ -1837,7 +1910,7 @@ server <- function(input, output) {
     }
     if (vals$sempi_data_input == TRUE){
       # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      sempi_count <- count(as.factor(c(vals$inter_s_ref_n,vals$inter_s_d_n,vals$inter_s_rre_n, vals$inter_s_p_n )))
+      sempi_count <- count(as.factor(c(vals$sempi_interact )))
       # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
       sempi_anot <- vals$sempi_data[vals$sempi_data$Cluster %in% as.numeric(levels(sempi_count$x)),]
       # Add prefices to the ID to plot for a barplot.  
@@ -1887,7 +1960,6 @@ server <- function(input, output) {
         df_f_d <- data.frame(D=NA)
       }
     }
-    df_f_r <- data.frame(R=NA)
     df_f_s <- data.frame(S=NA)
     if (vals$rre_data_input == TRUE){
       if ((input$group_by=="R") & (input$count_all == T)){
@@ -1914,91 +1986,46 @@ server <- function(input, output) {
       }
     }
     
-    df_a <- data.frame(A=NA, D=NA, P=NA, R=NA, S=NA)
+    
+    refine_unique <- function(data){
+      n <- tail(data, n=1)
+      data <- head(data, -1)
+      n_list <-  str_split(n, ",")
+      out <- sapply(n_list[[1]], function(x){x %in% unlist(str_split(data, ","))})
+      res <- sapply(out, function(x){
+        if (x==F){
+          x
+        }
+      })
+      
+      return(paste(names(Filter(Negate(is.null), res)), collapse = ","))
+    }
+    
     if (vals$anti_data_input == TRUE){
-        df_tmp <- data.frame(A=NA, D=NA)
-        df_tmp1 <- data.frame(A=NA, P=NA)
-        df_tmp2 <- data.frame(A=NA, R=NA)
-        df_tmp3 <- data.frame(A=NA, S=NA)
-        if (!is.null(vals$inter_d_ref_n)){
-          df_tmp <- data.frame(cbind(vals$inter_a1,vals$inter_d_ref_n))
-          colnames(df_tmp) <- c("A", "D")
-        }
-        if (!is.null(vals$inter_p_ref_n)){
-          df_tmp1 <- data.frame(cbind(vals$inter_a3,vals$inter_p_ref_n))
-          colnames(df_tmp1) <- c("A", "P")
-        }
-        
-        if(!is.null(vals$inter_rre_ref_n)){
-          df_tmp2 <- data.frame(cbind(vals$inter_a2,vals$inter_rre_ref_n))
-        colnames(df_tmp2) <- c("A", "R")
-        }
-        if(!is.null(vals$inter_s_ref_n)){
-          df_tmp3 <- data.frame(cbind(vals$inter_a4,vals$inter_s_ref_n))
-          colnames(df_tmp3) <- c("A", "S")
-        }
-        
-        
-     df_a <- merge(df_f_a, df_tmp, all =T)
-     df_a <- merge(df_a, df_tmp1, all = T)
-     df_a <- merge(df_a, df_tmp2, all = T )
-     df_a <- merge(df_a, df_tmp3, all = T )
+      vals$df_a <- merge(df_f_a, vals$df_a, all =T)
      
     }
     
-    df_d <- data.frame(D=NA, P=NA, R=NA, S=NA)
     if (vals$deep_data_input == TRUE){
-      df_tmp <- data_frame(D=NA, R=NA)
-      df_tmp1 <- data_frame(D=NA, P=NA)
-      df_tmp2 <- data_frame(D=NA, S=NA)
-      if (!is.null(vals$inter_rre_d_n)){
-        df_tmp <- data.frame(cbind(vals$inter_d_rre, vals$inter_rre_d_n ))
-        colnames(df_tmp) <- c("D", "R")
-      }
-      if (!is.null(vals$inter_p_d_n)){
-        df_tmp1 <- data.frame(cbind(vals$inter_d_p ,vals$inter_p_d_n ))
-        colnames(df_tmp1) <- c("D", "P")
-      }
-      if (!is.null(vals$inter_s_d_n)){
-        df_tmp2 <- data.frame(cbind(vals$inter_d_s ,vals$inter_s_d_n ))
-        colnames(df_tmp2) <- c("D", "S")
-      }
-      df_d <- merge(df_f_d, df_tmp, by.x="D", by.y="D", all =T)
-      df_d <- merge(df_d, df_tmp1, by.x="D", by.y="D", all =T)
-      df_d <- merge(df_d, df_tmp2, by.x="D", by.y="D", all =T)
+      
+      vals$df_d <- merge(df_f_d, vals$df_d, all =T)
+      
     }
     
-    df_p <- data_frame(P=NA, R=NA, S=NA)
     if (vals$prism_data_input == TRUE){
-      df_p <- data_frame(P=NA, R=NA, S=NA)
-      df_tmp <- data_frame(P=NA, R=NA)
-      df_tmp2 <- data_frame(P=NA, S=NA)
-      if (!is.null(vals$inter_rre_p_n)){
-      df_tmp<- data.frame(cbind(vals$inter_p_rre,vals$inter_rre_p_n ))
-      colnames(df_tmp) <- c("P", "R")
-      }
-      if (!is.null(vals$inter_s_p_n)){
-        df_tmp2<- data.frame(cbind(vals$inter_p_s,vals$inter_s_p_n ))
-        colnames(df_tmp2) <- c("P", "S")
-      }
-      df_p <- merge(df_f_p, df_tmp, by.x="P", by.y="P", all =T)
-      df_p <- merge(df_p, df_tmp2, by.x="P", by.y="P", all =T)
+      vals$df_p <- merge(df_f_p, vals$df_p, all =T)
     }
     
-    df_r <- data_frame( R=NA, S=NA)
     if (vals$rre_data_input == TRUE){
-      df_tmp <- data_frame(R=NA, S=NA)
-      if (!is.null(vals$inter_s_rre_n)){
-        df_tmp<- data.frame(cbind(vals$inter_rre_s, vals$inter_s_rre_n ))
-        colnames(df_tmp) <- c("R", "S")
-      }
-      df_r <- merge(df_f_r, df_tmp, by.x="R", by.y="R", all =T)
-    }
+      vals$df_r <- merge(df_f_r, vals$df_r, all = T)
+  }
+    
     if (vals$sempi_data_input == TRUE){
     }
-    df_1 <- merge(df_d,df_a, all=T)
-    df_2 <- merge(df_1, df_p, all=T)
-    df_3 <- merge(df_2, df_r, all=T)
+    
+    df_1 <- merge(vals$df_d, vals$df_a, all=T)
+    df_2 <- merge(df_1, vals$df_p, all=T)
+    df_3 <- merge(df_2, vals$df_r, all=T)
     df_fin <- merge(df_3, df_f_s, all=T)
     if (input$group_by=="A"){
       data <- df_fin %>% group_by(A) %>% summarise(D=paste(D, collapse=","),
@@ -2026,6 +2053,17 @@ server <- function(input, output) {
                                                    P=paste(P, collapse=","),
                                                    D=paste(D, collapse=","))
     }
+    
+    data$D <- gsub('NA,|,NA', '', data$D)
+    data$D[nrow(data)] <- refine_unique(data$D)
+    data$A <- gsub('NA,|,NA', '', data$A)
+    data$A[nrow(data)]<- refine_unique(data$A)
+    data$P <- gsub('NA,|,NA', '', data$P)
+    data$P[nrow(data)] <- refine_unique(data$P)
+    data$R <- gsub('NA,|,NA', '', data$R)
+    data$R[nrow(data)]<- refine_unique(data$R)
+    data$S <- gsub('NA,|,NA', '', data$S)
+    data$S[nrow(data)]<- refine_unique(data$S)
     
     if (vals$anti_data_input != TRUE){
       data <- data %>%
