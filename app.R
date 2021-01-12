@@ -494,7 +494,14 @@ server <- function(input, output) {
         dupl <-  x[!duplicated(x)]
         paste(dupl, collapse = "__")
       })
-      return(type_3)
+      type_4 <- sapply(type_3, function(y){
+          if (y %in% renamed_dataframe$Code){
+            renamed_dataframe$Group[renamed_dataframe$Code == y]
+          } else {
+            y
+          }
+      })
+      return(type_4)
     }
     
     rename_data <- read.csv("rename.csv")
