@@ -137,14 +137,16 @@ server <- function(input, output, session) {
     is.integer(x) && length(x) == 0L
   }
   
-  anti_listen <- reactive({
-    list( input$anti_hybrid, input$anti_input_options)
+  biocircos_listen <- reactive({
+    list( vals$sempi_data,vals$rre_data, vals$deep_data, vals$anti_data, vals$prism_data, input$biocircos_color,
+          input$group_by, input$cluster_type, input$gene_filter,input$biodomain_filter,  input$score_c, input$score_d, 
+          input$score_a, input$rename, input$reset_name)
   })
     
   # Rective vals the app is using
   # Some dataframes that are used through the app + some vectors of untercepted values
   vals <- reactiveValues(deep_data = NULL, anti_data = NULL, rre_data=NULL, prism_data=NULL, chr_len = NULL, fullness = NULL,
-                         biocircos_deep = NULL, deep_data_input = FALSE,
+                         biocircos_deep = NULL, deep_data_input = FALSE,tracklist = NULL, chromosomes = NULL,
                          anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
                          seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
                          data_upload_count = 0, anti_type=NULL, prism_type=NULL, sempi_data = NULL, sempi_data_input= FALSE,
@@ -1352,7 +1354,7 @@ server <- function(input, output, session) {
     arc_labels <- c()
     arc_col <- c()
     
-
+    
     rename_data <- read.csv("rename.csv") %>% select(Group_color, Color)
     
     # ANTISMASH
@@ -1518,9 +1520,9 @@ server <- function(input, output, session) {
         arc_colors <-  '#b15928'
       }
     }
-
-
-
+    
+    
+    
     # Add to tracklist. Then it can be populated with links
     tracklist <- BioCircosArcTrack('myArcTrack', arcs_chromosomes, arcs_begin, arcs_end, 
                                    minRadius = 0.90, maxRadius = 0.97, labels = arc_labels,colors = arc_col )
@@ -1674,7 +1676,7 @@ server <- function(input, output, session) {
         output <- add_biocircos_data(deep_inter, anti_inter, biocircos_deep, biocircos_anti, "DeepBGC", "Antismash")
         vals$inter_d_ref_n <- output[[2]]
         vals$inter_a1  <- output[[1]]
-        deep_interact <- c(deep_interact,output[[2]] )
+        deep_interact <- c(deep_interact,biocircos_deep$ID[output[[2]]] )
         anti_interact <- c(anti_interact,output[[1]] )
         df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
         colnames(df_tmp) <- c("A", "D")
@@ -1752,14 +1754,14 @@ server <- function(input, output, session) {
     
     # DEEPBGC 
     if (vals$deep_data_input == TRUE){
-     
+      
       # Get interception of DeepBGC with rrefinder
       if (vals$rre_data_input == TRUE){
         output <- add_biocircos_data(rre_inter, deep_inter, biocircos_rre, biocircos_deep, "RRE", "DeepBGC")
         vals$inter_rre_d_n <- output[[2]]
         vals$inter_d_rre  <- output[[1]]
         rre_interact <- c(rre_interact,output[[2]] )
-        deep_interact <- c(deep_interact,output[[1]] )
+        deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]] )
         df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
         colnames(df_tmp) <- c("D", "R")
         df_d <- merge(df_d, df_tmp, all = T)
@@ -1778,14 +1780,13 @@ server <- function(input, output, session) {
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
         # Safe used local variables to the reactive ones
-        vals$inter_d_rre_ID <- biocircos_deep$ID[output[[1]]]
       }
       # Get interception of DeepBGC with PRISM
       if (vals$prism_data_input == TRUE){
         output <- add_biocircos_data(prism_inter, deep_inter, biocircos_prism, biocircos_deep, "PRISM", "DeepBGC")
         vals$inter_p_d_n <- output[[2]]
         vals$inter_d_p  <- output[[1]]
-        deep_interact <- c(deep_interact,output[[1]] )
+        deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]])
         prism_interact <- c(prism_interact,output[[2]] )
         df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
         colnames(df_tmp) <- c("D", "P")
@@ -1805,14 +1806,13 @@ server <- function(input, output, session) {
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
         # Safe used local variables to the reactive ones
-        vals$inter_d_p_ID <- biocircos_deep$ID[output[[1]]]
       }
       # Get interception of DeepBGC with SEMPI
       if (vals$sempi_data_input == TRUE){
         output <- add_biocircos_data(sempi_inter, deep_inter, biocircos_sempi, biocircos_deep, "SEMPI", "DeepBGC")
         vals$inter_s_d_n <- output[[2]]
         vals$inter_d_s  <- output[[1]]
-        deep_interact <- c(deep_interact,output[[1]] )
+        deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]] )
         sempi_interact <- c(sempi_interact,output[[2]] )
         df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
         colnames(df_tmp) <- c("D", "S")
@@ -1831,9 +1831,7 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
-        # Safe used local variables to the reactive ones
-        vals$inter_d_s_ID <- biocircos_deep$ID[output[[1]]]
-      }
+        }
       # Safe used local variables to the reactive ones
       vals$biocircos_deep <- biocircos_deep
       # Write csvs with locally used variables
@@ -1842,7 +1840,7 @@ server <- function(input, output, session) {
     
     # PRISM
     if (vals$prism_data_input == TRUE){
-     
+      
       # Get interception of PRISM with rrefinder
       if (vals$rre_data_input == TRUE){
         output <- add_biocircos_data(rre_inter, prism_inter, biocircos_rre, biocircos_prism, "RRE", "PRISM")
@@ -1896,7 +1894,7 @@ server <- function(input, output, session) {
       # Write csvs with locally used variables
       write.csv(biocircos_prism, "prism_biocircos.csv", row.names = F)
     }
-     
+    
     # RRE-FINDER 
     if (vals$rre_data_input == TRUE){
       
@@ -1935,9 +1933,9 @@ server <- function(input, output, session) {
       write.csv(biocircos_sempi, "sempi_biocircos.csv", row.names = F)
     }
     
- 
     
-   
+    
+    
     # Combine labels with mapply to one list
     link_labels <- mapply(function(x,y)  paste(x, y, sep = " | "), label_1, label_2 )
     
@@ -1955,7 +1953,6 @@ server <- function(input, output, session) {
                                                link_pos_start_1, chromosomes_end, link_pos_end, 
                                                link_pos_end_2, maxRadius = 0.85, labels = link_labels,
                                                displayLabel = FALSE)
-
     
     
     # Plot BioCircos
@@ -1996,8 +1993,7 @@ server <- function(input, output, session) {
       # Add label column to the dataframe, from which we will plot  
       deep_count$label <- rep("DeepBGC", length(deep_count$x))
       # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-      deep_count$Type <- deep_anot$product_class
-      # Add Start positions (to visualize on hover)
+      deep_count$Type <- deep_anot$Type
       deep_count$Start <- deep_anot$nucl_start
       # Add Stop positions (to visualize on hover)
       deep_count$Stop <- deep_anot$nucl_end
