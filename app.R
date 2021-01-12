@@ -1921,29 +1921,6 @@ server <- function(input, output, session) {
     # -----------------------------------------
     
     
-    add_biocircos_data_1 <- function(data1_inter, data2_inter, data1, data2, data1_label, data2_label){
-      inter_a1_t<- get_interception(data1_inter, data2_inter)
-      inter_s_rre_n <- unlist(inter_a1_t[2])
-      inter_rre_s <- unlist(inter_a1_t[1])
-      # Add link start. Just populate certain chromosome name times the lenght of interception 
-      chromosomes_start <- c(rep(data2_label, length(inter_rre_s)))
-      # Add link end. Just populate second output from the vectors, used above. 
-      chromosomes_end <- c(rep(data1_label, length(inter_s_rre_n)))
-      # Add links start positions as a start from dataframe. This vector is for chromosome start
-      link_pos_start <- as.numeric(c(data2$Start[inter_rre_s] ))
-      # Add links start positions as a start from dataframe. For chromosome start variable
-      link_pos_start_1 <- as.numeric(c(data2$Stop[inter_rre_s] ))
-      # Add links start position for a chromosome stop variable
-      link_pos_end <- as.numeric(c( data1$Start[inter_s_rre_n]))
-      # Add links start position for a chromosome stop position
-      link_pos_end_2 <- as.numeric(c(data1$Stop[inter_s_rre_n]))
-      label_1 <- c(sapply(inter_rre_s, function(x){x = paste(paste0(data2_label,":"), x, ",", data2$Type[x])})) 
-      label_2 <- c(sapply(inter_s_rre_n, function(x){x = paste(paste0(data1_label, ":"), x, ",", data1$Type[x])}))
-
-      return(list(inter_rre_s, inter_s_rre_n, chromosomes_start, chromosomes_end, link_pos_start, link_pos_start_1, link_pos_end, 
-                  link_pos_end_2, label_1, label_2))
-    }
-   
     add_biocircos_data <- function(data1_inter, data2_inter, data1, data2, data1_label, data2_label, rename_data, class){
       inter_a1_t<- get_interception(data1_inter, data2_inter)
       inter_s_rre_n <- unlist(inter_a1_t[2])
