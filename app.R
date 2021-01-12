@@ -559,6 +559,293 @@ server <- function(input, output, session) {
     write.csv(rename_data, "rename.csv", row.names = F)
   })
   
+  observeEvent(biocircos_listen(), {
+
+    # ANTISMASH
+    if (vals$anti_data_input == TRUE){
+      # Store data in local variable
+      biocircos_anti <- vals$anti_data
+    }
+    
+    #DEEPBGC
+    if (vals$deep_data_input == TRUE){
+      # Get vector of max values from chosen columns from deepbgc data
+      score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
+      score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
+      score_c <- apply(vals$deep_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
+      deep_data_chromo <- vals$deep_data %>%
+        mutate(score = apply(vals$deep_data %>%
+                               select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
+      # Cluster_type column. Here extract colnames, and assign max value to a new column
+      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
+      # If max score is under threshold, print "Under threshold"
+      deep_data_chromo <- deep_data_chromo%>%
+        mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "Under threshold"))
+      #Finally store deepbgc data in plotting variable. Do final scores processing 
+      biocircos_deep <- deep_data_chromo%>%
+        mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
+        filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , 
+               score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
+               num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
+      biocircos_deep['Start'] <- biocircos_deep$nucl_start
+      biocircos_deep['Stop'] <- biocircos_deep$nucl_end
+      biocircos_deep['Type'] <- biocircos_deep$product_class
+    }
+    
+    #RRE-FINDER
+    if (vals$rre_data_input == TRUE){
+      biocircos_rre <- data.frame(vals$rre_data)
+      biocircos_rre$Start <- as.numeric(biocircos_rre$Start)
+      biocircos_rre$Stop <- as.numeric(biocircos_rre$Stop)
+    }
+    
+    # PRISM
+    if (vals$prism_data_input == TRUE){
+      # Store data in local variable
+      biocircos_prism <- vals$prism_data
+    }
+    
+    #SEMPI
+    if (vals$sempi_data_input == TRUE){
+      # Store data in local variable
+      biocircos_sempi <- vals$sempi_data
+    }
+    
+    
+
+    # Function to get interception between two matrices. Returns a list of two elements - IDs from first matrix and 
+    # from second one. IDs are duplicated, if intercepted more than one time
+    get_interception <- function(x,y) {
+      interseption <- annotate(x, y)
+      inter_x <- unlist(interseption, use.names=FALSE)
+      inter_tmp <- which(sapply(interseption,length )!=0)
+      inter_y <- c()
+      if (length(inter_tmp) != 0) {
+        tmp <- sapply(interseption,length)
+        for (i in seq(1:length(tmp[which(tmp != 0)]))) {
+          inter_y <- c(inter_y,rep(inter_tmp[i],tmp[which(tmp != 0)][i]))
+        }}
+      return(list(inter_x, inter_y))
+    }
+    
+    # REVERSE THE ORDER, ACCORDING TO THE QUANTITY OF THE LINKS FOR _INTER COMPUTATION?
+    
+    # ANTISMASH
+    if (vals$anti_data_input == TRUE){
+      anti_inter <- biocircos_anti %>%
+        select(Start, Stop) %>%
+        as.matrix()
+    }
+    
+    # PRISM
+    if (vals$prism_data_input == TRUE){
+      # Store PRISM data start/stop as matrix  for further interception calculation
+      prism_inter <- biocircos_prism %>%
+        select(Start, Stop) %>%
+        as.matrix()
+    }
+    
+    #SEMPI
+    if (vals$sempi_data_input == TRUE){
+      # Store SEMPI data start/stop as matrix  for further interception calculation
+      sempi_inter <- biocircos_sempi %>%
+        select(Start, Stop) %>%
+        as.matrix()
+    }
+    #RRE-FINDER
+    if (vals$rre_data_input == TRUE){
+      # Store RREFinder data start/stop as matrix  for futher interception calculation
+      rre_inter <- biocircos_rre%>%
+        select(Start, Stop) %>%
+        as.matrix()
+    }
+    
+    #DEEPBGC
+    if (vals$deep_data_input == TRUE){
+      # Store deepbgc data start/stop as matrix  for futher interception calculation
+      deep_inter <- biocircos_deep %>% 
+        select(nucl_start, nucl_end) %>%
+        as.matrix()
+    }
+    
+    #CALCULATIONS
+    # -----------------------------------------
+    
+    
+    add_biocircos_data <- function(data1_inter, data2_inter, data1, data2, data1_label, data2_label){
+      inter_a1_t<- get_interception(data1_inter, data2_inter)
+      inter_s_rre_n <- unlist(inter_a1_t[2])
+      inter_rre_s <- unlist(inter_a1_t[1])
+      # Add link start. Just populate certain chromosome name times the lenght of interception 
+      chromosomes_start <- c(rep(data2_label, length(inter_rre_s)))
+      # Add link end. Just populate second output from the vectors, used above. 
+      chromosomes_end <- c(rep(data1_label, length(inter_s_rre_n)))
+      # Add links start positions as a start from dataframe. This vector is for chromosome start
+      link_pos_start <- as.numeric(c(data2$Start[inter_rre_s] ))
+      # Add links start positions as a start from dataframe. For chromosome start variable
+      link_pos_start_1 <- as.numeric(c(data2$Stop[inter_rre_s] + 50000 ))
+      # Add links start position for a chromosome stop variable
+      link_pos_end <- as.numeric(c( data1$Start[inter_s_rre_n]))
+      # Add links start position for a chromosome stop position
+      link_pos_end_2 <- as.numeric(c(data1$Stop[inter_s_rre_n]))
+      label_1 <- c(sapply(inter_rre_s, function(x){x = paste(paste0(data2_label,":"), x, ",", data2$Type[x])})) 
+      label_2 <- c(sapply(inter_s_rre_n, function(x){x = paste(paste0(data1_label, ":"), x, ",", data1$Type[x])}))
+      return(list(inter_rre_s, inter_s_rre_n, chromosomes_start, chromosomes_end, link_pos_start, link_pos_start_1, link_pos_end, 
+                  link_pos_end_2, label_1, label_2))
+    }
+    
+    rre_interact <- c()
+    anti_interact <- c()
+    prism_interact <- c()
+    deep_interact <- c()
+    sempi_interact <- c()
+    
+    df_a <- data.frame(A=NA, D=NA, P=NA, R=NA, S=NA)
+    df_d <- data.frame(D=NA, P=NA, R=NA, S=NA)
+    df_p = data_frame(P=NA, R=NA, S=NA)
+    df_r =data_frame(R=NA, S=NA)
+    
+    # ANTISMASH
+    if (vals$anti_data_input == TRUE){
+      
+      # Get interception of antismash with PRISM
+      if (vals$prism_data_input == TRUE){
+        output <- add_biocircos_data(prism_inter, anti_inter, biocircos_prism, biocircos_anti, "PRISM", "Antismash")
+        anti_interact <- c(anti_interact,output[[1]] )
+        prism_interact <- c(prism_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("A", "P")
+        df_a <- merge(df_a, df_tmp, all = T)
+      }
+      # Get interception of antismash with deepbgc
+      if (vals$deep_data_input == TRUE){
+        output <- add_biocircos_data(deep_inter, anti_inter, biocircos_deep, biocircos_anti, "DeepBGC", "Antismash")
+        deep_interact <- c(deep_interact,biocircos_deep$ID[output[[2]]] )
+        anti_interact <- c(anti_interact,output[[1]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("A", "D")
+        df_a <- merge(df_a, df_tmp, all = T)
+      } 
+      # Get interception of antismash with RREFinder
+      if (vals$rre_data_input == TRUE){
+        output <- add_biocircos_data(rre_inter, anti_inter, biocircos_rre, biocircos_anti, "RRE", "Antismash")
+        rre_interact <- c(rre_interact,output[[2]] )
+        anti_interact <- c(anti_interact,output[[1]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("A", "R")
+        df_a <- merge(df_a, df_tmp, all = T)
+      }
+      # Get interception of antismash with SEMPI
+      if (vals$sempi_data_input == TRUE){
+        output <- add_biocircos_data(sempi_inter, anti_inter, biocircos_sempi, biocircos_anti, "SEMPI", "Antismash")
+        anti_interact <- c(anti_interact,output[[1]] )
+        sempi_interact <- c(sempi_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("A", "S")
+        df_a <- merge(df_a, df_tmp, all = T)
+      }
+      # Write csvs with locally used variables
+    }
+    
+    # DEEPBGC 
+    if (vals$deep_data_input == TRUE){
+      
+      # Get interception of DeepBGC with rrefinder
+      if (vals$rre_data_input == TRUE){
+        output <- add_biocircos_data(rre_inter, deep_inter, biocircos_rre, biocircos_deep, "RRE", "DeepBGC")
+        rre_interact <- c(rre_interact,output[[2]] )
+        deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("D", "R")
+        df_d <- merge(df_d, df_tmp, all = T)
+        # Safe used local variables to the reactive ones
+      }
+      # Get interception of DeepBGC with PRISM
+      if (vals$prism_data_input == TRUE){
+        output <- add_biocircos_data(prism_inter, deep_inter, biocircos_prism, biocircos_deep, "PRISM", "DeepBGC")
+        deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]])
+        prism_interact <- c(prism_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("D", "P")
+        df_d <- merge(df_d, df_tmp, all = T)
+      
+        # Safe used local variables to the reactive ones
+      }
+      # Get interception of DeepBGC with SEMPI
+      if (vals$sempi_data_input == TRUE){
+        output <- add_biocircos_data(sempi_inter, deep_inter, biocircos_sempi, biocircos_deep, "SEMPI", "DeepBGC")
+        deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]] )
+        sempi_interact <- c(sempi_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("D", "S")
+        df_d <- merge(df_d, df_tmp, all = T)
+      }
+      # Safe used local variables to the reactive ones
+      vals$biocircos_deep <- biocircos_deep
+      # Write csvs with locally used variables
+    }
+    
+    # PRISM
+    if (vals$prism_data_input == TRUE){
+      
+      # Get interception of PRISM with rrefinder
+      if (vals$rre_data_input == TRUE){
+        output <- add_biocircos_data(rre_inter, prism_inter, biocircos_rre, biocircos_prism, "RRE", "PRISM")
+        rre_interact <- c(rre_interact,output[[2]] )
+        prism_interact <- c(prism_interact,output[[1]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("P", "R")
+        df_p <- merge(df_p, df_tmp, all = T)
+      }
+      # Get interception of PRISM with SEMPI
+      if (vals$sempi_data_input == TRUE){
+        output <- add_biocircos_data(sempi_inter, prism_inter, biocircos_sempi, biocircos_prism, "SEMPI", "PRISM")
+        prism_interact <- c(prism_interact,output[[1]] )
+        sempi_interact <- c(sempi_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("P", "S")
+        df_p <- merge(df_p, df_tmp, all = T)
+        
+      }
+      # Write csvs with locally used variables
+    }
+    
+    # RRE-FINDER 
+    if (vals$rre_data_input == TRUE){
+      
+      # Get interception of RRE with SEMPI
+      if (vals$sempi_data_input == TRUE){
+        output <- add_biocircos_data(sempi_inter, rre_inter, biocircos_sempi, biocircos_rre, "SEMPI", "RRE")
+        rre_interact <- c(rre_interact,output[[1]] )
+        sempi_interact <- c(sempi_interact,output[[2]] )
+        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        colnames(df_tmp) <- c("R", "S")
+        df_r <- merge(df_r, df_tmp, all = T)
+        
+      }
+      # Write csvs with locally used variables
+      write.csv(biocircos_rre, "rre_biocircos.csv", row.names = F)
+    }
+    
+    #SEMPI (NO VALUE)
+    if (vals$sempi_data_input == TRUE){
+      # Write csvs with locally used variables
+    }
+    
+    
+    vals$df_a <- df_a
+    vals$df_d <- df_d
+    vals$df_p <- df_p
+    vals$df_r <- df_r
+    vals$rre_interact <- rre_interact
+    vals$anti_interact <- anti_interact
+    vals$prism_interact <- prism_interact
+    vals$deep_interact <- deep_interact
+    vals$sempi_interact <- sempi_interact
+
+    
+  })
+  
   
   #Render output plots
 
@@ -1519,6 +1806,7 @@ server <- function(input, output, session) {
       } else {
         arc_colors <-  '#b15928'
       }
+      arc_col <- c(arc_col,arc_colors )
     }
     
     
