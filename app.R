@@ -1663,11 +1663,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#b15928'
+            '#40B9D4'
           }
         })
       } else {
-        arc_colors <- '#b15928'
+        arc_colors <- '#40B9D4'
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -1710,11 +1710,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#b15928'
+            #40B9D4'
           }
         })
       } else {
-        arc_colors <- '#b15928'
+        arc_colors <- '#40B9D4'
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -1743,11 +1743,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#b15928'
+            '#40B9D4'
           }
         })
       } else {
-        arc_colors <- '#b15928'
+        arc_colors <-'#40B9D4'
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -1771,11 +1771,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#b15928'
+            '#40B9D4'
           }
         })
       } else {
-        arc_colors <- '#b15928'
+        arc_colors <- '#40B9D4'
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -1800,11 +1800,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#b15928'
+            '#40B9D4'
           }
         })
       } else {
-        arc_colors <-  '#b15928'
+        arc_colors <-  '#40B9D4'
       }
       arc_col <- c(arc_col,arc_colors )
     }
