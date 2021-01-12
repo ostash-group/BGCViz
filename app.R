@@ -60,11 +60,6 @@ ui <- fluidPage(
       checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
       h3(id = "sempi_header","SEMPI data options:"),
       checkboxInput("sempi_hybrid", "Visualize SEMPI BGC with several types as 'Hybrid'"),
-      h3(id = "data_filter","Data filtering:"),
-      fileInput("rename_data",
-               "Upload dataframe for grouping"),
-      actionButton("rename", "Rename"),
-      actionButton("reset_name", "Reset"),
       h3(id = "genes_on_chr","Genes on chromosome plot controls:"),
       selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
                                                               "DeepBGC" = "DeepBGC",
@@ -82,6 +77,10 @@ ui <- fluidPage(
       checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
       h3("Improve visualization:"),
       #Improve RREFinder annotated BCG visibility
+      fileInput("rename_data",
+               "Upload dataframe for grouping"),
+      actionButton("rename", "Rename"),
+      actionButton("reset_name", "Reset"),
       checkboxInput("rre_width", "Add thickness (+50000) to RRE results visualization (do not alter any results)"),
       checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
       h3(id="data_comparison_header","Comparison with DeepBGC plots:"),
@@ -519,6 +518,11 @@ server <- function(input, output) {
     vals$sempi_data['Type2'] <- vals$sempi_data['Type']
     vals$ prism_data['Type2'] <- vals$ prism_data['Type']
     vals$biocircos_color = FALSE
+  })
+  
+  observeEvent(input$rename_data,{
+    rename_data <- read.csv(input$rename_data$datapath)
+    write.csv(rename_data, "rename.csv", row.names = F)
   })
   
   
