@@ -129,7 +129,7 @@ ui <- fluidPage(
 )
 
 # Define server logic
-server <- function(input, output) {
+server <- function(input, output, session) {
   options(shiny.maxRequestSize=100*1024^2)
   # Small function to make integers zeros
   is.integer0 <- function(x)
@@ -233,6 +233,13 @@ server <- function(input, output) {
     write.csv(vals$sempi_data, "sempi_data.csv", row.names = F)
     vals$sempi_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    if (vals$data_upload_count == 1){
+      updateSelectInput(session, "ref",
+                      selected = "SEMPI" )
+      updateSelectInput(session, "group_by",
+                        selected = "S" )
+    }
+    
   })
   
   # Observe PRISM data input and save in reactive dataframe
@@ -286,6 +293,12 @@ server <- function(input, output) {
     write.csv(vals$prism_data, "prism_data.csv", row.names = F)
     vals$prism_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    if (vals$data_upload_count == 1){
+      updateSelectInput(session, "ref",
+                        selected = "PRISM" )
+      updateSelectInput(session, "group_by",
+                        selected = "P" )
+    }
   })
   
   #Read and clean DeepBGC data
@@ -303,6 +316,12 @@ server <- function(input, output) {
     write.csv(vals$deep_data, "deep_data.csv", row.names = F)
     vals$deep_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    if (vals$data_upload_count == 1){
+      updateSelectInput(session, "ref",
+                        selected = "DeepBGC" )
+      updateSelectInput(session, "group_by",
+                        selected = "D" )
+    }
   })
   
   # Read RREFinder data
@@ -322,6 +341,12 @@ server <- function(input, output) {
     write.csv(vals$rre_data, "rre_data.csv", row.names = F)
     vals$rre_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    if (vals$data_upload_count == 1){
+      updateSelectInput(session, "ref",
+                        selected = "RRE-Finder" )
+      updateSelectInput(session, "group_by",
+                        selected = "R" )
+    }
   })
   # Observe input of chromosome length
   observeEvent(input$chr_len,{
