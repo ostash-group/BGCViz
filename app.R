@@ -83,6 +83,19 @@ ui <- fluidPage(
       actionButton("reset_name", "Reset"),
       checkboxInput("rre_width", "Add thickness (+50000) to RRE results visualization (do not alter any results)"),
       checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
+      checkboxInput("label_color", "Make links in biocircos colorful, based on the class"),
+      selectInput("label_color_class", "Choose the mode to color the links", choices = c("Hierarchical-based" = "H",
+                                                                                           "Purity-based" = "P",
+                                                                                           "Reference column-based" = "R"
+                                                                                         ),
+                  selected = 'H'),
+      selectInput("ref_col_biocircos", "Choose reference column to color the links", choices = c("Antismash" = "Antismash",
+                                                                                         "PRISM" = "PRISM",
+                                                                                         "RRE-Finder" = "RRE",
+                                                                                         'DeepBGC' = "DeepBGC",
+                                                                                         "SEMPI" = "SEMPI"
+      ),
+      selected = 'Antismash'),
       h3(id="data_comparison_header","Comparison with DeepBGC plots:"),
       selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c("Antismash" = "A",
                                                                      "PRISM" = "P",
@@ -150,10 +163,12 @@ server <- function(input, output, session) {
                          anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
                          seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
                          data_upload_count = 0, anti_type=NULL, prism_type=NULL, sempi_data = NULL, sempi_data_input= FALSE,
-                         sempi_type = NULL, biocircos_color = NULL,
+                         sempi_type = NULL, biocircos_color = NULL, rename_data = NULL,
                          rre_interact = NULL, anti_interact = NULL, prism_interact = NULL, deep_interact = NULL,  
                          sempi_interact = NULL, df_a = NULL, df_d = NULL, df_p = NULL, df_r = NULL
                          )
+  
+  vals$rename_data <- read.csv("rename.csv")
   
   # Observe antismash data input and save as reactive value
   observeEvent(input$anti_data,{
@@ -531,14 +546,18 @@ server <- function(input, output, session) {
       return(type_4)
     }
     
-    rename_data <- read.csv("rename.csv")
+    rename_data <- vals$rename_data
     anti_data <- read.csv("anti_data.csv")
     sempi_data <- read.csv("sempi_data.csv")
     prism_data <- read.csv("prism_data.csv")
+    
+    vals$anti_type <- rename_vector(anti_data, rename_data)
+    vals$prism_type <- rename_vector(sempi_data, rename_data)
+    vals$sempi_type <- rename_vector(prism_data, rename_data)
 
-    anti_data['Type2'] <- rename_vector(anti_data, rename_data)
-    sempi_data['Type2'] <- rename_vector(sempi_data, rename_data)
-    prism_data['Type2'] <- rename_vector(prism_data, rename_data)
+    anti_data['Type2'] <- vals$anti_type
+    sempi_data['Type2'] <- vals$prism_type
+    prism_data['Type2'] <-  vals$sempi_type
     
     vals$anti_data <- anti_data
     vals$sempi_data <- sempi_data
@@ -556,6 +575,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$rename_data,{
     rename_data <- read.csv(input$rename_data$datapath)
+    vals$rename_data <- rename_data
     write.csv(rename_data, "rename.csv", row.names = F)
   })
   
@@ -1642,7 +1662,7 @@ server <- function(input, output, session) {
     arc_col <- c()
     
     
-    rename_data <- read.csv("rename.csv") %>% select(Group_color, Color)
+    rename_data <- vals$rename_data
     
     # ANTISMASH
     if (vals$anti_data_input == TRUE){
@@ -1695,6 +1715,7 @@ server <- function(input, output, session) {
       biocircos_deep['Start'] <- biocircos_deep$nucl_start
       biocircos_deep['Stop'] <- biocircos_deep$nucl_end
       biocircos_deep['Type'] <- biocircos_deep$product_class
+      biocircos_deep['Type2'] <- biocircos_deep$product_class
       #Make chromosome list for Biocircos plot. Use chr_len as an input
       Biocircos_chromosomes[["DeepBGC"]] <- vals$chr_len
       #Add arcs. Quantity of arcs is length of dataframes
@@ -1710,7 +1731,7 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            #40B9D4'
+            '#40B9D4'
           }
         })
       } else {
@@ -1724,6 +1745,7 @@ server <- function(input, output, session) {
       biocircos_rre <- data.frame(vals$rre_data)
       biocircos_rre$Start <- as.numeric(biocircos_rre$Start)
       biocircos_rre$Stop <- as.numeric(biocircos_rre$Stop)
+      biocircos_rre['Type2'] <- biocircos_rre$Type
       #Make chromosome list for Biocircos plot. Use chr_len as an input
       Biocircos_chromosomes[["RRE"]] <- vals$chr_len
       #Add arcs. Quantity of arcs is length of dataframes
@@ -1854,6 +1876,7 @@ server <- function(input, output, session) {
     link_pos_end_2 <- c()
     label_1 <- c()
     label_2 <- c()
+    label_color <- c()
     # REVERSE THE ORDER, ACCORDING TO THE QUANTITY OF THE LINKS FOR _INTER COMPUTATION?
     
     # ANTISMASH
@@ -1898,7 +1921,7 @@ server <- function(input, output, session) {
     # -----------------------------------------
     
     
-    add_biocircos_data <- function(data1_inter, data2_inter, data1, data2, data1_label, data2_label){
+    add_biocircos_data_1 <- function(data1_inter, data2_inter, data1, data2, data1_label, data2_label){
       inter_a1_t<- get_interception(data1_inter, data2_inter)
       inter_s_rre_n <- unlist(inter_a1_t[2])
       inter_rre_s <- unlist(inter_a1_t[1])
@@ -1909,15 +1932,98 @@ server <- function(input, output, session) {
       # Add links start positions as a start from dataframe. This vector is for chromosome start
       link_pos_start <- as.numeric(c(data2$Start[inter_rre_s] ))
       # Add links start positions as a start from dataframe. For chromosome start variable
-      link_pos_start_1 <- as.numeric(c(data2$Stop[inter_rre_s] + 50000 ))
+      link_pos_start_1 <- as.numeric(c(data2$Stop[inter_rre_s] ))
       # Add links start position for a chromosome stop variable
       link_pos_end <- as.numeric(c( data1$Start[inter_s_rre_n]))
       # Add links start position for a chromosome stop position
       link_pos_end_2 <- as.numeric(c(data1$Stop[inter_s_rre_n]))
       label_1 <- c(sapply(inter_rre_s, function(x){x = paste(paste0(data2_label,":"), x, ",", data2$Type[x])})) 
       label_2 <- c(sapply(inter_s_rre_n, function(x){x = paste(paste0(data1_label, ":"), x, ",", data1$Type[x])}))
+
       return(list(inter_rre_s, inter_s_rre_n, chromosomes_start, chromosomes_end, link_pos_start, link_pos_start_1, link_pos_end, 
                   link_pos_end_2, label_1, label_2))
+    }
+   
+    add_biocircos_data <- function(data1_inter, data2_inter, data1, data2, data1_label, data2_label, rename_data, class){
+      inter_a1_t<- get_interception(data1_inter, data2_inter)
+      inter_s_rre_n <- unlist(inter_a1_t[2])
+      inter_rre_s <- unlist(inter_a1_t[1])
+      # Add link start. Just populate certain chromosome name times the lenght of interception 
+      chromosomes_start <- c(rep(data2_label, length(inter_rre_s)))
+      # Add link end. Just populate second output from the vectors, used above. 
+      chromosomes_end <- c(rep(data1_label, length(inter_s_rre_n)))
+      # Add links start positions as a start from dataframe. This vector is for chromosome start
+      link_pos_start <- as.numeric(c(data2$Start[inter_rre_s] ))
+      # Add links start positions as a start from dataframe. For chromosome start variable
+      link_pos_start_1 <- as.numeric(c(data2$Stop[inter_rre_s]))
+      # Add links start position for a chromosome stop variable
+      link_pos_end <- as.numeric(c( data1$Start[inter_s_rre_n]))
+      # Add links start position for a chromosome stop position
+      link_pos_end_2 <- as.numeric(c(data1$Stop[inter_s_rre_n]))
+      label_1 <- c(sapply(inter_rre_s, function(x){x = paste(paste0(data2_label,":"), x, ",", data2$Type[x])})) 
+      label_2 <- c(sapply(inter_s_rre_n, function(x){x = paste(paste0(data1_label, ":"), x, ",", data1$Type[x])}))
+      if (class == 'P'){
+        subset_vec <- data2$Type2[inter_rre_s] == data1$Type2[inter_s_rre_n]
+        label_color <- c(sapply(data2$Type2[inter_rre_s], function (x){
+          if (x %in% rename_data$Group_color) {
+            rename_data$Color[rename_data$Group_color == x]
+          }
+          else{
+            '#6a3d9a'
+          }
+        }))
+        for (t in seq(1:length(label_color))){
+          if (subset_vec[t] == F){
+            label_color[t] <- '#40B9D4'
+          }
+        }
+      } else if (class == 'H'){
+        if (grep(data1_label, data$Hierarchy) < (grep(data2_label, data$Hierarchy))){
+          label_color <- c(sapply(data1$Type2[inter_s_rre_n], function (x){
+          if (x %in% rename_data$Group_color) {
+            rename_data$Color[rename_data$Group_color == x]
+          }
+          else{
+            '#6a3d9a'
+          }
+        }))
+        } else {
+          label_color <- c(sapply(data2$Type2[inter_rre_s], function (x){
+            if (x %in% rename_data$Group_color) {
+              rename_data$Color[rename_data$Group_color == x]
+            }
+            else{
+              '#6a3d9a'
+            }
+          }))
+        }
+      }else if (class == 'R'){
+        if (data2_label == input$ref_col_biocircos){
+          label_color <- c(sapply(data1$Type2[inter_s_rre_n], function (x){
+            if (x %in% rename_data$Group_color) {
+              rename_data$Color[rename_data$Group_color == x]
+            }
+            else{
+              '#6a3d9a'
+            }
+          }))
+        } else if (data1_label == input$ref_col_biocircos){
+          label_color <- c(sapply(data2$Type2[inter_rre_s], function (x){
+            if (x %in% rename_data$Group_color) {
+              rename_data$Color[rename_data$Group_color == x]
+            }
+            else{
+              '#6a3d9a'
+            }
+          }))
+        } else{
+          label_color <- rep('#40B9D4', length(chromosomes_start))
+        }
+      } else {
+        label_color <- rep('#40B9D4', length(chromosomes_start))
+      }
+      return(list(inter_rre_s, inter_s_rre_n, chromosomes_start, chromosomes_end, link_pos_start, link_pos_start_1, link_pos_end, 
+                  link_pos_end_2, label_1, label_2, label_color))
     }
     
     rre_interact <- c()
@@ -1936,7 +2042,7 @@ server <- function(input, output, session) {
       
       # Get interception of antismash with PRISM
       if (vals$prism_data_input == TRUE){
-        output <- add_biocircos_data(prism_inter, anti_inter, biocircos_prism, biocircos_anti, "PRISM", "Antismash")
+        output <- add_biocircos_data(prism_inter, anti_inter, biocircos_prism, biocircos_anti, "PRISM", "Antismash", rename_data, input$label_color_class)
         vals$inter_p_ref_n <- output[[2]]
         vals$inter_a3 <- output[[1]]
         anti_interact <- c(anti_interact,output[[1]] )
@@ -1958,10 +2064,11 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
+        label_color = c(label_color, output[[11]] )
       }
       # Get interception of antismash with deepbgc
       if (vals$deep_data_input == TRUE){
-        output <- add_biocircos_data(deep_inter, anti_inter, biocircos_deep, biocircos_anti, "DeepBGC", "Antismash")
+        output <- add_biocircos_data(deep_inter, anti_inter, biocircos_deep, biocircos_anti, "DeepBGC", "Antismash", rename_data, input$label_color_class)
         vals$inter_d_ref_n <- output[[2]]
         vals$inter_a1  <- output[[1]]
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[2]]] )
@@ -1983,12 +2090,12 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
+        label_color = c(label_color, output[[11]] )
         # Safe used local variables to the reactive ones
-        vals$inter_d_ref_n_ID <- biocircos_deep$ID[output[[2]]]
       } 
       # Get interception of antismash with RREFinder
       if (vals$rre_data_input == TRUE){
-        output <- add_biocircos_data(rre_inter, anti_inter, biocircos_rre, biocircos_anti, "RRE", "Antismash")
+        output <- add_biocircos_data(rre_inter, anti_inter, biocircos_rre, biocircos_anti, "RRE", "Antismash", rename_data, input$label_color_class)
         vals$inter_rre_ref_n <- output[[2]]
         vals$inter_a2  <- output[[1]]
         rre_interact <- c(rre_interact,output[[2]] )
@@ -2010,10 +2117,11 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
+        label_color = c(label_color, output[[11]] )
       }
       # Get interception of antismash with SEMPI
       if (vals$sempi_data_input == TRUE){
-        output <- add_biocircos_data(sempi_inter, anti_inter, biocircos_sempi, biocircos_anti, "SEMPI", "Antismash")
+        output <- add_biocircos_data(sempi_inter, anti_inter, biocircos_sempi, biocircos_anti, "SEMPI", "Antismash", rename_data, input$label_color_class)
         vals$inter_s_ref_n <- output[[2]]
         vals$inter_a4  <- output[[1]]
         anti_interact <- c(anti_interact,output[[1]] )
@@ -2035,6 +2143,7 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
+        label_color = c(label_color, output[[11]] )
       }
       # Write csvs with locally used variables
       write.csv(biocircos_anti, "antismash_biocircos.csv", row.names = F)
@@ -2045,7 +2154,7 @@ server <- function(input, output, session) {
       
       # Get interception of DeepBGC with rrefinder
       if (vals$rre_data_input == TRUE){
-        output <- add_biocircos_data(rre_inter, deep_inter, biocircos_rre, biocircos_deep, "RRE", "DeepBGC")
+        output <- add_biocircos_data(rre_inter, deep_inter, biocircos_rre, biocircos_deep, "RRE", "DeepBGC", rename_data, input$label_color_class)
         vals$inter_rre_d_n <- output[[2]]
         vals$inter_d_rre  <- output[[1]]
         rre_interact <- c(rre_interact,output[[2]] )
@@ -2067,11 +2176,12 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
+        label_color = c(label_color, output[[11]] )
         # Safe used local variables to the reactive ones
       }
       # Get interception of DeepBGC with PRISM
       if (vals$prism_data_input == TRUE){
-        output <- add_biocircos_data(prism_inter, deep_inter, biocircos_prism, biocircos_deep, "PRISM", "DeepBGC")
+        output <- add_biocircos_data(prism_inter, deep_inter, biocircos_prism, biocircos_deep, "PRISM", "DeepBGC", rename_data, input$label_color_class)
         vals$inter_p_d_n <- output[[2]]
         vals$inter_d_p  <- output[[1]]
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]])
@@ -2093,11 +2203,12 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
+        label_color = c(label_color, output[[11]] )
         # Safe used local variables to the reactive ones
       }
       # Get interception of DeepBGC with SEMPI
       if (vals$sempi_data_input == TRUE){
-        output <- add_biocircos_data(sempi_inter, deep_inter, biocircos_sempi, biocircos_deep, "SEMPI", "DeepBGC")
+        output <- add_biocircos_data(sempi_inter, deep_inter, biocircos_sempi, biocircos_deep, "SEMPI", "DeepBGC", rename_data, input$label_color_class)
         vals$inter_s_d_n <- output[[2]]
         vals$inter_d_s  <- output[[1]]
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]] )
@@ -2119,6 +2230,7 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
+        label_color = c(label_color, output[[11]] )
         }
       # Safe used local variables to the reactive ones
       vals$biocircos_deep <- biocircos_deep
@@ -2131,7 +2243,7 @@ server <- function(input, output, session) {
       
       # Get interception of PRISM with rrefinder
       if (vals$rre_data_input == TRUE){
-        output <- add_biocircos_data(rre_inter, prism_inter, biocircos_rre, biocircos_prism, "RRE", "PRISM")
+        output <- add_biocircos_data(rre_inter, prism_inter, biocircos_rre, biocircos_prism, "RRE", "PRISM", rename_data, input$label_color_class)
         vals$inter_rre_p_n <- output[[2]]
         vals$inter_p_rre  <- output[[1]]
         rre_interact <- c(rre_interact,output[[2]] )
@@ -2153,10 +2265,11 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
+        label_color = c(label_color, output[[11]] )
       }
       # Get interception of PRISM with SEMPI
       if (vals$sempi_data_input == TRUE){
-        output <- add_biocircos_data(sempi_inter, prism_inter, biocircos_sempi, biocircos_prism, "SEMPI", "PRISM")
+        output <- add_biocircos_data(sempi_inter, prism_inter, biocircos_sempi, biocircos_prism, "SEMPI", "PRISM", rename_data, input$label_color_class)
         vals$inter_s_p_n <- output[[2]]
         vals$inter_p_s  <- output[[1]]
         prism_interact <- c(prism_interact,output[[1]] )
@@ -2178,6 +2291,7 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
+        label_color = c(label_color, output[[11]] )
       }
       # Write csvs with locally used variables
       write.csv(biocircos_prism, "prism_biocircos.csv", row.names = F)
@@ -2188,7 +2302,7 @@ server <- function(input, output, session) {
       
       # Get interception of RRE with SEMPI
       if (vals$sempi_data_input == TRUE){
-        output <- add_biocircos_data(sempi_inter, rre_inter, biocircos_sempi, biocircos_rre, "SEMPI", "RRE")
+        output <- add_biocircos_data(sempi_inter, rre_inter, biocircos_sempi, biocircos_rre, "SEMPI", "RRE", rename_data, input$label_color_class)
         vals$inter_s_rre_n <- output[[2]]
         vals$inter_rre_s  <- output[[1]]
         rre_interact <- c(rre_interact,output[[1]] )
@@ -2210,6 +2324,7 @@ server <- function(input, output, session) {
         link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
         label_1 <- c(label_1, output[[9]])
         label_2 <- c(label_2, output[[10]])
+        label_color = c(label_color, output[[11]] )
       }
       # Write csvs with locally used variables
       write.csv(biocircos_rre, "rre_biocircos.csv", row.names = F)
@@ -2237,10 +2352,26 @@ server <- function(input, output, session) {
     vals$deep_interact <- deep_interact
     vals$sempi_interact <- sempi_interact
     # Add links and labels to the track list for subsequent visualization 
-    tracklist = tracklist + BioCircosLinkTrack('myLinkTrack', chromosomes_start, link_pos_start, 
+    if (input$label_color == T){
+      group_colors <- count(unlist(label_color))
+      for (i in seq(1:dim(group_colors)[1])){
+        subset <- unname( which(label_color %in% group_colors$x[i]))
+        tracklist = tracklist + BioCircosLinkTrack(as.character(i), chromosomes_start[subset], link_pos_start[subset], 
+                                                   link_pos_start_1[subset], chromosomes_end[subset], link_pos_end[subset], 
+                                                   link_pos_end_2[subset], maxRadius = 0.85, labels = link_labels[subset],
+                                                   displayLabel = FALSE, color = group_colors$x[i])
+      }
+    } else{
+      tracklist = tracklist + BioCircosLinkTrack('myLinkTrack_master', chromosomes_start, link_pos_start, 
                                                link_pos_start_1, chromosomes_end, link_pos_end, 
                                                link_pos_end_2, maxRadius = 0.85, labels = link_labels,
-                                               displayLabel = FALSE)
+                                               displayLabel = FALSE, color = '#40B9D4')
+    }
+    
+    
+    
+   
+    
     
     
     # Plot BioCircos
