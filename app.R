@@ -16,15 +16,13 @@ library(IntervalSurgeon)
 library(plotly)
 library(BioCircos)
 library(ggplot2)
-library(reticulate)
 library(shinyjs)
 library(rjson)
 library(stringr)
 library(RSQLite)
+library(readr)
 
 
-
-use_virtualenv("clinker")
 # Define UI 
 ui <- fluidPage(
   
@@ -38,7 +36,7 @@ ui <- fluidPage(
       # Data upload
       h3("Data upload and necesary input:"),
       h5("ANTISMASH:"),
-      checkboxInput("anti_input_options", "My AntiSMASH data is a dataframe, not json results file from antismash"),
+      checkboxInput("anti_input_options", "My AntiSMASH data is a dataframe, not json results file from antismash", value = T),
       fileInput("anti_data",
                 "Upload antismash data"),
       h5("PRISM:"),
@@ -212,8 +210,8 @@ server <- function(input, output) {
     # Add chromosome column
     anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
     # Type magic
-    anti_data$Type <- tolower(anti_data$Type)
-    anti_data['Type2'] <- tolower(anti_data$Type)
+    anti_data$Type <- str_trim(tolower(anti_data$Type))
+    anti_data['Type2'] <- str_trim(tolower(anti_data$Type))
     vals$anti_type <- anti_data$Type2
     vals$anti_data <- anti_data
     # Save file
@@ -223,30 +221,9 @@ server <- function(input, output) {
   })
   
   observeEvent(input$sempi_data,{
-    conn <- dbConnect(RSQLite::SQLite(), input$sempi_data$datapath)
     
-    dbListTables(conn)
-    
-    data <- dbGetQuery(conn, "SELECT * FROM tbl_segments")
-    
-    
-    data <- data %>%
-      filter(trackid==6)
-
-
-      types <- sapply(data$name, function(x){
-        tmp <- str_trim(x)
-        tmp <- gsub(", ", "", tmp)
-        gsub(" ", "__", tmp)
-      })
-
-    sempi_data <- data.frame(cbind(seq(1:length(data$trackid)),data$start, data$end,as.character(types)))
-    colnames(sempi_data) <- c("Cluster", "Start", "Stop", "Type")
-    sempi_data$Cluster <- as.numeric(sempi_data$Cluster)
-    sempi_data$Start <- as.numeric(sempi_data$Start)
-    sempi_data$Stop <- as.numeric(sempi_data$Stop)
-    sempi_data$Type <- tolower(sempi_data$Type)
-    sempi_data['Type2'] <- tolower(sempi_data$Type)
+    sempi_data <- read.csv(input$sempi_data$datapath)
+    sempi_data['Type2'] <- str_trim(tolower(sempi_data$Type))
     vals$sempi_type <- sempi_data$Type2
     vals$sempi_data <- sempi_data
     # Add chromosome info column
@@ -297,8 +274,8 @@ server <- function(input, output) {
         transmute(Cluster=as.numeric(rownames(prism_data)), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
       vals$biocircos_color = F
     }
-    prism_data$Type <- tolower(prism_data$Type)
-    prism_data['Type2'] <- tolower(prism_data$Type)
+    prism_data$Type <- str_trim(tolower(prism_data$Type))
+    prism_data['Type2'] <- str_trim(tolower(prism_data$Type))
     vals$prism_data <- prism_data
     vals$prism_type <- prism_data$Type2
     
@@ -312,7 +289,7 @@ server <- function(input, output) {
     vals$data_upload_count <- vals$data_upload_count +1
   })
   
-# Read and clean DeepBGC data
+  #Read and clean DeepBGC data
   observeEvent(input$deep_data, {
     drop_cols <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
     # Read data
@@ -441,7 +418,7 @@ server <- function(input, output) {
     })
   
   observeEvent(vals$anti_data_input,{
-    if ((vals$anti_data_input == T) & (input$anti_input_options==F)){
+    if ((vals$anti_data_input == T)){
       showElement(selector = "#anti_header")
       showElement(selector = "#anti_hybrid")
     } else{
@@ -451,7 +428,7 @@ server <- function(input, output) {
   })
   
   observeEvent(vals$prism_data_input,{
-    if ((vals$prism_data_input == T) & (input$prism_input_options==F)){
+    if ((vals$prism_data_input == T)){
       showElement(selector = "#prism_header")
       showElement(selector = "#prism_hybrid")
     } else{
@@ -543,6 +520,8 @@ server <- function(input, output) {
     vals$ prism_data['Type2'] <- vals$ prism_data['Type']
     vals$biocircos_color = FALSE
   })
+  
+  
   #Render output plots
 
   # Render barplot
@@ -782,9 +761,9 @@ server <- function(input, output) {
         filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
                num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
       # Store cleaned DeepBGC data into other variable to subset only Start and Stop
-      deep_inter <- deep_data_chromo
-      
+      deep_data_chromo$Type2 <- deep_data_chromo$product_class
       vals$deep_data_chromo <- deep_data_chromo
+      deep_inter <- deep_data_chromo
       deep_inter <- deep_inter %>% 
         select(nucl_start, nucl_end) %>%
         as.matrix()
@@ -965,7 +944,7 @@ server <- function(input, output) {
         if (vals$deep_data_input == TRUE){
           seg_df <-  get_deep_inter(anti_inter,deep_inter,deep_data_chromo, "Y" )
           if (dim(seg_df[1]) > 0){
-          plot <- plot + geom_anti(seg_df)
+          plot <- plot + geom_deep(seg_df)
           }
         }
         if (vals$rre_data_input == TRUE){
@@ -1335,6 +1314,10 @@ server <- function(input, output) {
     arcs_begin <- c()
     arcs_end <- c()
     arc_labels <- c()
+    arc_col <- c()
+    
+
+    rename_data <- read.csv("rename.csv") %>% select(Group_color, Color)
     
     # ANTISMASH
     if (vals$anti_data_input == TRUE){
@@ -1350,6 +1333,18 @@ server <- function(input, output) {
       arcs_end <- c(arcs_end, biocircos_anti$Stop )
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels, biocircos_anti$Type)
+      if ((input$biocircos_color == T) & (input$anti_hybrid == T)){
+        arc_colors <- sapply(biocircos_anti$Type2, function(x){
+          if (x %in% rename_data$Group_color){
+            rename_data$Color[rename_data$Group_color == x]
+          } else {
+            '#b15928'
+          }
+        })
+      } else {
+        arc_colors <- '#b15928'
+      }
+      arc_col <- c(arc_col,arc_colors )
     }
     
     #DEEPBGC
@@ -1385,6 +1380,18 @@ server <- function(input, output) {
       arcs_end <- c(arcs_end, biocircos_deep$nucl_end)
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels, biocircos_deep$product_class)
+      if ((input$biocircos_color == T)){
+        arc_colors <- sapply(biocircos_deep$Type, function(x){
+          if (x %in% rename_data$Group_color){
+            rename_data$Color[rename_data$Group_color == x]
+          } else {
+            '#b15928'
+          }
+        })
+      } else {
+        arc_colors <- '#b15928'
+      }
+      arc_col <- c(arc_col,arc_colors )
     }
     
     #RRE-FINDER
@@ -1406,6 +1413,18 @@ server <- function(input, output) {
       }
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels,  biocircos_rre$E.value)
+      if ((input$biocircos_color == T)){
+        arc_colors <- sapply(biocircos_rre$Type, function(x){
+          if (x %in% rename_data$Group_color){
+            rename_data$Color[rename_data$Group_color == x]
+          } else {
+            '#b15928'
+          }
+        })
+      } else {
+        arc_colors <- '#b15928'
+      }
+      arc_col <- c(arc_col,arc_colors )
     }
     
     # PRISM
@@ -1422,6 +1441,18 @@ server <- function(input, output) {
       arcs_end <- c(arcs_end, biocircos_prism$Stop )
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels,biocircos_prism$Type )
+      if ((input$biocircos_color == T) & (input$prism_hybrid == T)){
+        arc_colors <- sapply(biocircos_prism$Type2, function(x){
+          if (x %in% rename_data$Group_color){
+            rename_data$Color[rename_data$Group_color == x]
+          } else {
+            '#b15928'
+          }
+        })
+      } else {
+        arc_colors <- '#b15928'
+      }
+      arc_col <- c(arc_col,arc_colors )
     }
     
     #SEMPI
@@ -1439,13 +1470,24 @@ server <- function(input, output) {
       arcs_end <- c(arcs_end, biocircos_sempi$Stop )
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels,biocircos_sempi$Type )
+      if ((input$biocircos_color == T) & (input$sempi_hybrid == T)){
+        arc_colors <- sapply(biocircos_sempi$Type2, function(x){
+          if (x %in% rename_data$Group_color){
+            rename_data$Color[rename_data$Group_color == x]
+          } else {
+            '#b15928'
+          }
+        })
+      } else {
+        arc_colors <-  '#b15928'
+      }
     }
 
 
 
     # Add to tracklist. Then it can be populated with links
     tracklist <- BioCircosArcTrack('myArcTrack', arcs_chromosomes, arcs_begin, arcs_end, 
-                                   minRadius = 0.90, maxRadius = 0.97, labels = arc_labels)
+                                   minRadius = 0.90, maxRadius = 0.97, labels = arc_labels,colors = arc_col )
     # Function to get interception between two matrices. Returns a list of two elements - IDs from first matrix and 
     # from second one. IDs are duplicated, if intercepted more than one time
     get_interception <- function(x,y) {
