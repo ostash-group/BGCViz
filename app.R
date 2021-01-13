@@ -21,7 +21,10 @@ library(rjson)
 library(stringr)
 library(RSQLite)
 library(readr)
+library(reticulate)
 
+
+use_virtualenv('clinker')
 
 # Define UI 
 ui <- fluidPage(
@@ -35,32 +38,36 @@ ui <- fluidPage(
     sidebarPanel(
       # Data upload
       h3("Data upload and necesary input:"),
-      h5("ANTISMASH:"),
+      checkboxInput("hide_uploads", "Hide upload fields"),
+      h5(id = "anti_header_upload","ANTISMASH:"),
       checkboxInput("anti_input_options", "My AntiSMASH data is a dataframe, not json results file from antismash", value = T),
       fileInput("anti_data",
                 "Upload antismash data"),
-      h5("PRISM:"),
+      h5(id = "prism_header_upload","PRISM:"),
       checkboxInput("prism_input_options", "My PRISM data is a dataframe, not json results file"),
       fileInput("prism_data",
                 "Upload PRISM data"),
-      h5("SEMPI:"),
+      h5(id = "sempi_header_upload","SEMPI:"),
       fileInput("sempi_data",
                 "Upload SEMPI 2.0 data"),
-      h5("DEEPBGC:"),
+      h5(id = "deep_header_upload","DEEPBGC:"),
       fileInput("deep_data",
                 "Upload DeepBGC data"),
-      h5("RRE-FINDER:"),
+      h5(id = "rre_header_upload","RRE-FINDER:"),
       fileInput("rre_data",
                 "Upload RRE-Finder data"),
       # Numeric input of chromosome length of analyzed sequence
       numericInput("chr_len", "Please type chr len of an organism", value = 8773899),
-      h3(id = "anti_header","Antismash data options:"),
+      h3("Antismash, SEMPI and PRISM data options"),
+      checkboxInput("hide_anti", "Hide data manipulation fields"),
+      h5(id = "anti_header","Antismash data options:"),
       checkboxInput("anti_hybrid", "Visualize AntiSMASH BGC with several types as 'Hybrid'"),
-      h3(id = "prism_header","PRISM data options:"),
+      h5(id = "prism_header","PRISM data options:"),
       checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
-      h3(id = "sempi_header","SEMPI data options:"),
+      h5(id = "sempi_header","SEMPI data options:"),
       checkboxInput("sempi_hybrid", "Visualize SEMPI BGC with several types as 'Hybrid'"),
       h3(id = "genes_on_chr","Genes on chromosome plot controls:"),
+      checkboxInput("hide_genes_on_chr", "Hide 'Genes on chromosome plot' fields"),
       selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
                                                               "DeepBGC" = "DeepBGC",
                                                               "RRE-Finder" = "RRE-Finder",
@@ -68,6 +75,7 @@ ui <- fluidPage(
                                                               "SEMPI" = "SEMPI"),
                   selected = "Antismash"),
       h3(id = "summarize","Summarize options:"),
+      checkboxInput("hide_summarize", "Hide summarize options"),
       selectInput("group_by", "Group data by", choices = c("Antismash" = "A",
                                                               "DeepBGC" = "D",
                                                               "RRE-Finder" =  "R",
@@ -76,6 +84,7 @@ ui <- fluidPage(
                   selected = 'A'),
       checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
       h3("Improve visualization:"),
+      checkboxInput("hide_viz", "Hide improve visualization options"),
       #Improve RREFinder annotated BCG visibility
       fileInput("rename_data",
                "Upload dataframe for grouping"),
@@ -97,6 +106,7 @@ ui <- fluidPage(
       ),
       selected = 'Antismash'),
       h3(id="data_comparison_header","Comparison with DeepBGC plots:"),
+      checkboxInput("hide_data_comparison", "Hide data comparison options"),
       selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c("Antismash" = "A",
                                                                      "PRISM" = "P",
                                                                      "SEMPI" = "S"),
@@ -112,6 +122,7 @@ ui <- fluidPage(
       
       # DeepBGC data filtering 
       h3(id="data_filter_header","DeepBGC data filtering:"),
+      checkboxInput("hide_data_filter", "Hide DeepBGC data filtering options"),
       # Different score filtering. Remain >= of set threshold
       sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
       sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
@@ -143,6 +154,7 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output, session) {
+  use_virtualenv('clinker')
   options(shiny.maxRequestSize=100*1024^2)
   # Small function to make integers zeros
   is.integer0 <- function(x)
@@ -159,13 +171,13 @@ server <- function(input, output, session) {
   # Rective vals the app is using
   # Some dataframes that are used through the app + some vectors of untercepted values
   vals <- reactiveValues(deep_data = NULL, anti_data = NULL, rre_data=NULL, prism_data=NULL, chr_len = NULL, fullness = NULL,
-                         biocircos_deep = NULL, deep_data_input = FALSE,tracklist = NULL, chromosomes = NULL,
+                         biocircos_deep = NULL, deep_data_input = FALSE,tracklist = NULL, chromosomes = NULL, 
                          anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
                          seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
                          data_upload_count = 0, anti_type=NULL, prism_type=NULL, sempi_data = NULL, sempi_data_input= FALSE,
-                         sempi_type = NULL, biocircos_color = NULL, rename_data = NULL,
+                         sempi_type = NULL, biocircos_color = NULL, rename_data = NULL, group_by_data = NULL, 
                          rre_interact = NULL, anti_interact = NULL, prism_interact = NULL, deep_interact = NULL,  
-                         sempi_interact = NULL, df_a = NULL, df_d = NULL, df_p = NULL, df_r = NULL
+                         sempi_interact = NULL, df_a = NULL, df_d = NULL, df_p = NULL, df_r = NULL, prism_supp = NULL
                          )
   
   vals$rename_data <- read.csv("rename.csv")
@@ -221,6 +233,7 @@ server <- function(input, output, session) {
         anti_data$Start <- as.numeric(anti_data$Start)
         anti_data$Stop <- as.numeric(anti_data$Stop)
         vals$biocircos_color = F
+        
     }
 
     # Add chromosome column
@@ -234,6 +247,17 @@ server <- function(input, output, session) {
     write.csv(vals$anti_data, "anti_data.csv", row.names = F)
     vals$anti_data_input = TRUE 
     vals$data_upload_count <- vals$data_upload_count +1
+    if (vals$data_upload_count == 1){
+      updateSelectInput(session, "ref",
+                        selected = "Antismash" )
+      updateSelectInput(session, "group_by",
+                        selected = "A" )
+      updateSelectInput(session, "ref_comparison",
+                        selected = "A")
+      updateSelectInput(session, "ref_col_biocircos",
+                        selected =  "Antismash")
+    }
+    
   })
   
   observeEvent(input$sempi_data,{
@@ -252,9 +276,13 @@ server <- function(input, output, session) {
     vals$data_upload_count <- vals$data_upload_count +1
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
-                      selected = "SEMPI" )
+                        selected = "SEMPI" )
       updateSelectInput(session, "group_by",
                         selected = "S" )
+      updateSelectInput(session, "ref_comparison",
+                        selected = "S")
+      updateSelectInput(session, "ref_col_biocircos",
+                        selected =  "SEMPI")
     }
     
   })
@@ -296,6 +324,67 @@ server <- function(input, output, session) {
       prism_data <- prism_data %>%
         transmute(Cluster=as.numeric(rownames(prism_data)), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
       vals$biocircos_color = F
+      
+      regul_genes_orfs <- sapply(data$prism_results$regulatory_genes, function(x){
+        x$orf
+      })
+      
+      location <-  sapply(data$prism_results$orfs[[1]]$orfs, function(y){
+        sapply(regul_genes_orfs, function(x){
+          if (y$name == x) {
+            y$coordinates
+          }
+        })
+      }) 
+      
+      location <- Filter(Negate(is.null), location)
+      
+      reg_genes <-data.frame(t(data.frame(sapply(location, function(x){unlist(x)}))))
+      colnames(reg_genes) <- c("Start", "Stop")
+      reg_genes$Type <- 'regulatory'
+      reg_genes$Type2 <- reg_genes$Type
+      reg_genes$Score <- sapply(data$prism_results$regulatory_genes, function(x){
+        x$score
+      })
+      reg_genes$Name <- sapply(data$prism_results$regulatory_genes, function(x){
+        x$name
+      })
+      reg_genes$Full_name <- sapply(data$prism_results$regulatory_genes, function(x){
+        x$full_name
+      })
+      
+      resist_genes_orfs <- sapply(data$prism_results$resistance_genes, function(x){
+        x$orf
+      })
+      
+      location <-  sapply(data$prism_results$orfs[[1]]$orfs, function(y){
+        sapply(resist_genes_orfs, function(x){
+          if (y$name == x) {
+            y$coordinates
+          }
+        })
+      })
+      
+      location <- Filter(Negate(is.null), location)
+      
+      res_genes <-data.frame(t(data.frame(sapply(location, function(x){unlist(x)}))))
+      colnames(res_genes) <- c("Start", "Stop")
+      res_genes$Type <- 'resistance'
+      res_genes$Type2 <- res_genes$Type
+      res_genes$Score <- sapply(data$prism_results$resistance_genes, function(x){
+        x$score
+      })
+      res_genes$Name <- sapply(data$prism_results$resistance_genes, function(x){
+        x$name
+      })
+      res_genes$Full_name <- sapply(data$prism_results$resistance_genes, function(x){
+        x$full_name
+      })
+      
+      final_reg <- rbind(res_genes, reg_genes)
+      final_reg$ID <- seq(1:dim(final_reg)[1])
+      final_reg$Cluster <- final_reg$ID
+      vals$prism_supp <- final_reg
     }
     prism_data$Type <- str_trim(tolower(prism_data$Type))
     prism_data['Type2'] <- str_trim(tolower(prism_data$Type))
@@ -315,6 +404,10 @@ server <- function(input, output, session) {
                         selected = "PRISM" )
       updateSelectInput(session, "group_by",
                         selected = "P" )
+      updateSelectInput(session, "ref_comparison",
+                        selected = "P")
+      updateSelectInput(session, "ref_col_biocircos",
+                        selected =  "PRISM")
     }
   })
   
@@ -330,6 +423,7 @@ server <- function(input, output, session) {
     vals$deep_data$chromosome <-  rep("D", length(vals$deep_data$bgc_candidate_id))
     # Add ID column as number seuquence of dataframe length
     vals$deep_data$ID <- seq(1:length(vals$deep_data$bgc_candidate_id))
+    vals$deep_data$Cluster <- vals$deep_data$ID
     write.csv(vals$deep_data, "deep_data.csv", row.names = F)
     vals$deep_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
@@ -338,6 +432,10 @@ server <- function(input, output, session) {
                         selected = "DeepBGC" )
       updateSelectInput(session, "group_by",
                         selected = "D" )
+      updateSelectInput(session, "ref_col_biocircos",
+                        choices = "DeepBGC",
+                        selected = "DeepBGC")
+      
     }
   })
   
@@ -353,6 +451,7 @@ server <- function(input, output, session) {
     vals$rre_data$chromosome <- rep("RRE",length(vals$rre_data$Sequence))
     # Add ID column
     vals$rre_data$ID <- seq(1:length(vals$rre_data$Sequence))
+    vals$rre_data$Cluster <- vals$rre_data$ID
     vals$rre_data <- data.frame(vals$rre_data)
     vals$rre_data['Type'] <- 'ripp'
     write.csv(vals$rre_data, "rre_data.csv", row.names = F)
@@ -363,6 +462,10 @@ server <- function(input, output, session) {
                         selected = "RRE-Finder" )
       updateSelectInput(session, "group_by",
                         selected = "R" )
+      updateSelectInput(session, "ref_col_biocircos",
+                        choices = "RRE-Finder",
+                        selected = "RRE")
+      
     }
   })
   # Observe input of chromosome length
@@ -372,15 +475,55 @@ server <- function(input, output, session) {
   
   observeEvent(vals$rre_data_input, {
     if (vals$rre_data_input == T){
-      showElement(selector = "#rre_width")
+      if (input$hide_viz == F){
+        showElement(selector = "#rre_width")
+      }
     } else{
       hideElement(selector = "#rre_width")
     }
   })
+
+  observeEvent(vals$anti_data_input, {
+    if (vals$anti_data_input == T){
+      if (input$hide_anti == F){
+        showElement(selector = "#anti_header")
+        showElement(selector = "#anti_hybrid")
+      }
+    } else{
+      hideElement(selector = "#anti_header")
+      hideElement(selector = "#anti_hybrid")
+    }
+  })
   
+  observeEvent(vals$prism_data_input, {
+    if (vals$prism_data_input == T){
+      if (input$hide_anti == F){
+        showElement(selector = "#prism_header")
+        showElement(selector = "#prism_hybrid")
+      }
+    } else{
+      hideElement(selector = "#prism_header")
+      hideElement(selector = "#prism_hybrid")
+    }
+  })
+  
+  observeEvent(vals$sempi_data_input, {
+    if (vals$sempi_data_input == T){
+      if (input$hide_anti == F){
+        showElement(selector = "#sempi_header")
+        showElement(selector = "#sempi_hybrid")
+      }
+    } else{
+      hideElement(selector = "#sempi_header")
+      hideElement(selector = "#sempi_hybrid")
+    }
+  })
+
   observeEvent(vals$deep_data_input,{
     if (vals$deep_data_input == T){
       showElement(selector = "#ref_comparison")
+      showElement(selector = "#hide_data_comparison")
+      showElement(selector = "#hide_data_filter")
       showElement(selector = "#score_type")
       showElement(selector = "#plot_step")
       showElement(selector = "#plot_start")
@@ -397,6 +540,8 @@ server <- function(input, output, session) {
     } else{
       hideElement(selector = "#ref_comparison")
       hideElement(selector = "#score_type")
+      hideElement(selector = "#hide_data_comparison")
+      hideElement(selector = "#hide_data_filter")
       hideElement(selector = "#plot_step")
       hideElement(selector = "#plot_start")
       hideElement(selector = "#score_a")
@@ -416,24 +561,41 @@ server <- function(input, output, session) {
     if (vals$data_upload_count <2){
       hideTab("main", "2")
       hideTab("main", "3")
-      hideElement(selector = "#summarize")
-      hideElement(selector = "#group_by")
-      hideElement(selector = "#count_all")
     }else{
+      if (input$hide_summarize == F) {
+        showElement(selector = "#summarize")
+        showElement(selector = "#group_by")
+        showElement(selector = "#count_all")
+      }
+      if (input$hide_viz == F){
+        showElement(selector = "#biocircos_color")
+        showElement(selector = "#label_color")
+        showElement(selector = "#label_color_class")
+      }
       showTab("main", "2")
       showTab("main", "3")
-      showElement(selector = "#summarize")
-      showElement(selector = "#group_by")
-      showElement(selector = "#count_all")
     }
     if (vals$data_upload_count <1){
       hideTab("main", "4")
       hideElement(selector = "#genes_on_chr")
+      hideElement(selector = "#hide_genes_on_chr")
       hideElement(selector = "#ref")
     }else{
       showTab("main", "4")
-      showElement(selector = "#genes_on_chr")
-      showElement(selector = "#ref")
+      if (input$hide_genes_on_chr == F){
+        showElement(selector = "#genes_on_chr")
+        showElement(selector = "#hide_genes_on_chr")
+        showElement(selector = "#ref")
+      }
+      
+    }
+  })
+  
+  observeEvent(input$label_color_class, {
+    if (input$label_color_class == "R"){
+      showElement(selector = "#ref_col_biocircos")
+    } else {
+      hideElement(selector = "#ref_col_biocircos")
     }
   })
   
@@ -457,27 +619,7 @@ server <- function(input, output, session) {
     }
     
     })
-  
-  observeEvent(vals$anti_data_input,{
-    if ((vals$anti_data_input == T)){
-      showElement(selector = "#anti_header")
-      showElement(selector = "#anti_hybrid")
-    } else{
-      hideElement(selector = "#anti_header")
-      hideElement(selector = "#anti_hybrid")
-    }
-  })
-  
-  observeEvent(vals$prism_data_input,{
-    if ((vals$prism_data_input == T)){
-      showElement(selector = "#prism_header")
-      showElement(selector = "#prism_hybrid")
-    } else{
-      hideElement(selector = "#prism_header")
-      hideElement(selector = "#prism_hybrid")
-    }
-  })
-  
+
   observeEvent(input$prism_hybrid, {
     hybrid_col <- function(data){
       data_split <- str_split(data$Type2, "__")
@@ -742,7 +884,7 @@ server <- function(input, output, session) {
         output <- add_biocircos_data(deep_inter, anti_inter, biocircos_deep, biocircos_anti, "DeepBGC", "Antismash")
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[2]]] )
         anti_interact <- c(anti_interact,output[[1]] )
-        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        df_tmp <- data.frame(cbind(output[[1]],biocircos_deep$ID[output[[2]]]))
         colnames(df_tmp) <- c("A", "D")
         df_a <- merge(df_a, df_tmp, all = T)
       } 
@@ -775,7 +917,7 @@ server <- function(input, output, session) {
         output <- add_biocircos_data(rre_inter, deep_inter, biocircos_rre, biocircos_deep, "RRE", "DeepBGC")
         rre_interact <- c(rre_interact,output[[2]] )
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]] )
-        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        df_tmp <- data.frame(cbind(biocircos_deep$ID[output[[1]]],output[[2]]))
         colnames(df_tmp) <- c("D", "R")
         df_d <- merge(df_d, df_tmp, all = T)
         # Safe used local variables to the reactive ones
@@ -785,7 +927,7 @@ server <- function(input, output, session) {
         output <- add_biocircos_data(prism_inter, deep_inter, biocircos_prism, biocircos_deep, "PRISM", "DeepBGC")
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]])
         prism_interact <- c(prism_interact,output[[2]] )
-        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        df_tmp <- data.frame(cbind(biocircos_deep$ID[output[[1]]],output[[2]]))
         colnames(df_tmp) <- c("D", "P")
         df_d <- merge(df_d, df_tmp, all = T)
       
@@ -796,7 +938,7 @@ server <- function(input, output, session) {
         output <- add_biocircos_data(sempi_inter, deep_inter, biocircos_sempi, biocircos_deep, "SEMPI", "DeepBGC")
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]] )
         sempi_interact <- c(sempi_interact,output[[2]] )
-        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        df_tmp <- data.frame(cbind(biocircos_deep$ID[output[[1]]],output[[2]]))
         colnames(df_tmp) <- c("D", "S")
         df_d <- merge(df_d, df_tmp, all = T)
       }
@@ -864,6 +1006,185 @@ server <- function(input, output, session) {
     vals$sempi_interact <- sempi_interact
 
     
+  })
+  
+  observeEvent(input$hide_uploads, {
+    if (input$hide_uploads == T){
+      hideElement(selector = "#anti_input_options")
+      hideElement(selector = "#anti_data")
+      hideElement(selector = "#prism_input_options")
+      hideElement(selector = "#anti_header_upload")
+      hideElement(selector = "#prism_header_upload")
+      hideElement(selector = "#prism_data")
+      hideElement(selector = "#sempi_header_upload")
+      hideElement(selector = "#sempi_data")
+      hideElement(selector = "#deep_header_upload")
+      hideElement(selector = "#deep_data")
+      hideElement(selector = "#rre_header_upload")
+      hideElement(selector = "#rre_data")
+      hideElement(selector = "#chr_len")
+    }else {
+      showElement(selector = "#anti_input_options")
+      showElement(selector = "#anti_data")
+      showElement(selector = "#prism_input_options")
+      showElement(selector = "#anti_header_upload")
+      showElement(selector = "#prism_header_upload")
+      showElement(selector = "#prism_data")
+      showElement(selector = "#sempi_header_upload")
+      showElement(selector = "#sempi_data")
+      showElement(selector = "#deep_header_upload")
+      showElement(selector = "#deep_data")
+      showElement(selector = "#rre_header_upload")
+      showElement(selector = "#rre_data")
+      showElement(selector = "#chr_len")
+    }
+  })
+  
+  observeEvent(input$hide_anti, {
+    if (input$hide_anti== T){
+      hideElement(selector = "#anti_header")
+      hideElement(selector = "#anti_hybrid")
+      hideElement(selector = "#sempi_header")
+      hideElement(selector = "#sempi_hybrid")
+      hideElement(selector = "#prism_header")
+      hideElement(selector = "#prism_hybrid")
+    }else{
+      if (vals$anti_data_input == T){
+        showElement(selector = "#anti_header")
+        showElement(selector = "#anti_hybrid")
+      } else{
+        hideElement(selector = "#anti_header")
+        hideElement(selector = "#anti_hybrid")
+      }
+      if (vals$prism_data_input == T){
+      showElement(selector = "#prism_header")
+      showElement(selector = "#prism_hybrid")
+      } else {
+        hideElement(selector = "#prism_header")
+        hideElement(selector = "#prism_hybrid")
+      }
+      if (vals$sempi_data_input == T){
+      showElement(selector = "#sempi_header")
+      showElement(selector = "#sempi_hybrid")
+      } else {
+        hideElement(selector = "#sempi_header")
+        hideElement(selector = "#sempi_hybrid")
+      }
+    }
+  })
+  
+  observeEvent(input$hide_genes_on_chr, {
+    if (input$hide_genes_on_chr == T){
+      hideElement(selector = "#ref")
+    } else {
+      if (vals$data_upload_count > 0){
+        showElement(selector = "#ref")
+      } else {
+        hideElement(selector = "#genes_on_chr")
+        hideElement(selector = "#ref")
+      }
+    }
+  })
+  
+  observeEvent(input$hide_summarize, {
+    if (input$hide_summarize == T){
+      hideElement(selector = "#group_by")
+      hideElement(selector = "#count_all")
+    } else {
+      if (vals$data_upload_count > 1){
+        showElement(selector = "#group_by")
+        showElement(selector = "#count_all")
+      } else {
+        hideElement(selector = "#summarize")
+        hideElement(selector = "#group_by")
+        hideElement(selector = "#count_all")
+      }
+      
+    }
+  })
+  
+  observeEvent(input$hide_viz, {
+    if (input$hide_viz == T){
+      hideElement(selector = "#rename_data")
+      hideElement(selector = "#rename")
+      hideElement(selector = "#reset_name")
+      hideElement(selector = "#rre_width")
+      hideElement(selector = "#biocircos_color")
+      hideElement(selector = "#label_color")
+      hideElement(selector = "#label_color_class")
+      hideElement(selector = "#ref_col_biocircos")
+    } else{
+      showElement(selector = "#rename_data")
+      showElement(selector = "#rename")
+      showElement(selector = "#reset_name")
+      if (vals$rre_data_input == T){
+        showElement(selector = "#rre_width")
+      } else {
+        hideElement(selector = "#rre_width")
+      }
+      if (vals$data_upload_count > 1){
+        showElement(selector = "#biocircos_color")
+        showElement(selector = "#label_color")
+        showElement(selector = "#label_color_class")
+      } else {
+        hideElement(selector = "#biocircos_color")
+        hideElement(selector = "#label_color")
+        hideElement(selector = "#label_color_class")
+      }
+      if (input$label_color_class == "R"){
+        showElement(selector = "#ref_col_biocircos")
+      } else {
+        hideElement(selector = "#ref_col_biocircos")
+      }
+      
+    }
+  })
+  
+  observeEvent(input$hide_data_comparison, {
+    if ((input$hide_data_comparison == T)){
+      hideElement(selector = "#ref_comparison")
+      hideElement(selector = "#score_type")
+      hideElement(selector = "#plot_step")
+      hideElement(selector = "#plot_start")
+    } else if (vals$deep_data_input == T) {
+      showElement(selector = "#ref_comparison")
+      showElement(selector = "#score_type")
+      showElement(selector = "#plot_step")
+      showElement(selector = "#plot_start")
+    } else {
+      hideElement(selector = "#ref_comparison")
+      hideElement(selector = "#score_type")
+      hideElement(selector = "#plot_step")
+      hideElement(selector = "#plot_start")
+    }
+  })
+  
+  observeEvent(input$hide_data_filter, {
+    if ((input$hide_data_filter == T)){
+      hideElement(selector = "#score_a")
+      hideElement(selector = "#score_d")
+      hideElement(selector = "#score_c")
+      hideElement(selector = "#domains_filter")
+      hideElement(selector = "#biodomain_filter")
+      hideElement(selector = "#gene_filter")
+      hideElement(selector = "#cluster_type")
+    } else if  (vals$deep_data_input == T){
+      showElement(selector = "#score_a")
+      showElement(selector = "#score_d")
+      showElement(selector = "#score_c")
+      showElement(selector = "#domains_filter")
+      showElement(selector = "#biodomain_filter")
+      showElement(selector = "#gene_filter")
+      showElement(selector = "#cluster_type")
+    } else {
+      hideElement(selector = "#score_a")
+      hideElement(selector = "#score_d")
+      hideElement(selector = "#score_c")
+      hideElement(selector = "#domains_filter")
+      hideElement(selector = "#biodomain_filter")
+      hideElement(selector = "#gene_filter")
+      hideElement(selector = "#cluster_type")
+    }
   })
   
   
@@ -1678,7 +1999,7 @@ server <- function(input, output, session) {
       arcs_end <- c(arcs_end, biocircos_anti$Stop )
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels, biocircos_anti$Type)
-      if ((input$biocircos_color == T) & (input$anti_hybrid == T)){
+      if ((input$biocircos_color == T)){
         arc_colors <- sapply(biocircos_anti$Type2, function(x){
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
@@ -1716,6 +2037,7 @@ server <- function(input, output, session) {
       biocircos_deep['Stop'] <- biocircos_deep$nucl_end
       biocircos_deep['Type'] <- biocircos_deep$product_class
       biocircos_deep['Type2'] <- biocircos_deep$product_class
+      biocircos_deep['Cluster'] <- biocircos_deep$ID
       #Make chromosome list for Biocircos plot. Use chr_len as an input
       Biocircos_chromosomes[["DeepBGC"]] <- vals$chr_len
       #Add arcs. Quantity of arcs is length of dataframes
@@ -1746,6 +2068,7 @@ server <- function(input, output, session) {
       biocircos_rre$Start <- as.numeric(biocircos_rre$Start)
       biocircos_rre$Stop <- as.numeric(biocircos_rre$Stop)
       biocircos_rre['Type2'] <- biocircos_rre$Type
+      biocircos_rre['Cluster'] <- biocircos_rre$ID
       #Make chromosome list for Biocircos plot. Use chr_len as an input
       Biocircos_chromosomes[["RRE"]] <- vals$chr_len
       #Add arcs. Quantity of arcs is length of dataframes
@@ -1788,7 +2111,7 @@ server <- function(input, output, session) {
       arcs_end <- c(arcs_end, biocircos_prism$Stop )
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels,biocircos_prism$Type )
-      if ((input$biocircos_color == T) & (input$prism_hybrid == T)){
+      if ((input$biocircos_color == T)){
         arc_colors <- sapply(biocircos_prism$Type2, function(x){
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
@@ -1817,7 +2140,7 @@ server <- function(input, output, session) {
       arcs_end <- c(arcs_end, biocircos_sempi$Stop )
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels,biocircos_sempi$Type )
-      if ((input$biocircos_color == T) & (input$sempi_hybrid == T)){
+      if ((input$biocircos_color == T)){
         arc_colors <- sapply(biocircos_sempi$Type2, function(x){
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
@@ -1955,7 +2278,7 @@ server <- function(input, output, session) {
           }
         }
       } else if (class == 'H'){
-        if (grep(data1_label, data$Hierarchy) < (grep(data2_label, data$Hierarchy))){
+        if (grep(data1_label, rename_data$Hierarchy) < (grep(data2_label, rename_data$Hierarchy))){
           label_color <- c(sapply(data1$Type2[inter_s_rre_n], function (x){
           if (x %in% rename_data$Group_color) {
             rename_data$Color[rename_data$Group_color == x]
@@ -2050,7 +2373,7 @@ server <- function(input, output, session) {
         vals$inter_a1  <- output[[1]]
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[2]]] )
         anti_interact <- c(anti_interact,output[[1]] )
-        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        df_tmp <- data.frame(cbind(output[[1]], biocircos_deep$ID[output[[2]]] ))
         colnames(df_tmp) <- c("A", "D")
         df_a <- merge(df_a, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
@@ -2136,7 +2459,7 @@ server <- function(input, output, session) {
         vals$inter_d_rre  <- output[[1]]
         rre_interact <- c(rre_interact,output[[2]] )
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]] )
-        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        df_tmp <- data.frame(cbind(biocircos_deep$ID[output[[1]]],output[[2]]))
         colnames(df_tmp) <- c("D", "R")
         df_d <- merge(df_d, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
@@ -2163,7 +2486,7 @@ server <- function(input, output, session) {
         vals$inter_d_p  <- output[[1]]
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]])
         prism_interact <- c(prism_interact,output[[2]] )
-        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        df_tmp <- data.frame(cbind(biocircos_deep$ID[output[[1]]],output[[2]]))
         colnames(df_tmp) <- c("D", "P")
         df_d <- merge(df_d, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
@@ -2190,7 +2513,7 @@ server <- function(input, output, session) {
         vals$inter_d_s  <- output[[1]]
         deep_interact <- c(deep_interact,biocircos_deep$ID[output[[1]]] )
         sempi_interact <- c(sempi_interact,output[[2]] )
-        df_tmp <- data.frame(cbind(output[[1]],output[[2]]))
+        df_tmp <- data.frame(cbind(biocircos_deep$ID[output[[1]]],output[[2]]))
         colnames(df_tmp) <- c("D", "S")
         df_d <- merge(df_d, df_tmp, all = T)
         # Add link start. Just populate certain chromosome name times the lenght of interception 
@@ -2464,7 +2787,7 @@ server <- function(input, output, session) {
   output$group_table <- renderTable({
     if (vals$anti_data_input == TRUE){
       if ((input$group_by=="A") & (input$count_all == T)){
-        df_f_a <- data.frame(seq(1:length(vals$anti_data$chromosome)))
+        df_f_a <- data.frame(seq(1:length(vals$anti_data$Cluster)))
         colnames(df_f_a) <- c("A")
       } else{
         df_f_a <- data.frame(A=NA)
@@ -2472,7 +2795,7 @@ server <- function(input, output, session) {
     }
     if (vals$deep_data_input == TRUE){
       if ((input$group_by=="D") & (input$count_all == T)){
-        df_f_d <- data.frame(seq(1:length(vals$deep_data_chromo$ID)))
+        df_f_d <- data.frame(seq(1:length(vals$biocircos_deep$ID)))
         colnames(df_f_d) <- c("D")
       } else{
         df_f_d <- data.frame(D=NA)
@@ -2519,31 +2842,36 @@ server <- function(input, output, session) {
       return(paste(names(Filter(Negate(is.null), res)), collapse = ","))
     }
     
+    
+    df_a <- data.frame(A=NA, D=NA, P=NA, R=NA, S=NA)
+    df_d <- data.frame(D=NA, P=NA, R=NA, S=NA)
+    df_p = data_frame(P=NA, R=NA, S=NA)
+    df_r =data_frame(R=NA, S=NA)
     if (vals$anti_data_input == TRUE){
-      vals$df_a <- merge(df_f_a, vals$df_a, all =T)
+      df_a <- merge(df_f_a, vals$df_a, all =T)
      
     }
     
     if (vals$deep_data_input == TRUE){
       
-      vals$df_d <- merge(df_f_d, vals$df_d, all =T)
+      df_d <- merge(df_f_d, vals$df_d, all =T)
       
     }
     
     if (vals$prism_data_input == TRUE){
-      vals$df_p <- merge(df_f_p, vals$df_p, all =T)
+      df_p <- merge(df_f_p, vals$df_p, all =T)
     }
     
     if (vals$rre_data_input == TRUE){
-      vals$df_r <- merge(df_f_r, vals$df_r, all = T)
+      df_r <- merge(df_f_r, vals$df_r, all = T)
   }
     
     if (vals$sempi_data_input == TRUE){
     }
     
-    df_1 <- merge(vals$df_d, vals$df_a, all=T)
-    df_2 <- merge(df_1, vals$df_p, all=T)
-    df_3 <- merge(df_2, vals$df_r, all=T)
+    df_1 <- merge(df_d, df_a, all=T)
+    df_2 <- merge(df_1, df_p, all=T)
+    df_3 <- merge(df_2, df_r, all=T)
     df_fin <- merge(df_3, df_f_s, all=T)
     if (input$group_by=="A"){
       data <- df_fin %>% group_by(A) %>% summarise(D=paste(D, collapse=","),
@@ -2583,27 +2911,35 @@ server <- function(input, output, session) {
     data$S <- gsub('NA,|,NA', '', data$S)
     data$S[nrow(data)]<- refine_unique(data$S)
     
+    names(data)[names(data) == 'D'] <- 'DeepBGC'
+    names(data)[names(data) == 'A'] <- 'Antismash'
+    names(data)[names(data) == 'S'] <- 'SEMPI'
+    names(data)[names(data) == 'R'] <- 'RRE-Finder'
+    names(data)[names(data) == 'P'] <- 'PRISM'
+    
     if (vals$anti_data_input != TRUE){
       data <- data %>%
-        select(-A)
+        select(-Antismash)
     }
     if (vals$deep_data_input != TRUE){
       data <- data %>%
-        select(-D)
+        select(-DeepBGC)
     }
     if (vals$rre_data_input != TRUE){
       data <- data %>%
-        select(-R)
+        select(-'RRE-Finder')
     }
     if (vals$prism_data_input != TRUE){
       data <- data %>%
-        select(-P)
+        select(-PRISM)
     }
     if (vals$sempi_data_input != TRUE){
       data <- data %>%
-        select(-S)
+        select(-SEMPI)
     }
-    
+    data["Group"] <- paste("group", rownames(data), sep = "_")
+    vals$group_by_data <- data
+    write.csv(data, "group_by.csv", row.names = F)
     data
   })
   
@@ -2618,6 +2954,10 @@ server <- function(input, output, session) {
     # Iterate over those files and if found "_biocircos.csv" add to the flst vector
     for (file_names in files_in_dir) {
       if (grepl('_biocircos.csv', file_names, fixed = TRUE)) {
+        flst <- c(flst, file_names)
+      } else if (grepl('group_by.csv', file_names, fixed = TRUE)){
+        flst <- c(flst, file_names)
+      } else if (grepl('group.py', file_names, fixed = TRUE)){
         flst <- c(flst, file_names)
       }
     }
