@@ -3,8 +3,8 @@ polyketide,pks,pks,#a6cee3,#6a3d9a,Antismash
 nonribosomal_peptide,nrps,nrps,#1f78b4,#ffff99,PRISM
 melanin,melanin,ripp,#b2df8a,#b15928,SEMPI
 ectoine,other,saccharide,#33a02c,,DeepBGC
-pentangular_polyphenol,other,melanin,#fb9a99,,RRE-Finder
-nrps-independent_siderophore_synthase,other,other,#e31a1c,,
+pentangular_polyphenol,other,melanin,#fb9a99,,RRE
+nrps-independent_siderophore_synthase,other,other,#e31a1c,,PRISM-supp
 angucycline-type,pks,terpene,#fdbf6f,,
 angucycline,pks,alkaloid,#ff7f00,,
 butyrolactone,ripp,hybrid,#cab2d6,,
