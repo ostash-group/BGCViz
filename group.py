@@ -22,15 +22,15 @@ def write_gbs(group_by, data, label, seq_file):
       print("Working on: "+ label+"_"+"cluster_"+str(list_l[i])+"_"+str(group))
       for record in file:
         loci = [feat for feat in record.features if feat.type == "CDS"]
-        start_new = int(start[0])
-        end_new = int(stop[0])
+        start_new = int(start[i])
+        end_new = int(stop[i])
         subrecord = record[start_new:end_new]
         annotation={"molecule_type":"DNA"}
         subrecord.annotations = annotation
         SeqIO.write(subrecord, group+"/"+label+"_"+"cluster_"+str(list_l[i])+"_"+str(group)+".gb", "genbank")
         
 
-group_by = pd.read_csv("group_by.csv")
+group_by = pd.read_csv("group_by.csv", dtype = str)
 seq_file = sys.argv[1]
 
 print("Searching for antismash files...")
@@ -66,4 +66,18 @@ if os.path.exists("sempi_biocircos.csv"):
   print("Found!")
   data = pd.read_csv("sempi_biocircos.csv")
   label = "SEMPI"
+  write_gbs(group_by, data, label, seq_file)
+
+print("Searching for ARTS files...")
+if os.path.exists("arts_biocircos.csv"):
+  print("Found!")
+  data = pd.read_csv("arts_biocircos.csv")
+  label = "ARTS"
+  write_gbs(group_by, data, label, seq_file)
+
+print("Searching for PRISM supplement files...")
+if os.path.exists("prism_supp_biocircos.csv"):
+  print("Found!")
+  data = pd.read_csv("prism_supp_biocircos.csv")
+  label = "PRISM-supp"
   write_gbs(group_by, data, label, seq_file)
