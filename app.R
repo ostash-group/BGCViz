@@ -21,7 +21,7 @@ library(rjson)
 library(stringr)
 library(RSQLite)
 library(readr)
-library(gt)
+library(DT)
 
 # Define UI 
 ui <- fluidPage(
@@ -41,7 +41,7 @@ ui <- fluidPage(
       fileInput("anti_data",
                 "Upload antismash data"),
       h5(id = "prism_header_upload","PRISM:"),
-      checkboxInput("prism_input_options", "My PRISM data is a dataframe, not json results file"),
+      checkboxInput("prism_input_options", "My PRISM data is a dataframe, not json results file", value = T),
       fileInput("prism_data",
                 "Upload PRISM data"),
       h5(id = "sempi_header_upload","SEMPI:"),
@@ -158,7 +158,7 @@ ui <- fluidPage(
         tabPanel(title = "Compare data with DeepBGC", value = 1 ,plotOutput("deep_barplot",height = "500px"), plotlyOutput("deep_rate")),
         tabPanel(title = "Annotation visualization and comparison", value = 4,plotlyOutput("deep_reference_2", height = "500px"), 
                  plotlyOutput("deep_reference", height = "500px")),
-        tabPanel(title = "Biocircos plot", value = 2, BioCircosOutput("biocircos", height = "1000px"), gt_output("biocircos_legend")),
+        tabPanel(title = "Biocircos plot", value = 2, BioCircosOutput("biocircos", height = "1000px"), dataTableOutput("biocircos_legend")),
         tabPanel(title = "Summarize interception", value = 3,plotlyOutput("barplot_rank", height = "600px"),tableOutput("group_table")),
         type = "tabs", id = "main"
       )
@@ -273,7 +273,7 @@ server <- function(input, output, session) {
       updateSelectInput(session, "ref_col_biocircos",
                         selected =  "Antismash")
     }
-    
+
   })
   
   observeEvent(input$sempi_data,{
@@ -343,12 +343,12 @@ server <- function(input, output, session) {
       arts_data$Cluster <- arts_data$ID
       vals$arts_data <- arts_data
       vals$data_upload_count <-  vals$data_upload_count +1
-      vals$arts_data_input <- T
       dup_table_id <- arts_data %>%
         filter(Core != "Not_core")
       updateSelectInput(session, "dup_choice",
                         choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
                         selected = "All" )
+      vals$upl_arts = T
       if (vals$data_upload_count == 1){
         updateSelectInput(session, "ref",
                           selected = "ARTS" )
@@ -529,6 +529,7 @@ server <- function(input, output, session) {
       rownames(final_reg) <- as.numeric(seq(1:dim(final_reg)[1]))
       vals$prism_supp <- final_reg
       vals$prism_json = T
+      
     }
     prism_data$Type <- str_trim(tolower(prism_data$Type))
     prism_data['Type2'] <- str_trim(tolower(prism_data$Type))
@@ -892,7 +893,6 @@ server <- function(input, output, session) {
   observeEvent(input$rename_data,{
     rename_data <- read.csv(input$rename_data$datapath)
     vals$rename_data <- rename_data
-    write.csv(rename_data, "rename.csv", row.names = F)
   })
   
   observeEvent(biocircos_listen(), {
@@ -1051,8 +1051,8 @@ server <- function(input, output, session) {
     
     add_biocircos_data <- function(data1_inter, data2_inter, data1, data2, data1_label, data2_label, rename_data, class){
       inter_a1_t<- get_interception(data1_inter, data2_inter)
-      inter_s_rre_n <- unlist(inter_a1_t[2])
-      inter_rre_s <- unlist(inter_a1_t[1])
+      inter_s_rre_n <- as.numeric(unlist(inter_a1_t[2]))
+      inter_rre_s <- as.numeric(unlist(inter_a1_t[1]))
       return(list(inter_rre_s, inter_s_rre_n))
     }
     
@@ -1350,6 +1350,9 @@ server <- function(input, output, session) {
       hideElement(selector = "#rre_header_upload")
       hideElement(selector = "#rre_data")
       hideElement(selector = "#chr_len")
+      hideElement(selector = "#arts_header_upload")
+      hideElement(selector = "#known_data")
+      hideElement(selector = "#dup_data")
     }else {
       showElement(selector = "#anti_input_options")
       showElement(selector = "#anti_data")
@@ -1364,8 +1367,11 @@ server <- function(input, output, session) {
       showElement(selector = "#rre_header_upload")
       showElement(selector = "#rre_data")
       showElement(selector = "#chr_len")
-    }
-  })
+      showElement(selector = "#arts_header_upload")
+      showElement(selector = "#known_data")
+      showElement(selector = "#dup_data")
+  }
+    })
   
   observeEvent(input$hide_anti, {
     if (input$hide_anti== T){
@@ -1539,6 +1545,7 @@ server <- function(input, output, session) {
       hideElement(selector = "#cluster_type")
     }
   })
+  
   
   #Render output plots
 
@@ -2699,11 +2706,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#40B9D4'
+            rename_data$Color[rename_data$Group_color == 'base']
           }
         })
       } else {
-        arc_colors <- '#40B9D4'
+        arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -2748,11 +2755,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#40B9D4'
+            rename_data$Color[rename_data$Group_color == 'base']
           }
         })
       } else {
-        arc_colors <- '#40B9D4'
+        arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -2783,11 +2790,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#40B9D4'
+            rename_data$Color[rename_data$Group_color == 'base']
           }
         })
       } else {
-        arc_colors <-'#40B9D4'
+        arc_colors <-rename_data$Color[rename_data$Group_color == 'base']
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -2811,11 +2818,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#40B9D4'
+            rename_data$Color[rename_data$Group_color == 'base']
           }
         })
       } else {
-        arc_colors <- '#40B9D4'
+        arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -2840,11 +2847,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#40B9D4'
+            rename_data$Color[rename_data$Group_color == 'base']
           }
         })
       } else {
-        arc_colors <-  '#40B9D4'
+        arc_colors <-  rename_data$Color[rename_data$Group_color == 'base']
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -2870,11 +2877,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#40B9D4'
+            rename_data$Color[rename_data$Group_color == 'base']
           }
         })
       } else {
-        arc_colors <-  '#40B9D4'
+        arc_colors <-  rename_data$Color[rename_data$Group_color == 'base']
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -2905,11 +2912,11 @@ server <- function(input, output, session) {
           if (x %in% rename_data$Group_color){
             rename_data$Color[rename_data$Group_color == x]
           } else {
-            '#40B9D4'
+            rename_data$Color[rename_data$Group_color == 'base']
           }
         })
       } else {
-        arc_colors <-'#40B9D4'
+        arc_colors <-rename_data$Color[rename_data$Group_color == 'base']
       }
       arc_col <- c(arc_col,arc_colors )
     }
@@ -3027,14 +3034,14 @@ server <- function(input, output, session) {
             rename_data$Color[rename_data$Group_color == x]
           }
           else{
-            '#6a3d9a'
+            rename_data$Color[rename_data$Group_color == 'base']
           }
         }))
         if (length(label_color) != 0){
           for (t in seq(1:length(label_color))){
             if (!is.null(subset_vec[t])){
               if (subset_vec[t] == F){
-              label_color[t] <- '#40B9D4'
+              label_color[t] <- rename_data$Color[rename_data$Group_color == 'base']
               }
             }
           }
@@ -3046,7 +3053,7 @@ server <- function(input, output, session) {
             rename_data$Color[rename_data$Group_color == x]
           }
           else{
-            '#6a3d9a'
+            rename_data$Color[rename_data$Group_color == 'base']
           }
         }))
         } else {
@@ -3055,7 +3062,7 @@ server <- function(input, output, session) {
               rename_data$Color[rename_data$Group_color == x]
             }
             else{
-              '#6a3d9a'
+              rename_data$Color[rename_data$Group_color == 'base']
             }
           }))
         }
@@ -3066,7 +3073,7 @@ server <- function(input, output, session) {
               rename_data$Color[rename_data$Group_color == x]
             }
             else{
-              '#6a3d9a'
+              rename_data$Color[rename_data$Group_color == 'base']
             }
           }))
         } else if (data1_label == input$ref_col_biocircos){
@@ -3075,14 +3082,14 @@ server <- function(input, output, session) {
               rename_data$Color[rename_data$Group_color == x]
             }
             else{
-              '#6a3d9a'
+              rename_data$Color[rename_data$Group_color == 'base']
             }
           }))
         } else{
-          label_color <- rep('#40B9D4', length(chromosomes_start))
+          label_color <- rep(rename_data$Color[rename_data$Group_color == 'base'], length(chromosomes_start))
         }
       } else {
-        label_color <- rep('#40B9D4', length(chromosomes_start))
+        label_color <- rep(rename_data$Color[rename_data$Group_color == 'base'], length(chromosomes_start))
       }
       }
       return(list(inter_rre_s, inter_s_rre_n, chromosomes_start, chromosomes_end, link_pos_start, link_pos_start_1, link_pos_end, 
@@ -3704,7 +3711,7 @@ server <- function(input, output, session) {
       tracklist = tracklist + BioCircosLinkTrack('myLinkTrack_master', chromosomes_start, link_pos_start, 
                                                link_pos_start_1, chromosomes_end, link_pos_end, 
                                                link_pos_end_2, maxRadius = 0.85, labels = link_labels,
-                                               displayLabel = FALSE, color = '#40B9D4')
+                                               displayLabel = FALSE, color = rename_data$Color[rename_data$Group_color == 'base'])
     }
     
     
@@ -3718,20 +3725,15 @@ server <- function(input, output, session) {
   })
   
   
-  output$biocircos_legend <- render_gt({
+  output$biocircos_legend <- renderDataTable({
     plot_data <- vals$rename_data
     new_data <- drop_na(data.frame(cbind(plot_data$Group_color, plot_data$Color)) )
     new_data <- new_data[!apply(new_data == "", 1, all),]
     colnames(new_data) <- c("Name", "Color")
     color_vec <- new_data$Color
-    new_data %>% 
-      gt() %>%
-      data_color(
-        columns = vars(Color),
-        colors = scales::col_factor(
-          palette = color_vec,
-          domain = NULL)
-      )
+    options(DT.options = list(pageLength = 50))
+    datatable(new_data, rownames = F) %>% formatStyle('Color',
+                                                      backgroundColor=styleEqual(color_vec, color_vec))
     
     
   })
