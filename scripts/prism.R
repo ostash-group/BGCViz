@@ -1,5 +1,6 @@
 library(stringr)
 library(dplyr)
+library(tidyr)
 library(rjson)
 
 args = commandArgs(trailingOnly=TRUE)
