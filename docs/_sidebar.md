@@ -1,0 +1,7 @@
+* [Home](/#BGCViz)
+* [Quick Start](Quick_start.md)
+* [Installation](Installation.md)
+* [Input Files](Input_files_options.md)
+* [Understand the output](Logic_of_the_output.md)
+* [Plotting and renaming options](BGCViz_renaming_and_coloring_options.md)
+* [Glossary](Glossary.md)
