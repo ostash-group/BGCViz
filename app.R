@@ -40,24 +40,30 @@ ui <- fluidPage(
       checkboxInput("anti_input_options", "My AntiSMASH data is a dataframe, not json results file from antismash", value = T),
       fileInput("anti_data",
                 "Upload antismash data"),
+      actionButton("anti_sco", "Use Antismash example data from S.coelicolor"),
       h5(id = "prism_header_upload","PRISM:"),
       checkboxInput("prism_input_options", "My PRISM data is a dataframe, not json results file", value = T),
       fileInput("prism_data",
                 "Upload PRISM data"),
+      actionButton("prism_sco", "Use PRISM example data from S.coelicolor"),
       h5(id = "sempi_header_upload","SEMPI:"),
       fileInput("sempi_data",
                 "Upload SEMPI 2.0 data"),
+      actionButton("sempi_sco", "Use SEMPI example data from S.coelicolor"),
       h5(id = "deep_header_upload","DEEPBGC:"),
       fileInput("deep_data",
                 "Upload DeepBGC data"),
+      actionButton("deep_sco", "Use DeepBGC example data from S.coelicolor"),
       h5(id = "rre_header_upload","RRE-FINDER:"),
       fileInput("rre_data",
                 "Upload RRE-Finder data"),
+      actionButton("rre_sco", "Use RRE-Finder example data from S.coelicolor"),
       h5(id = "arts_header_upload","ARTS:"),
       fileInput("known_data",
                 "Upload ARTS knownhits data"),
       fileInput("dup_data",
                 "Upload ARTS duptable data"),
+      actionButton("arts_sco", "Use ARTS example data from S.coelicolor"),
       # Numeric input of chromosome length of analyzed sequence
       numericInput("chr_len", "Please type chr len of an organism", value = 8773899),
       h3("Antismash, SEMPI and PRISM data options"),
@@ -193,10 +199,345 @@ server <- function(input, output, session) {
                          sempi_interact = NULL, df_a = NULL, df_d = NULL, df_p = NULL, df_r = NULL, prism_supp = NULL,
                          prism_json = FALSE, df_s = NULL, prism_supp_interact = NULL, known_data = NULL, dup_data = NULL,
                          known_data_input = F, dup_data_input = F, arts_data=NULL, arts_data_input = F, seg_df_ref_ar = NULL,
-                         df_ps = NULL, arts_interact = NULL
+                         df_ps = NULL, arts_interact = NULL, rre_more = FALSE
                          )
   
   vals$rename_data <- read.csv("rename.csv")
+  
+  observeEvent(input$anti_sco,{
+    anti_data <- read.csv("example_data/sco_antismash.csv")
+    # Add chromosome column
+    anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
+    # Type magic
+    anti_data$Type <- str_trim(tolower(anti_data$Type))
+    anti_data['Type2'] <- str_trim(tolower(anti_data$Type))
+    vals$anti_type <- anti_data$Type2
+    vals$anti_data <- anti_data
+    # Save file
+    write.csv(vals$anti_data, "anti_data.csv", row.names = F)
+    vals$anti_data_input = TRUE 
+    vals$data_upload_count <- vals$data_upload_count +1
+    if (vals$data_upload_count == 1){
+      updateSelectInput(session, "ref",
+                        selected = "Antismash" )
+      updateSelectInput(session, "group_by",
+                        selected = "A" )
+      updateSelectInput(session, "ref_comparison",
+                        selected = "A")
+      updateSelectInput(session, "ref_col_biocircos",
+                        selected =  "Antismash")
+    }
+    
+  })
+  
+  observeEvent(input$prism_sco,{
+    # Read data
+      data <- fromJSON(file = "example_data/sco_prism.json")
+      
+      
+      types <- sapply(data$prism_results$clusters, function(x){
+        tolower(x$type)
+      })
+      
+      types <- sapply(types, function(x){
+        if (length(unlist(x))>1){
+          tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
+          gsub(" ", "__", tmp)
+        }else{
+          x
+        }
+      })
+      
+      start <- sapply(data$prism_results$clusters, function(x){
+        x$start
+        
+      })
+      end <- sapply(data$prism_results$clusters, function(x){
+        x$end
+        
+      })
+      
+      
+      prism_data <- data.frame(cbind(start, end, types))
+      prism_data <- prism_data %>%
+        transmute(Cluster=as.numeric(rownames(prism_data)), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
+      vals$biocircos_color = F
+      
+      regul_genes_orfs <- sapply(data$prism_results$regulatory_genes, function(x){
+        x$orf
+      })
+      
+      location <-  sapply(data$prism_results$orfs[[1]]$orfs, function(y){
+        sapply(regul_genes_orfs, function(x){
+          if (y$name == x) {
+            y$coordinates
+          }
+        })
+      }) 
+      
+      location <- Filter(Negate(is.null), location)
+      
+      reg_genes <-data.frame(t(data.frame(sapply(location, function(x){unlist(x)}))))
+      colnames(reg_genes) <- c("Start", "Stop")
+      reg_genes$Type <- 'regulatory'
+      reg_genes$Type2 <- reg_genes$Type
+      reg_genes$Score <- sapply(data$prism_results$regulatory_genes, function(x){
+        x$score
+      })
+      reg_genes$Name <- sapply(data$prism_results$regulatory_genes, function(x){
+        x$name
+      })
+      reg_genes$Full_name <- sapply(data$prism_results$regulatory_genes, function(x){
+        x$full_name
+      })
+      
+      resist_genes_orfs <- sapply(data$prism_results$resistance_genes, function(x){
+        x$orf
+      })
+      
+      location <-  sapply(data$prism_results$orfs[[1]]$orfs, function(y){
+        sapply(resist_genes_orfs, function(x){
+          if (y$name == x) {
+            y$coordinates
+          }
+        })
+      })
+      
+      location <- Filter(Negate(is.null), location)
+      
+      res_genes <-data.frame(t(data.frame(sapply(location, function(x){unlist(x)}))))
+      colnames(res_genes) <- c("Start", "Stop")
+      res_genes$Type <- 'resistance'
+      res_genes$Type2 <- res_genes$Type
+      res_genes$Score <- sapply(data$prism_results$resistance_genes, function(x){
+        x$score
+      })
+      res_genes$Name <- sapply(data$prism_results$resistance_genes, function(x){
+        x$name
+      })
+      res_genes$Full_name <- sapply(data$prism_results$resistance_genes, function(x){
+        x$full_name
+      })
+      
+      final_reg <- rbind(res_genes, reg_genes)
+      final_reg$ID <- seq(1:dim(final_reg)[1])
+      final_reg$Cluster <- final_reg$ID
+      rownames(final_reg) <- as.numeric(seq(1:dim(final_reg)[1]))
+      vals$prism_supp <- final_reg
+      vals$prism_json = T
+      
+    prism_data$Type <- str_trim(tolower(prism_data$Type))
+    prism_data['Type2'] <- str_trim(tolower(prism_data$Type))
+    vals$prism_data <- prism_data
+    vals$prism_type <- prism_data$Type2
+    
+    # Add chromosome info column
+    vals$prism_data$chromosome <-  rep("P", length(vals$prism_data$Cluster))
+    # Add ID column (same as Cluster)
+    vals$prism_data$ID <- vals$prism$Cluster
+    # Save file
+    write.csv(vals$prism_data, "prism_data.csv", row.names = F)
+    vals$prism_data_input = TRUE
+    vals$data_upload_count <- vals$data_upload_count +1
+    if (vals$data_upload_count == 1){
+      updateSelectInput(session, "ref",
+                        selected = "PRISM" )
+      updateSelectInput(session, "group_by",
+                        selected = "P" )
+      updateSelectInput(session, "ref_comparison",
+                        selected = "P")
+      updateSelectInput(session, "ref_col_biocircos",
+                        selected =  "PRISM")
+    }
+  })
+  
+  observeEvent(input$sempi_sco,{
+    
+    sempi_data <- read.csv("example_data/sco_sempi.csv")
+    sempi_data['Type2'] <- str_trim(tolower(sempi_data$Type))
+    vals$sempi_type <- sempi_data$Type2
+    vals$sempi_data <- sempi_data
+    # Add chromosome info column
+    vals$sempi_data$chromosome <-  rep("S", length(vals$sempi_data$Cluster))
+    # Add ID column (same as Cluster)
+    vals$sempi_data$ID <- vals$sempi_data$Cluster
+    # Save file
+    write.csv(vals$sempi_data, "sempi_data.csv", row.names = F)
+    vals$sempi_data_input = TRUE
+    vals$data_upload_count <- vals$data_upload_count +1
+    if (vals$data_upload_count == 1){
+      updateSelectInput(session, "ref",
+                        selected = "SEMPI" )
+      updateSelectInput(session, "group_by",
+                        selected = "S" )
+      updateSelectInput(session, "ref_comparison",
+                        selected = "S")
+      updateSelectInput(session, "ref_col_biocircos",
+                        selected =  "SEMPI")
+    }
+    
+  })
+  
+  observeEvent(input$arts_sco, {
+    
+    data <- read.delim("example_data/sco_duptable.tsv")
+    
+    get_location_duptable <- function(x, y){
+      test <- str_split(x, ";")
+      test2<- sub(".*loc\\|", "", test[[1]])
+      test3 <- str_split(test2, " ")
+      res <- list()
+      for (i in seq(1:length(test3))){
+        id <- paste('hit',as.character(i), sep = "_")
+        start <- test3[[i]][1]
+        stop <- test3[[i]][2]
+        res_1 <- list(id,start, stop)
+        res <- append(res, list(res_1))
+      }
+      return(res)
+      
+    }
+    
+    dup_table <- data.frame()
+    for (i in seq(1:dim(data)[1])){
+      lst <- get_location_duptable(data$X.Hits_listed.[i])
+      fin_data <- data.frame(do.call("rbind", lst))
+      fin_data$Core_gene <- data$X.Core_gene[i]
+      fin_data$Description <- data$Description[i]
+      fin_data$Count <- data$Count[i]
+      colnames(fin_data) <- c("Hit", "Start", "Stop", "Core", "Description", "Count")
+      dup_table <- rbind(dup_table, fin_data)
+    }
+    dup_table$Hit <- unlist(dup_table$Hit)
+    dup_table$Start <- unlist(dup_table$Start)
+    dup_table$Stop <- unlist(dup_table$Stop)
+    dup_table$Start <- as.numeric(dup_table$Start )
+    dup_table$Stop <- as.numeric(dup_table$Stop)
+    dup_table$ID <- seq(1: dim(dup_table)[1])
+    dup_table$Cluster <- dup_table$ID
+    dup_table$Type <- 'core'
+    dup_table$Type2 <- dup_table$Type
+    dup_table$Evalue <- NA 
+    dup_table$Bitscore <- NA 
+    dup_table$Model <- "Core" 
+    vals$dup_data <- dup_table
+    vals$dup_data_input = T
+    
+    data <- read.delim("sco_knownhits.tsv")
+    locations <- sapply(data$Sequence.description, function(x){
+      tail(str_split(x , "\\|")[[1]], 1)
+    })
+    
+    start <- sapply(locations, function(x){
+      str_split(x, "_")[[1]][1]
+    })
+    stop <- sapply(locations, function(x){
+      str_split(x, "_")[[1]][2]
+    })
+    
+    known_table <- data.frame(cbind(start, stop))
+    colnames(known_table) <- c("Start", "Stop")
+    rownames(known_table) <- seq(1:dim(known_table)[1])
+    known_table$Start <- as.numeric(known_table$Start )
+    known_table$Stop <- as.numeric(known_table$Stop)
+    known_table$Description <- data$Description
+    known_table$Model <- data$X.Model
+    known_table$Evalue <- data$evalue
+    known_table$Bitscore <- data$bitscore
+    known_table$ID <- seq(1:dim(known_table)[1])
+    known_table$Cluster <-known_table$ID
+    known_table$Type <- 'resistance'
+    known_table$Type2 <- known_table$Type
+    known_table$Hit <- NA
+    known_table$Core <- "Not_core"
+    known_table$Count <- 1
+    vals$known_data <- known_table
+    vals$known_data_input <- TRUE
+      dup_table <- vals$dup_data
+      known_table <- vals$known_data
+      arts_data <- rbind(dup_table, known_table)
+      arts_data$ID <- seq(1:dim(arts_data)[1])
+      arts_data$Cluster <- arts_data$ID
+      vals$arts_data <- arts_data
+      vals$data_upload_count <-  vals$data_upload_count +1
+      vals$arts_data_input <- T
+      dup_table_id <- arts_data %>%
+        filter(Core != "Not_core")
+      updateSelectInput(session, "dup_choice",
+                        choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
+                        selected = "All" )
+      vals$upl_arts = T
+      if (vals$data_upload_count == 1){
+        updateSelectInput(session, "ref",
+                          selected = "ARTS" )
+        updateSelectInput(session, "group_by",
+                          selected = "AR" )
+        updateSelectInput(session, "ref_col_biocircos",
+                          selected =  "ARTS")
+      }
+  })
+  
+  observeEvent(input$deep_sco, {
+    drop_cols <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
+    # Read data
+    vals$deep_data <- read.delim("example_data/sco_deep.tsv") %>%
+      mutate(pks=Polyketide, other = Other, nrps = NRP, alkaloid = Alkaloid, 
+             terpene = Terpene, saccharide = Saccharide, ripp = RiPP) %>%
+      select(-one_of(drop_cols))
+    # Add chromosome info column
+    vals$deep_data$chromosome <-  rep("D", length(vals$deep_data$bgc_candidate_id))
+    # Add ID column as number seuquence of dataframe length
+    vals$deep_data$ID <- seq(1:length(vals$deep_data$bgc_candidate_id))
+    vals$deep_data$Cluster <- vals$deep_data$ID
+    write.csv(vals$deep_data, "deep_data.csv", row.names = F)
+    vals$deep_data_input = TRUE
+    vals$data_upload_count <- vals$data_upload_count +1
+    if (vals$data_upload_count == 1){
+      updateSelectInput(session, "ref",
+                        selected = "DeepBGC" )
+      updateSelectInput(session, "group_by",
+                        selected = "D" )
+      updateSelectInput(session, "ref_col_biocircos",
+                        choices = "DeepBGC",
+                        selected = "DeepBGC")
+      
+    }
+  })
+  
+  observeEvent(input$rre_sco, {
+    # Read data
+    vals$rre_data <- read.delim("example_data/sco_rre.txt")
+    # Clean RRE data. Extract coordinates and Locus tag with double underscore delimiter (__)
+    vals$rre_data <- vals$rre_data %>%
+      separate(Gene.name, c("Sequence","Coordinates","Locus_tag"),sep = "__") %>%
+      separate(Coordinates, c("Start", "Stop"),sep = "-")
+    # Add chromosome info column
+    vals$rre_data$chromosome <- rep("RRE",length(vals$rre_data$Sequence))
+    # Add ID column
+    vals$rre_data$ID <- seq(1:length(vals$rre_data$Sequence))
+    vals$rre_data$Cluster <- vals$rre_data$ID
+    vals$rre_data <- data.frame(vals$rre_data)
+    vals$rre_data['Type'] <- 'ripp'
+    write.csv(vals$rre_data, "rre_data.csv", row.names = F)
+    
+    vals$rre_data_input = TRUE
+    vals$data_upload_count <- vals$data_upload_count +1
+    if (vals$data_upload_count == 1){
+      updateSelectInput(session, "ref",
+                        selected = "RRE-Finder" )
+      updateSelectInput(session, "group_by",
+                        selected = "R" )
+      updateSelectInput(session, "ref_col_biocircos",
+                        choices = "RRE-Finder",
+                        selected = "RRE")
+      
+    }
+    if (!is.null(vals$rre_data$Probability)){
+      vals$rre_more = T
+    } else {
+      vals$rre_more = F
+    }
+  })
   
   # Observe antismash data input and save as reactive value
   observeEvent(input$anti_data,{
@@ -611,6 +952,11 @@ server <- function(input, output, session) {
                         choices = "RRE-Finder",
                         selected = "RRE")
       
+    }
+    if (!is.null(vals$rre_data$Probability)){
+      vals$rre_more = T
+    } else {
+      vals$rre_more = F
     }
   })
   # Observe input of chromosome length
@@ -1353,6 +1699,12 @@ server <- function(input, output, session) {
       hideElement(selector = "#arts_header_upload")
       hideElement(selector = "#known_data")
       hideElement(selector = "#dup_data")
+      hideElement(selector = "#anti_sco")
+      hideElement(selector = "#prism_sco")
+      hideElement(selector = "#arts_sco")
+      hideElement(selector = "#rre_sco")
+      hideElement(selector = "#sempi_sco")
+      hideElement(selector = "#deep_sco")
     }else {
       showElement(selector = "#anti_input_options")
       showElement(selector = "#anti_data")
@@ -1370,6 +1722,12 @@ server <- function(input, output, session) {
       showElement(selector = "#arts_header_upload")
       showElement(selector = "#known_data")
       showElement(selector = "#dup_data")
+      showElement(selector = "#anti_sco")
+      showElement(selector = "#prism_sco")
+      showElement(selector = "#arts_sco")
+      showElement(selector = "#rre_sco")
+      showElement(selector = "#sempi_sco")
+      showElement(selector = "#deep_sco")
   }
     })
   
@@ -1551,8 +1909,6 @@ server <- function(input, output, session) {
 
   # Render barplot
   output$deep_barplot <- renderPlot({
-    # Require deepBGC data and sntismash data to visualize plot
-    req(input$deep_data)
     
     # Create empty dataframe to populate later
     fullnes_of_annotation <- data.frame(NA, NA, NA)
@@ -1674,8 +2030,6 @@ server <- function(input, output, session) {
   
   # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data
   output$deep_rate <- renderPlotly({
-    # Require DeepBGC and antismash data to begin plotting
-    req(input$deep_data)
     
     # Store scores columns in vectors for DeepBGC data
     score_activity <- c("antibacterial", "cytotoxic","inhibitor","antifungal")
@@ -1930,8 +2284,8 @@ server <- function(input, output, session) {
       } else{
         Stop_vals_RRE_in <- as.numeric(data$Stop)
       }
-      # Create a dataframe with antismash data, intercepted with RREFinder, with all the additional info to visualize on hover
-      seg_df_2 <- data.frame(x=data$Start,
+      if (vals$rre_more == T){
+        seg_df_2 <- data.frame(x=data$Start,
                              y=rep(letter, length(data$Locus_tag)),
                              xend=Stop_vals_RRE_in,
                              yend=rep(letter, length(data$Locus_tag)),
@@ -1946,6 +2300,21 @@ server <- function(input, output, session) {
                              RRE_start = data$RRE.start,
                              RRE_stop = data$RRE.end,
                              Probability = data$Probability)
+      } else {
+        seg_df_2 <- data.frame(x=data$Start,
+                               y=rep(letter, length(data$Locus_tag)),
+                               xend=Stop_vals_RRE_in,
+                               yend=rep(letter, length(data$Locus_tag)),
+                               Type = rep("ripp", length(data$Locus_tag)),
+                               Software = rep("RREFinder", length(data$Locus_tag)),
+                               ID = data$Locus_tag,
+                               Start = data$Start,
+                               Stop = data$Stop,
+                               E_value = data$E.value)
+      }
+
+      # Create a dataframe with antismash data, intercepted with RREFinder, with all the additional info to visualize on hover
+      
       return(seg_df_2)
     }
     get_prism_supp_inter <- function(x,prism_supp_inter,prism_supp, letter ){
@@ -2018,10 +2387,16 @@ server <- function(input, output, session) {
                                                                deepbgc_score = deepbgc_score,activity = activity ),size =3)
       }
     geom_rre <- function(data){
+      if (vals$rre_more == T){
       geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
                                                            ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
                                                            P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
                                                            Probability = Probability),size = 3)
+      } else {
+        geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                    ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value
+                                    ),size = 3)
+      }
       }
     geom_sempi <- function(data){
       geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
@@ -2183,6 +2558,7 @@ server <- function(input, output, session) {
                                       activity = deep_data_chromo$product_activity)
     }
     if (vals$rre_data_input == TRUE){
+      if (vals$rre_more == T){
       seg_ref_r <- data.frame(x=vals$rre_data$Start,
                               y=rep("Z", length(vals$rre_data$Locus_tag)),
                               xend=Stop_vals_RRE,
@@ -2198,6 +2574,18 @@ server <- function(input, output, session) {
                               RRE_start = vals$rre_data$RRE.start,
                               RRE_stop = vals$rre_data$RRE.end,
                               Probability = vals$rre_data$Probability)
+      } else {
+        seg_ref_r <- data.frame(x=vals$rre_data$Start,
+                                y=rep("Z", length(vals$rre_data$Locus_tag)),
+                                xend=Stop_vals_RRE,
+                                yend=rep("Z", length(vals$rre_data$Locus_tag)),
+                                Type = rep("ripp", length(vals$rre_data$Locus_tag)),
+                                Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
+                                ID = vals$rre_data$Locus_tag,
+                                Start = vals$rre_data$Start,
+                                Stop = vals$rre_data$Stop,
+                                E_value = vals$rre_data$E.value)
+      }
       seg_ref <- seg_ref_r
       if (input$ref == "RRE-Finder") {
         plot <- ggplot(rre_data, aes(x = vals$chr_len, y = Chr)) + geom_rre(seg_ref)
@@ -2250,6 +2638,7 @@ server <- function(input, output, session) {
         )
       }
       
+      if (vals$rre_more == T){
       vals$seg_df_ref_r <- data.frame(x=vals$rre_data$Start,
                                       y=rep("Y", length(vals$rre_data$Locus_tag)),
                                       xend=Stop_vals_RRE,
@@ -2265,6 +2654,18 @@ server <- function(input, output, session) {
                                       RRE_start = vals$rre_data$RRE.start,
                                       RRE_stop = vals$rre_data$RRE.end,
                                       Probability = vals$rre_data$Probability)
+      } else {
+        vals$seg_df_ref_r <- data.frame(x=vals$rre_data$Start,
+                                        y=rep("Y", length(vals$rre_data$Locus_tag)),
+                                        xend=Stop_vals_RRE,
+                                        yend=rep("Y", length(vals$rre_data$Locus_tag)),
+                                        Type = rep("ripp", length(vals$rre_data$Locus_tag)),
+                                        Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
+                                        ID = vals$rre_data$Locus_tag,
+                                        Start = vals$rre_data$Start,
+                                        Stop = vals$rre_data$Stop,
+                                        E_value = vals$rre_data$E.value)
+      }
     }
     if (vals$prism_data_input == TRUE){
       # Create a dataframe with PRISM data with all the additional info to visualize on hover
@@ -2632,10 +3033,15 @@ server <- function(input, output, session) {
                                       deepbgc_score = deepbgc_score,activity = activity ),size =3)
     }
     if (vals$rre_data_input == TRUE){
+      if (vals$rre_more == T){
       plot <- plot + geom_segment(data=vals$seg_df_ref_r, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
                                                     ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
                                                     P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
                                                     Probability = Probability),size = 3)
+      } else {
+        plot <- plot + geom_segment(data=vals$seg_df_ref_r, aes(x, y, xend=xend, yend=yend, color = Type,  Software = Software,
+                                                                ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value),size = 3)
+      }
     }
     if (vals$prism_data_input == TRUE){
       plot <- plot + geom_segment(data=vals$seg_df_ref_p, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
