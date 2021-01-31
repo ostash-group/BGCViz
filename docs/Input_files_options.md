@@ -31,7 +31,7 @@ Similarly to the AntiSMASH, there are two options for the PRISM input:
 ```
 
 
-**If json file was provided, the additional option of using Regulatory and Resistance genes, identified by PRISM can be used from the "Antismash, SEMPI and PRISM data options"  menu option in BGCViz. Those genes will be treated as an additional input, and chromosome will be named "P-supp"**
+**If json file was provided, the additional option of using Regulatory and Resistance genes, identified by PRISM can be used from the "Data manipulation option"  menu option in BGCViz. Those genes will be treated as an additional input, and chromosome will be named "P-supp"**
 
 **This field supports the csv file upload. It can be any csv file, as long as the format is the satisfied. Therefore you can upload any results in this field, in place of PRISM, but the result plot will label these as "PRISM"**
 
@@ -49,9 +49,15 @@ The db file, script can transform to the .csv file is the   `/genome_browser/mai
 We are expecting the default DeepBGC tsv output file. Please the the example in /example_data folder
 
 # RRE-Finder
-We the expecting the modified default txt results file from RRE-Finder, which is in the format as below:
+We the expecting the modified default txt results file from RRE-Finder, which is in the format as below (in case of exploratory mode):
 
 ![rre_data](/images/rre_data.png)
+
+Or like this (in case of precise mode):
+
+![rre_data_precise.png](/images/rre_data_precise.png)
+
+(These files are created from genbank input to RRE-Finder (which is an expected input by default) )
 
 The expected list of modifications:
 1.  The first column ("Gene_name")  is divided in 3 parts by double underscore as a delimiter ("__".)  
@@ -59,7 +65,7 @@ The expected list of modifications:
 3.  Second part is the most valuable one - coordinates.
 4.  Third part is a locus name, or other sequence identifier.
 
-**Please be sure that any other data from Gene_name column is deleted. The data itself is divided by double underscores (should be made manually) iny three clean parts. Please delete all other data in Gene_name column (product names or gene names), if any**
+**Please be sure that any other data from Gene_name column is deleted. The data itself is divided by double underscores (should be made manually) into three clean parts. Please delete all other data in Gene_name column (product names or gene names), if any**
 
 # ARTS
 There are two uploads for the ARTS data. And only two files are provided the data will be included in the analysis.  Firstly, download the ARTS results (all results). 

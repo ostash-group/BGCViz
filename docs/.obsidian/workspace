@@ -9,19 +9,19 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "Quick_start.md",
+            "file": "Logic_of_the_output.md",
             "mode": "source"
           }
         }
       },
       {
-        "id": "714e750e96c06a9f",
+        "id": "a538915d727d2cfb",
         "type": "leaf",
         "active": true,
         "state": {
           "type": "markdown",
           "state": {
-            "file": "BGCViz_renaming_and_coloring_options.md",
+            "file": "Quick_start.md",
             "mode": "source"
           }
         }
@@ -80,7 +80,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "BGCViz_renaming_and_coloring_options.md",
+                "file": "Quick_start.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -93,19 +93,18 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "lastOpenFiles": [
-    "BGCViz_renaming_and_coloring_options.md",
+    "Quick_start.md",
+    "Additional_analysis.md",
     "Logic_of_the_output.md",
     "Introduction.md",
-    "Quick_start.md",
-    "Glossary.md",
-    "README.md",
+    "Installation.md",
     "Input_files_options.md",
-    "Untitled.md",
-    "Logic of the output.md",
-    "Biocircos.md"
+    "Glossary.md",
+    "BGCViz_renaming_and_coloring_options.md",
+    "_sidebar.md",
+    "UI_guide.md"
   ]
 }

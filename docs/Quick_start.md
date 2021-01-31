@@ -18,13 +18,15 @@ A detailed description of every possible input file is [here](Input_files_option
 
 The upload of the files is pretty straightforward - use the properly named file upload section.  Prior to upload, no UI toggles and elements are shown. 
 
-After the upload of the first input (antismash.csv) (**make sure the checkbox is ticked!**):
+#### Note: You can use example data from S.coelicolor, pressing the button below the input field
+
+After the upload of the first input (antismash.csv)(**make sure the checkbox is ticked!**):
 
   
-
 ![anti_upload](/images/anti_upload.png)
 
   
+**Please also enter the length of the contig in the corresponding field under uploads. This length is used for correct representation of Biocircos plot**
 
 ## Results with only one file upload
 
@@ -52,7 +54,7 @@ For now, this plot is the same as a plot above, due to lack of data.
 
 After uploading a single file, several controls are available. "Genes on chromosome plot controls" have one select menu, which states which data is used as a reference.  
 
-Also, "Visualize AntiSMASH BGC with several types as 'Hybrid'" check box is available under "Antismash, SEMPI and PRISM data options" menu option. This will rename the multiple typer regions as "hybrid".
+Also, "Visualize AntiSMASH BGC with several types as 'Hybrid'" check box is available under "Data manipulation option" menu option. This will rename the multiple typer regions as "hybrid".
 
   
 
@@ -64,7 +66,7 @@ Also, "Visualize AntiSMASH BGC with several types as 'Hybrid'" check box is avai
 
 Let's proceed and upload PRISM and SEMPI results:
 
-  
+#### **The example S.coelicolor data is available upon button press uder PRISM and SEMPI input fields.**
 
 ![prism_sempi](/images/prism_sempi.png)
 
@@ -86,7 +88,7 @@ The plots in the current tab changed.  Also, two additional tabs appeared:
 
   
 
-Because we uploaded the json PRISM file (from PRISM 4.4.5), which also contains resistance and regulatory genes which can be mapped to the genomic coordinates, we can tick the checkbox "Use PRISM resistance and regulatory genes information" under "Antismash, SEMPI and PRISM data options". This will cause a new "chromosome" to be visualized with these genes, named "P-supp". More details available [here](Input_files_options#PRISM). The genes are invisible on the plots due to plot scale. To make them more visible, you can tick the "Add thickness to PRISM resistance + regulatory genes results visualization" checkbox under "Improve visualization" menu.
+Because we uploaded the json PRISM file (from PRISM 4.4.5), which also contains resistance and regulatory genes which can be mapped to the genomic coordinates, we can tick the checkbox "Use PRISM resistance and regulatory genes information" under "Data manipulation option". This will cause a new "chromosome" to be visualized with these genes, named "P-supp". More details available [here](Input_files_options#PRISM). The genes are invisible on the plots due to plot scale. To make them more visible, you can tick the "Add thickness to PRISM resistance + regulatory genes results visualization" checkbox under "Improve visualization" menu.
 
   
 
@@ -102,7 +104,7 @@ They are more controls for data manipulation available, as well as more plots. T
 
 ## Step 3.1 Rename the clusters 
 
-It is a good practice, to rename the type of clusters after uploading. Renaming the clusters will hugely affect the colouring schema. In other ways, it will decrease the clutter in the legend and improve high-level visual comparison. Also, renaming is somewhat essential for colouring the Biocircos links and arcs.
+It is a good practice, to rename the type of clusters after uploading. Renaming the clusters will hugely affect the coloring schema. In other ways, it will decrease the clutter in the legend and improve high-level visual comparison. Also, renaming is somewhat essential for coloring the Biocircos links and arcs.
 
 
 To rename the dataset you can press "Rename" button under  "Improve visualization" menu. 
@@ -119,7 +121,7 @@ The legend on the plots changes, but the "Type" field upon mouse cursor hovering
 
   
 
-Red rectangular on the plot shows, that the product information is preserved, but the colouring scheme changed (lassopeptide -> ripp).
+Red rectangular on the plot shows, that the product information is preserved, but the coloring scheme changed (lassopeptide -> ripp).
 
 The renaming scheme is available in the [Glossary](Glossary.md).  Guide how to change it available [here](BGCViz_renaming_and_coloring_options.md).
 
@@ -139,9 +141,9 @@ By default, all hybrids remain intact after renaming. However, it is possible to
 
 **The data manipulation options changes upon files input.  They are not the same in the every case**
 
-# Step 4. Colour the links in biocircos plot
+# Step 4. Color the links in biocircos plot
 
-The other tab is "Biocircos plot". By default, no colouring is done (the data should be renamed, or, at least, match colouring scheme (more [here](BGCViz_renaming_and_coloring_options.md)) for better colouring)
+The other tab is "Biocircos plot". By default, no coloring is done (the data should be renamed, or, at least, match coloring scheme (more about changing colors in [here](BGCViz_renaming_and_coloring_options.md)) and about link coloring modes is [here](Logic_of_the_output.md#biocircos-plot))
 
   
 
@@ -161,7 +163,7 @@ The second plot is actually a legend for circos plot:
 
   
 
-**Note: "base" color indicates the default color. Please include is, if changing the coloring scheme (more [here](BGCViz_renaming_and_coloring_options.md))**
+**Note: "base" color indicates the default color. Please include it, if changing the coloring scheme (more [here](BGCViz_renaming_and_coloring_options.md))**
 
   
 
@@ -173,7 +175,7 @@ The coloring options for biocircos plot are available under "Improve visualizati
 
   
 
-There are three colouring modes available for the links, which are discussed in much more details in the appropriate [section](BGCViz_renaming_and_coloring_options.md). The problem with links is that they can connect clusters with separate types. Mentioned modes are just different ways to deal with this issue.
+There are three coloring modes available for the links, which are discussed in much more details in the appropriate [section](Logic_of_the_output.md#biocircos-plot). The problem with links is that they can connect clusters with separate types. Mentioned modes are just different ways to deal with this issue.
 
   
 
@@ -191,7 +193,7 @@ For our example, the barplot looks like this:
 
   
 
-We right from the chart can see that cluster # 30 from antismash and # 18 from prism are the most abundant between annotations. The group by table reveals, the intercepted clusters:
+We right from the chart can see that cluster # 19 from antismash and # 13, 9 from prism are the most abundant between annotations. The group by table reveals, the intercepted clusters:
 
   
 
@@ -199,7 +201,7 @@ We right from the chart can see that cluster # 30 from antismash and # 18 from p
 
   
 
-We can conclude that cluster # 30 from antismash, #18 from PRISM, # 31 from SEMPI are the same one. Moreover, it contains 1 resistance genes (#54) and 2 regulatory genes (#76, #77), as identified by PRISM. 
+We can conclude that cluster # 19 from antismash, #13 from PRISM, # 23 from SEMPI are the same one. Moreover, it contains 1 resistance genes (#65) and 4 regulatory genes (#122, #123, #124, #125), as identified by PRISM. 
 
   
 
@@ -215,7 +217,7 @@ By default, only intercepted regions are showed. But if the purpose of the analy
 
   
 
-**Tip: Check the last NA row for the group by column. It shows the clusters, that are not intercepted with the reference data but are intercepted with other methods. For example, cluster #7 is in NA row, when we group by Antismash. When we group by PRISM, it becomes clear that this cluster is annotated only by SEMPI and contain resistance and regulatory genes (#20 and #59)**
+**Tip: Check the last ("NA") row in the first column. It shows the clusters, that are not intercepted with the reference data but are intercepted among other methods. For example, cluster #6 from PRISM is in NA row, when we group by Antismash. When we group by PRISM, it becomes clear that this cluster is annotated only by SEMPI (#7). The similar situation is with PRISM resistance (#35) and regulatory (#78) genes, which are not intercepted by Antismash. If we group the data by the PRISM column, those genes will land in corresponding groups**
 
   
 

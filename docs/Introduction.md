@@ -43,13 +43,13 @@ For more information about which files need to be preparated please see [input f
 
 # Contributing
 
-There are no contributing guidelines yet. But feel free to resolve any posted issue on [repository](https://github.com/ostash-group/BGCViz/issues) or implement smth from out TO-DO list. 
+There are no contributing guidelines yet. But feel free to resolve any posted issue on [repository](https://github.com/ostash-group/BGCViz/issues) or implement anything from our TO-DO list. 
 
 If you have any questions, suggestions, or bugs with the BGCViz please let us know via Issues section of the repo on [GitHub](https://github.com/ostash-group/BGCViz/issues)
 
 # TO-DO list
 
-1. Write all group information in one GenBank file (for know separate files are generated. More info [here](Additional_analysis.md))
+1. Write all group information within one GenBank file (for now separate files are generated. More info [here](Additional_analysis.md))
 
 2. Add BigFAM information parsing
 
