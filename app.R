@@ -66,7 +66,7 @@ ui <- fluidPage(
       actionButton("arts_sco", "Use ARTS example data from S.coelicolor"),
       # Numeric input of chromosome length of analyzed sequence
       numericInput("chr_len", "Please type chr len of an organism", value = 10000000),
-      h3("Antismash, SEMPI and PRISM data options"),
+      h3("Data manipulation options"),
       checkboxInput("hide_anti", "Hide data manipulation fields"),
       h5(id = "anti_header","Antismash data options:"),
       checkboxInput("anti_hybrid", "Visualize AntiSMASH BGC with several types as 'Hybrid'"),
