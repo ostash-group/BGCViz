@@ -3,5 +3,6 @@
 * [Installation](Installation.md)
 * [Input Files](Input_files_options.md)
 * [Understand the output](Logic_of_the_output.md)
-* [Plotting and renaming options](BGCViz_renaming_and_coloring_options.md)
+* [Plot coloring and renaming options](BGCViz_renaming_and_coloring_options.md)
+* [Additional analysis with clinker](Additional_analysis.md)
 * [Glossary](Glossary.md)

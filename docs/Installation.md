@@ -21,7 +21,7 @@ install.packages(c("dplyr", "tidyr", "stringr", "RSQLite", "rjson" ))
 ## Why local run
 The local run of an app is identical to the website one, with the same UI in the browser. Howewer, it have several advantages:
 - Fast upload of files
-- Better response times
+- Better response time
 - Control over execution. Quick modifications to the code.
 
-Besides speed and flexibility of a local run, ability of upload raw  json output files from PRISM and AntiSMASH is a big plus (more details [here](Input_filess_options.md)). For server usage we are suggesting to convert the json files to the csv ones, using provided scripts (more details [here](Input_filess_options.md)). 
+Besides speed and flexibility of a local run, ability of upload raw  json output files from PRISM and AntiSMASH is a big plus (more details [here](Input_files_options.md)). For server usage we are suggesting to convert the json files to the csv ones, using provided scripts (more details [here](Input_files_options.md)). 
