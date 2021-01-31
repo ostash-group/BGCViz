@@ -1,6 +1,6 @@
 # BGCViz
 
-BGCViz is a shiny application (can be run locally, or via [website](https://pavloh.shinyapps.io/BGCViz_dev/)), which uses genomic coordinates of BGC annotations from different sources to visualize interception between them in one sequence (genome). This integrative approach could point to both:
+BGCViz is a shiny application (can be run locally, or via [website](https://biopavlohrab.shinyapps.io/BGCViz/)), which uses genomic coordinates of BGC annotations from different sources to visualize interception between them in one sequence (genome). This integrative approach could point to both:
 
  - "regions of interest", annotated with more than one tool.
 
