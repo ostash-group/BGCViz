@@ -103,7 +103,7 @@ ui <- fluidPage(
       checkboxInput("hide_viz", "Hide improve visualization options"),
       #Improve RREFinder annotated BCG visibility
       fileInput("rename_data",
-               "Upload dataframe for grouping"),
+               "Upload renaming and coloring scheme"),
       actionButton("rename", "Rename"),
       actionButton("reset_name", "Reset"),
       checkboxInput("rre_width", "Add thickness to RRE results visualization"),
