@@ -25,7 +25,7 @@ aminocoumarin|other||||
 
 The data used for renaming is stored under "Code" and "Group" columns. The default file is available is the BGCViz directory or in the [Glossary](Glossary.md). The one is free to use any renaming scheme, but the whole csv file should be uploaded in the file input in BGCViz:
 
-![renaming_opt.png](/images/renaming_opt.png)
+![rename](/images/rename.png)
 
 # Coloring renamed data
 
