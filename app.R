@@ -423,7 +423,7 @@ server <- function(input, output, session) {
     vals$dup_data <- dup_table
     vals$dup_data_input = T
     
-    data <- read.delim("sco_knownhits.tsv")
+    data <- read.delim("example_data/sco_knownhits.tsv")
     locations <- sapply(data$Sequence.description, function(x){
       tail(str_split(x , "\\|")[[1]], 1)
     })
