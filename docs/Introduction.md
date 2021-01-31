@@ -10,9 +10,7 @@ BGCViz is a shiny application (can be run locally, or via [website](https://biop
 
 This app is written as a part of **Cambridge Bioinformatics Hackathon 2020** ([link](https://cambiohack.uk)). 
 
- 
-**All the documentation is available on out [site](https://ostash-group.github.io/BGCViz/#/)**
-
+  
 
 ![Biocircos](images/biocircos.png)
 
@@ -32,17 +30,26 @@ Currently, the app supports annotations from such sources:
 
 6. ARTS (raw tsv files)
 
+  
 
+For more information about which files need to be preparated please see [input files](Input_files_options.md) section
+
+# What's next?
+
+1. See our [installation](Installation.md) guide if you decided to run the app locally.
+
+2. You can use our [guide](Quick_start.md) for a quick start.
+  
 
 # Contributing
 
-There are no contributing guidelines yet. But feel free to resolve any posted issue on [repository](https://github.com/ostash-group/BGCViz/issues) or implement smth from out TO-DO list. 
+There are no contributing guidelines yet. But feel free to resolve any posted issue on [repository](https://github.com/ostash-group/BGCViz/issues) or implement anything from our TO-DO list. 
 
 If you have any questions, suggestions, or bugs with the BGCViz please let us know via Issues section of the repo on [GitHub](https://github.com/ostash-group/BGCViz/issues)
 
 # TO-DO list
 
-1. Write all group information in one GenBank file (for know separate files are generated. More info [here](Additional_analysis.md))
+1. Write all group information within one GenBank file (for now separate files are generated. More info [here](Additional_analysis.md))
 
 2. Add BigFAM information parsing
 
