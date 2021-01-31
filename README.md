@@ -11,7 +11,7 @@ BGCViz is a shiny application (can be run locally, or via [website](https://biop
 This app is written as a part of **Cambridge Bioinformatics Hackathon 2020** ([link](https://cambiohack.uk)). 
 
  
-**All the documentation is available on out [site](https://ostash-group.github.io/BGCViz/#/)**
+**All the documentation is available on our [site](https://ostash-group.github.io/BGCViz)**
 
 
 ![Biocircos](images/biocircos.png)
@@ -36,7 +36,7 @@ Currently, the app supports annotations from such sources:
 
 # Contributing
 
-There are no contributing guidelines yet. But feel free to resolve any posted issue on [repository](https://github.com/ostash-group/BGCViz/issues) or implement smth from out TO-DO list. 
+There are no contributing guidelines yet. But feel free to resolve any posted issue on [repository](https://github.com/ostash-group/BGCViz/issues) or implement anything from our TO-DO list. 
 
 If you have any questions, suggestions, or bugs with the BGCViz please let us know via Issues section of the repo on [GitHub](https://github.com/ostash-group/BGCViz/issues)
 
