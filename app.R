@@ -12,16 +12,14 @@
 library(shiny)
 library(tidyverse)
 library(plyr)
-library(IntervalSurgeon)
 library(plotly)
 library(BioCircos)
 library(ggplot2)
 library(shinyjs)
 library(rjson)
 library(stringr)
-library(RSQLite)
-library(readr)
 library(DT)
+library(GenomicRanges)
 
 # Define UI 
 ui <- fluidPage(
@@ -1326,15 +1324,11 @@ server <- function(input, output, session) {
     # Function to get interception between two matrices. Returns a list of two elements - IDs from first matrix and 
     # from second one. IDs are duplicated, if intercepted more than one time
     get_interception <- function(x,y) {
-      interseption <- annotate(x, y)
-      inter_x <- unlist(interseption, use.names=FALSE)
-      inter_tmp <- which(sapply(interseption,length )!=0)
-      inter_y <- c()
-      if (length(inter_tmp) != 0) {
-        tmp <- sapply(interseption,length)
-        for (i in seq(1:length(tmp[which(tmp != 0)]))) {
-          inter_y <- c(inter_y,rep(inter_tmp[i],tmp[which(tmp != 0)][i]))
-        }}
+      query <- makeGRangesFromDataFrame(x)
+      subject <- makeGRangesFromDataFrame(y)
+      interseption <- findOverlaps(query,subject)
+      inter_x <- interseption@to
+      inter_y <- interseption@from
       return(list(inter_x, inter_y))
     }
     
@@ -1343,54 +1337,54 @@ server <- function(input, output, session) {
     # ANTISMASH
     if (vals$anti_data_input == TRUE){
       anti_inter <- biocircos_anti %>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+      anti_inter$seqnames <- "chr"
     }
     
     # PRISM
     if (vals$prism_data_input == TRUE){
       # Store PRISM data start/stop as matrix  for further interception calculation
       prism_inter <- biocircos_prism %>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+      prism_inter$seqnames <- "chr"
     }
     
     #SEMPI
     if (vals$sempi_data_input == TRUE){
       # Store SEMPI data start/stop as matrix  for further interception calculation
       sempi_inter <- biocircos_sempi %>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+      sempi_inter$seqnames <- "chr"
     }
     #RRE-FINDER
     if (vals$rre_data_input == TRUE){
       # Store RREFinder data start/stop as matrix  for futher interception calculation
       rre_inter <- biocircos_rre%>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop)
+      rre_inter$seqnames <- "chr"
     }
     
     #DEEPBGC
     if (vals$deep_data_input == TRUE){
       # Store deepbgc data start/stop as matrix  for futher interception calculation
       deep_inter <- biocircos_deep %>% 
-        select(nucl_start, nucl_end) %>%
-        as.matrix()
+        select(nucl_start, nucl_end) 
+      deep_inter$seqnames <- "chr"
     }
     
     
     if (input$prism_supp == TRUE){
       # Store deepbgc data start/stop as matrix  for futher interception calculation
       prism_supp_inter <- biocircos_prism_supp %>% 
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+      prism_supp_inter$seqnames <- "chr"
     }
     
     if (vals$arts_data_input == TRUE){
       # Store deepbgc data start/stop as matrix  for futher interception calculation
       arts_inter <- biocircos_arts %>% 
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+      arts_inter$seqnames <- "chr"
     }
     
     
@@ -1948,59 +1942,57 @@ server <- function(input, output, session) {
         mutate(score_a = score_a, score_d = score_d, score_c = score_c) %>%
         filter(num_domains>=input$domains_filter, score>=dataframe_1/100, num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter,
                score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , score_d >= as.numeric(input$score_d)/100) %>%
-        select(nucl_start, nucl_end) %>%
-        as.matrix()
+        select(Start = nucl_start, Stop = nucl_end) 
+      if (length(deep_inter$Start) > 0) {
+        deep_inter$seqnames <- "chr"
+      }
+      
       
       # Store antismash bgc start amd atop values as matrix
       if (input$ref_comparison == 'A'){
         anti_inter <- vals$anti_data %>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+        anti_inter$seqnames <- "chr"
       } else if (input$ref_comparison == 'P'){
         anti_inter <- vals$prism_data %>%
-          select(Start, Stop) %>%
-          as.matrix()
+          select(Start, Stop) 
+        anti_inter$seqnames <- "chr"
       } else if (input$ref_comparison == 'S'){
     anti_inter <- vals$sempi_data %>%
-      select(Start, Stop) %>%
-      as.matrix()
+      select(Start, Stop) 
+    anti_inter$seqnames <- "chr"
   } 
       
       
      
       
       # Get the interception of two matrices
-      interseption <- annotate(deep_inter, anti_inter) #Here we use IntervalSurgeon to get intersection list
-      
-      # Add zero elements to the new vector. Those are the values that have no interception and annotated only by deepBGC
-      new_vect <- c()
-      if (length(interseption) >0 ) {
-        for (i in 1:length(interseption )){
-          if (is.integer0(interseption[[i]])) {
-            new_vect = c(new_vect , i)
-          }
-        }
+      if (length(deep_inter$Start) > 0) {
+        query <- makeGRangesFromDataFrame(deep_inter)
+        subject <- makeGRangesFromDataFrame(anti_inter)
+        interseption <- findOverlaps(query,subject)
+        inter_bgc <- length(interseption@from)
+        len_new <- length(deep_inter$seqnames) - inter_bgc
+      } else {
+        inter_bgc <- 0
+        len_new <- 0
       }
       
-      # Get number for interception bgc
-      inter_bgc <-  length(unlist(interseption))
-      # Get nember of non intercepted antismash data
+
       if (input$ref_comparison == 'A'){
-        used_antismash <-  length(vals$anti_data$Cluster)-length(unlist(interseption))
+        used_antismash <-  length(vals$anti_data$Cluster)-inter_bgc
         cols <-  c("Only Antismash", "DeepBGC+Antismash", "Only DeepBGC")
         title <-  ggtitle("Comparison of Antismash and DeepBGC annotations at given score threshold")
       } else if (input$ref_comparison == 'P'){
-        used_antismash <-  length(vals$prism_data$Cluster)-length(unlist(interseption))
+        used_antismash <-  length(vals$prism_data$Cluster)-inter_bgc
         cols <- c("Only PRISM", "DeepBGC+PRISM", "Only DeepBGC")
         title <- ggtitle("Comparison of PRISM and DeepBGC annotations at given score threshold")
       } else if (input$ref_comparison == 'S') {
-        used_antismash <-  length(vals$sempi_data$Cluster)-length(unlist(interseption))
+        used_antismash <-  length(vals$sempi_data$Cluster)-inter_bgc
         cols <- c("Only SEMPI", "DeepBGC+SEMPI", "Only DeepBGC")
         title <- ggtitle("Comparison of SEMPI and DeepBGC annotations at given score threshold")
       }
-      
-      # Number of only DeepBGC annotated clusters
-      len_new <- length(new_vect)
+
       # Combine all vectors into one dataframe
       fullnes_of_annotation_1 <- data.frame(c(rep(c(as.character(dataframe_1)),3 )), 
                                             cols, c(used_antismash, inter_bgc, len_new))
@@ -2110,8 +2102,9 @@ server <- function(input, output, session) {
         dplyr::select(ID,Chr ,Start, Stop, Type, Type2)
       # Extract only Start and Stop from antismash data into matrix
       anti_inter <- vals$anti_data %>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop)
+      anti_inter$seqnames <- "chr"
+      
       }
     if (vals$deep_data_input == TRUE){
       # Store deepbgc max score in a vector for chosen columns
@@ -2139,8 +2132,9 @@ server <- function(input, output, session) {
       vals$deep_data_chromo <- deep_data_chromo
       deep_inter <- deep_data_chromo
       deep_inter <- deep_inter %>% 
-        select(nucl_start, nucl_end) %>%
-        as.matrix()
+        select(nucl_start, nucl_end)
+      
+      deep_inter$seqnames <- "chr"
     }
     if (vals$rre_data_input == TRUE){
       # Convert numeric columns in a dataframe as a numeric
@@ -2150,8 +2144,8 @@ server <- function(input, output, session) {
       rre_data <- data.frame(vals$rre_data)
       # Start/Stop columns from rre data as matrix
       rre_inter <- rre_data %>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop)
+      rre_inter$seqnames <- "chr"
       if (input$rre_width == TRUE) {
         Stop_vals_RRE <- as.numeric(vals$rre_data$Stop)+50000
       } else{
@@ -2162,23 +2156,23 @@ server <- function(input, output, session) {
       # Store master prism data in local variable
       prism_data <- vals$prism_data
       # Start/Stop columns from prism data as matrix
-      prism_inter <- vals$prism_data %>%
-        select(Start,Stop) %>%
-        as.matrix()
+      prism_inter <- prism_data %>%
+        select(Start,Stop)
+      prism_inter$seqnames <- "chr"
     }
     if (vals$sempi_data_input == TRUE){
       # Store master prism data in local variable
       sempi_data <- vals$sempi_data
       # Start/Stop columns from prism data as matrix
       sempi_inter <- vals$sempi_data %>%
-        select(Start,Stop) %>%
-        as.matrix()
+        select(Start,Stop)
+      sempi_inter$seqnames <- "chr"
     }
     if (input$prism_supp == T){
       prism_supp <- vals$prism_supp
       prism_supp_inter <- prism_supp %>%
-        select(Start,Stop) %>%
-        as.matrix()
+        select(Start,Stop)
+      prism_supp_inter$seqnames <- "chr"
       if (input$prism_supp_width == TRUE) {
         Stop_vals_prism_supp <- as.numeric(vals$prism_supp$Stop)+50000
       } else{
@@ -2192,8 +2186,8 @@ server <- function(input, output, session) {
           filter(Core == input$dup_choice | Core == "Not_core")
       }
       arts_inter <- arts_data %>%
-        select(Start,Stop) %>%
-        as.matrix()
+        select(Start,Stop) 
+      arts_inter$seqnames <- "chr"
       if (input$arts_width == TRUE) {
         Stop_vals_arts <- as.numeric(arts_data$Stop)+20000
       } else{
@@ -2203,8 +2197,10 @@ server <- function(input, output, session) {
     
     get_prism_inter <- function(x,prism_inter,prism_data, letter ){
       # Get an interception of prism and smth
-      interseption <- annotate(x,prism_inter)
-      inter <- unlist(interseption, use.names=FALSE)
+      query <- makeGRangesFromDataFrame(prism_inter)
+      subject <- makeGRangesFromDataFrame(x)
+      interseption <- findOverlaps(query,subject)
+      inter <- interseption@from
       data <- prism_data[inter,]
       # Create a dataframe with antismash data, intercepted with PRISM, with all the additional info to visualize on hover
       seg_df_3 <- data.frame(x=as.numeric(data$Start),
@@ -2221,8 +2217,10 @@ server <- function(input, output, session) {
     }
     get_sempi_inter <- function(x,sempi_inter,sempi_data, letter ){
       # Get an interception of sempi and smth
-      interseption <- annotate(x,sempi_inter)
-      inter <- unlist(interseption, use.names=FALSE)
+      query <- makeGRangesFromDataFrame(sempi_inter)
+      subject <- makeGRangesFromDataFrame(x)
+      interseption <- findOverlaps(query,subject)
+      inter <- interseption@from
       data <- sempi_data[inter,]
       # Create a dataframe with antismash data, intercepted with PRISM, with all the additional info to visualize on hover
       seg_df <- data.frame(x=as.numeric(data$Start),
@@ -2239,8 +2237,10 @@ server <- function(input, output, session) {
     }
     get_anti_inter <- function(x,anti_inter,anti_data_chromo, letter ){
       # Get an interception of deepBGC and antismash data 
-      interseption <- annotate( x,anti_inter)
-      inter <- unlist(interseption, use.names=FALSE)
+      query <- makeGRangesFromDataFrame(anti_inter)
+      subject <- makeGRangesFromDataFrame(x)
+      interseption <- findOverlaps(query,subject)
+      inter <- interseption@from
       data <- anti_data_chromo[inter,]
       seg_df_1 <- data.frame(x=as.numeric(  data$Start),
                              y=rep(letter, length(data$ID)),
@@ -2256,8 +2256,10 @@ server <- function(input, output, session) {
     }
     get_deep_inter <- function(x,deep_inter,deep_data_chromo, letter ){
       # Get an interception of deepBGC and antismash data 
-      interseption <- annotate(x, deep_inter)
-      inter <- unlist(interseption, use.names=FALSE)
+      query <- makeGRangesFromDataFrame(deep_inter)
+      subject <- makeGRangesFromDataFrame(x)
+      interseption <- findOverlaps(query,subject)
+      inter <- interseption@from
       data <- deep_data_chromo[inter,]
       # Create a dataframe with antismash data, interce[ted with deepbgc with all the additional info to visualize on hover
       seg_df_1 <-  data.frame(x=as.numeric(  data$nucl_start),
@@ -2276,8 +2278,10 @@ server <- function(input, output, session) {
     }
     get_RRE_inter <- function(x,rre_inter,rre_data, letter ){
       # Get an interception of RREFinder and antismash 
-      interseption <- annotate(x, rre_inter)
-      inter <- unlist(interseption, use.names=FALSE)
+      query <- makeGRangesFromDataFrame(rre_inter)
+      subject <- makeGRangesFromDataFrame(x)
+      interseption <- findOverlaps(query,subject)
+      inter <- interseption@from
       data <- rre_data[inter,]
       if (input$rre_width == TRUE) {
         Stop_vals_RRE_in <- as.numeric(data$Stop)+50000
@@ -2319,8 +2323,10 @@ server <- function(input, output, session) {
     }
     get_prism_supp_inter <- function(x,prism_supp_inter,prism_supp, letter ){
       # Get an interception of RREFinder and antismash 
-      interseption <- annotate(x, prism_supp_inter)
-      inter <- unlist(interseption, use.names=FALSE)
+      query <- makeGRangesFromDataFrame(prism_supp_inter)
+      subject <- makeGRangesFromDataFrame(x)
+      interseption <- findOverlaps(query,subject)
+      inter <- interseption@from
       data <- prism_supp[inter,]
       if (input$prism_supp_width == TRUE) {
         Stop_vals_prism_supp_in <- as.numeric(data$Stop)+50000
@@ -2346,8 +2352,10 @@ server <- function(input, output, session) {
     }
     get_arts_inter <- function(x,arts_inter, arts_data, letter ){
       # Get an interception of RREFinder and antismash 
-      interseption <- annotate(x, arts_inter)
-      inter <- unlist(interseption, use.names=FALSE)
+      query <- makeGRangesFromDataFrame(arts_inter)
+      subject <- makeGRangesFromDataFrame(x)
+      interseption <- findOverlaps(query,subject)
+      inter <- interseption@from
       data <- arts_data[inter,]
       if (input$arts_width == TRUE) {
         Stop_vals_arts_in <- as.numeric(data$Stop)+20000
@@ -3334,15 +3342,11 @@ server <- function(input, output, session) {
     # Function to get interception between two matrices. Returns a list of two elements - IDs from first matrix and 
     # from second one. IDs are duplicated, if intercepted more than one time
     get_interception <- function(x,y) {
-      interseption <- annotate(x, y)
-      inter_x <- unlist(interseption, use.names=FALSE)
-      inter_tmp <- which(sapply(interseption,length )!=0)
-      inter_y <- c()
-      if (length(inter_tmp) != 0) {
-        tmp <- sapply(interseption,length)
-        for (i in seq(1:length(tmp[which(tmp != 0)]))) {
-          inter_y <- c(inter_y,rep(inter_tmp[i],tmp[which(tmp != 0)][i]))
-        }}
+      query <- makeGRangesFromDataFrame(x)
+      subject <- makeGRangesFromDataFrame(y)
+      interseption <- findOverlaps(query,subject)
+      inter_x <- interseption@to
+      inter_y <- interseption@from
       return(list(inter_x, inter_y))
     }
     
@@ -3360,54 +3364,54 @@ server <- function(input, output, session) {
     # ANTISMASH
     if (vals$anti_data_input == TRUE){
       anti_inter <- biocircos_anti %>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+      anti_inter$seqnames <- "chr"
     }
     
     # PRISM
     if (vals$prism_data_input == TRUE){
       # Store PRISM data start/stop as matrix  for further interception calculation
       prism_inter <- biocircos_prism %>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+      prism_inter$seqnames <- "chr"
     }
     
     #SEMPI
     if (vals$sempi_data_input == TRUE){
       # Store SEMPI data start/stop as matrix  for further interception calculation
       sempi_inter <- biocircos_sempi %>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+      sempi_inter$seqnames <- "chr"
     }
     #RRE-FINDER
     if (vals$rre_data_input == TRUE){
       # Store RREFinder data start/stop as matrix  for futher interception calculation
       rre_inter <- biocircos_rre%>%
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop)
+      rre_inter$seqnames <- "chr"
     }
     
     #DEEPBGC
     if (vals$deep_data_input == TRUE){
       # Store deepbgc data start/stop as matrix  for futher interception calculation
       deep_inter <- biocircos_deep %>% 
-        select(nucl_start, nucl_end) %>%
-        as.matrix()
+        select(nucl_start, nucl_end) 
+      deep_inter$seqnames <- "chr"
     }
     
     
     if (input$prism_supp == TRUE){
       # Store deepbgc data start/stop as matrix  for futher interception calculation
       prism_supp_inter <- biocircos_prism_supp %>% 
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+      prism_supp_inter$seqnames <- "chr"
     }
     
     if (vals$arts_data_input == TRUE){
       # Store deepbgc data start/stop as matrix  for futher interception calculation
       arts_inter <- biocircos_arts %>% 
-        select(Start, Stop) %>%
-        as.matrix()
+        select(Start, Stop) 
+      arts_inter$seqnames <- "chr"
     }
     
     #CALCULATIONS

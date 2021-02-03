@@ -5,8 +5,16 @@ The app itself is written in R and is available as a [shiny app server](https://
 ## Base packages
 All packages can be installed via R console in Rstudio via:
 ```R
-install.packages(c("BioCircos", "ggplot2", "plotly", "IntervalSurgeon", "plyr", "tidyverse", "shiny", "DT" ,"rjson" ))
+install.packages(c("BioCircos", "ggplot2", "plotly",  "plyr", "tidyverse", "shiny", "DT" ,"rjson", "stringr", "shinyjs" ))
 ``` 
+After, to install GenomicRanges package please run
+```R
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("GenomicRanges")
+```
+
 If conda package manager is installed (see [Anaconda](https://www.anaconda.com) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html)) you can use the following command to install R and Rstudio:
 
 `conda install r-base rstudio`
