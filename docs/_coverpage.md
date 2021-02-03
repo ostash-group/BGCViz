@@ -1,5 +1,5 @@
 
-# BGCViz <small>1.0</small>
+# BGCViz <small>1.1</small>
 
 > A integrative BGC interception visualisation tool
 
