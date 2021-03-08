@@ -1,6 +1,6 @@
 # Installation
 
-The app itself is written in R and is available as a [shiny app server](https://biopavlohrab.shinyapps.io/BGCViz/) with no istallation required. However local run have some advantages(See Why local run section) over remote one. Considering ease of installation and UI indentity, we are suggetting local installation
+The app itself is written in R and is available as a [shiny app server](https://ostash-group.shinyapps.io/BGCViz/) with no istallation required. However local run have some advantages(See Why local run section) over remote one. Considering ease of installation and UI indentity, we are suggetting local installation
 
 ## Base packages
 All packages can be installed via R console in Rstudio via:
