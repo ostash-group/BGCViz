@@ -3126,7 +3126,7 @@ server <- function(input, output, session) {
       } else {
         arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
       }
-      arc_col <- c(arc_col,arc_colors )
+      arc_col <- c(arc_col,as.character(arc_colors) )
     }
     
     #DEEPBGC
@@ -3175,7 +3175,7 @@ server <- function(input, output, session) {
       } else {
         arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
       }
-      arc_col <- c(arc_col,arc_colors )
+      arc_col <- c(arc_col,as.character(arc_colors) )
     }
     
     #RRE-FINDER
@@ -3210,7 +3210,7 @@ server <- function(input, output, session) {
       } else {
         arc_colors <-rename_data$Color[rename_data$Group_color == 'base']
       }
-      arc_col <- c(arc_col,arc_colors )
+      arc_col <- c(arc_col,as.character(arc_colors) )
     }
     
     # PRISM
@@ -3238,7 +3238,7 @@ server <- function(input, output, session) {
       } else {
         arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
       }
-      arc_col <- c(arc_col,arc_colors )
+      arc_col <- c(arc_col,as.character(arc_colors) )
     }
     
     #SEMPI
@@ -3267,7 +3267,7 @@ server <- function(input, output, session) {
       } else {
         arc_colors <-  rename_data$Color[rename_data$Group_color == 'base']
       }
-      arc_col <- c(arc_col,arc_colors )
+      arc_col <- c(arc_col,as.character(arc_colors) )
     }
     
     if (input$prism_supp == TRUE){
@@ -3297,7 +3297,7 @@ server <- function(input, output, session) {
       } else {
         arc_colors <-  rename_data$Color[rename_data$Group_color == 'base']
       }
-      arc_col <- c(arc_col,arc_colors )
+      arc_col <- c(arc_col,as.character(arc_colors) )
     }
     
     
@@ -3332,7 +3332,7 @@ server <- function(input, output, session) {
       } else {
         arc_colors <-rename_data$Color[rename_data$Group_color == 'base']
       }
-      arc_col <- c(arc_col,arc_colors )
+      arc_col <- c(arc_col,as.character(arc_colors) )
     }
     
     
@@ -4137,7 +4137,7 @@ server <- function(input, output, session) {
   
   output$biocircos_legend <- renderDataTable({
     plot_data <- vals$rename_data
-    new_data <- drop_na(data.frame(cbind(plot_data$Group_color, plot_data$Color)) )
+    new_data <- drop_na(data.frame(cbind(as.character(plot_data$Group_color), as.character(plot_data$Color))) )
     new_data <- new_data[!apply(new_data == "", 1, all),]
     colnames(new_data) <- c("Name", "Color")
     color_vec <- new_data$Color
