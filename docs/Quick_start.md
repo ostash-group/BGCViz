@@ -66,7 +66,7 @@ Also, "Visualize AntiSMASH BGC with several types as 'Hybrid'" check box is avai
 
 Let's proceed and upload PRISM and SEMPI results:
 
-#### **The example S.coelicolor data is available upon button press uder PRISM and SEMPI input fields.**
+#### **The example S.coelicolor data is available upon button press under PRISM and SEMPI input fields.**
 
 ![prism_sempi](/images/prism_sempi.png)
 

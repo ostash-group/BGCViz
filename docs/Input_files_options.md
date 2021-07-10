@@ -24,14 +24,14 @@ File itself  can be created manually from the antismash results.
 
 # PRISM
 Similarly to the AntiSMASH, there are two options for the PRISM input:
-1. Use the json report file. It can be downloaded after the run. Because of the small  size of json output file, it can be directly uploaded to the BGCViz. Be sure the checkbox "My PRISM data is a dataframe, not json results file"  is UNTICKED.  **We are expecting that the run was made on version >= 4.4.5 of the PRISM.  If earlier version was used, please provide the csv instead of json one.**
+1. Use the json report file. It can be downloaded after the PRISM run. Because of the small  size of json output file, it can be directly uploaded to the BGCViz. Be sure the checkbox "My PRISM data is a dataframe, not json results file"  is UNTICKED.  **We are expecting that the run was made on version >= 4.4.5 of the PRISM.  If earlier version was used, please provide the csv instead of json one.**
 2. The csv format file. Identical to one, described in the [Antismash](#antismash) section above. Can also be created manually. The command for generation from json to csv format is the following:
 ```R
  Rscript prism.R <path-to-the-json>
 ```
 
 
-**If json file was provided, the additional option of using Regulatory and Resistance genes, identified by PRISM can be used from the "Data manipulation option"  menu option in BGCViz. Those genes will be treated as an additional input, and chromosome will be named "P-supp"**
+**If json file was provided, the additional option of using Regulatory and Resistance genes, identified by PRISM can be used from the "Data manipulation option"  menu option in BGCViz. Those genes will be treated as an additional input, and chromosome will be named "PRISM_SUPPORT"**
 
 **This field supports the csv file upload. It can be any csv file, as long as the format is the satisfied. Therefore you can upload any results in this field, in place of PRISM, but the result plot will label these as "PRISM"**
 
@@ -46,7 +46,7 @@ The db file, script can transform to the .csv file is the   `/genome_browser/mai
 
 **This field supports the csv file upload. It can be any csv file, as long as the format is the satisfied. Therefore you can upload any results in this field, in place of SEMPI, but the result plot will label these as "SEMPI"**
 # DeepBGC
-We are expecting the default DeepBGC tsv output file. Please the the example in /example_data folder
+We are expecting the default DeepBGC tsv output file. Please see the example in /example_data folder
 
 # RRE-Finder
 We the expecting the modified default txt results file from RRE-Finder, which is in the format as below (in case of exploratory mode):
@@ -71,3 +71,6 @@ The expected list of modifications:
 There are two uploads for the ARTS data. And only two files are provided the data will be included in the analysis.  Firstly, download the ARTS results (all results). 
 1. The first expected tsv file is knownhits.tsv (holding the hits to existing resisntance models) in the `<ARTS-results-dir>/tables/knownhits.tsv`
 2. The second input is duptable.tsv (holding the duplicated housekeeping genes data) in the  `<ARTS-results-dir>/tables/duptable.tsv`
+
+# GECCO
+We are expecting the default GECCO tsv output file. Please see the example in /example_data folder

@@ -21,9 +21,10 @@ library(stringr)
 library(DT)
 library(GenomicRanges)
 
+## TESTING
 # Define UI 
 ui <- fluidPage(
-  
+
   # Application title
   titlePanel("BGCViz"),
   
@@ -31,6 +32,7 @@ ui <- fluidPage(
   useShinyjs(),
   sidebarLayout(
     sidebarPanel(
+      id = "tPanel",style = "overflow-y:scroll; max-height: 90vh; position:fixed; width:inherit;",
       # Data upload
       h3("Data upload and necesary input:"),
       checkboxInput("hide_uploads", "Hide upload fields"),
@@ -74,7 +76,7 @@ ui <- fluidPage(
       checkboxInput("anti_hybrid", "Visualize AntiSMASH BGC with several types as 'Hybrid'"),
       h5(id = "prism_header","PRISM data options:"),
       checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
-      checkboxInput("prism_supp", "Use PRISM resistance and regulatory genes information'"),
+      checkboxInput("prism_supp", "Visualize PRISM resistance and regulatory genes"),
       h5(id = "sempi_header","SEMPI data options:"),
       checkboxInput("sempi_hybrid", "Visualize SEMPI BGC with several types as 'Hybrid'"),
       h5(id = "arts_header","ARTS data options:"),
@@ -82,26 +84,11 @@ ui <- fluidPage(
                   selected = "All"),
       h3(id = "genes_on_chr","Genes on chromosome plot controls:"),
       checkboxInput("hide_genes_on_chr", "Hide 'Genes on chromosome plot' fields"),
-      selectInput("ref", "Choose reference data", choices = c("Antismash" = "Antismash",
-                                                              "DeepBGC" = "DeepBGC",
-                                                              "RRE-Finder" = "RRE-Finder",
-                                                              "PRISM" = "PRISM",
-                                                              "SEMPI" = "SEMPI",
-                                                              "PRISM-supp" = "PRISM-supp",
-                                                              "ARTS" = "ARTS",
-                                                              "GECCO" = "GECCO"),
-                  selected = "Antismash"),
+      selectInput("ref", "Choose reference data", choices = c(""),
+                  selected = ""),
       h3(id = "summarize","Summarize options:"),
       checkboxInput("hide_summarize", "Hide summarize options"),
-      selectInput("group_by", "Group data by", choices = c("Antismash" = "A",
-                                                              "DeepBGC" = "D",
-                                                              "RRE-Finder" =  "R",
-                                                              "PRISM" = "P",
-                                                           "SEMPI" = "S",
-                                                           "PRISM-supp" = "PS",
-                                                           "ARTS" = "AR",
-                                                           "GECCO" = "G"),
-                  selected = 'A'),
+      selectInput("group_by", "Group data by", choices = c(""),  selected = ''),
       checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
       h3("Improve visualization:"),
       checkboxInput("hide_viz", "Hide improve visualization options"),
@@ -111,8 +98,9 @@ ui <- fluidPage(
       actionButton("rename", "Rename"),
       actionButton("reset_name", "Reset"),
       checkboxInput("rre_width", "Add thickness to RRE results visualization"),
-      checkboxInput("prism_supp_width", "Add thickness to PRISM resistance + regulatory genes results visualization"),
+      checkboxInput("prism_supp_data_input_width", "Add thickness to PRISM resistance + regulatory genes results visualization"),
       checkboxInput("arts_width", "Add thickness to ARTS results visualization"),
+      checkboxInput("sempi_width", "Add thickness to SEMPI results visualization"),
       checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
       checkboxInput("label_color", "Make links in biocircos colorful, based on the class"),
       selectInput("label_color_class", "Choose the mode to color the links", choices = c("Hierarchical-based" = "H",
@@ -120,28 +108,16 @@ ui <- fluidPage(
                                                                                            "Reference column-based" = "R"
                                                                                          ),
                   selected = 'H'),
-      selectInput("ref_col_biocircos", "Choose reference column to color the links", choices = c("Antismash" = "Antismash",
-                                                                                         "PRISM" = "PRISM",
-                                                                                         "RRE-Finder" = "RRE",
-                                                                                         'DeepBGC' = "DeepBGC",
-                                                                                         "SEMPI" = "SEMPI",
-                                                                                         "PRISM-supp" = "PRISM-supp",
-                                                                                         "ARTS" = "ARTS",
-                                                                                         "GECCO" = "GECCO"
-      ),
-      selected = 'Antismash'),
+      selectInput("ref_col_biocircos", "Choose reference column to color the links", choices = c(""), selected = ''),
       h3(id="data_comparison_header_gecco","Comparison with Gecco plots:"),
       checkboxInput("hide_data_comparison_gecco", "Hide Gecco data comparison options"),
-      selectInput("ref_comparison_gecco", "Choose data for comparison with Gecco", choices = c("Antismash" = "A",
-                                                                                           "PRISM" = "P",
-                                                                                           "SEMPI" = "S"),
-                  selected = 'A'),
+      selectInput("ref_comparison_gecco", "Choose data for comparison with Gecco", choices = c(""),selected = ''),
       selectInput("score_type_gecco", "Choose score type to set threshold", choices = c("Average p-value" = "avg_p",
                                                                                   "Cluster_type score" = "Cluster_Type"),
                   selected = "avg_p"),
       # Chose step for barplot (as a threshold to draw a bar)
       sliderInput("plot_step_gecco", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
-      sliderInput("plot_start_gecco", "Chose plot start point(barplot)", min = 0, max = 100, value = 0),
+      sliderInput("plot_start_gecco", "Chose plot start point(barplot)", min = 0, max = 99, value = 0),
       h3(id="data_filter_header_gecco","Gecco data filtering:"),
       checkboxInput("hide_data_filter_gecco", "Hide Gecco data filtering options"),
       sliderInput("score_average_gecco", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
@@ -150,10 +126,7 @@ ui <- fluidPage(
       sliderInput("prot_filter_gecco", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1),
       h3(id="data_comparison_header","Comparison with DeepBGC plots:"),
       checkboxInput("hide_data_comparison", "Hide DeepBGC data comparison options"),
-      selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c("Antismash" = "A",
-                                                                     "PRISM" = "P",
-                                                                     "SEMPI" = "S"),
-                  selected = 'A'),
+      selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c(""), selected = ''),
       # Score to use for thresholds
       selectInput("score_type", "Choose score type to set threshold", choices = c("Activity score" = "Activity",
                                                                                   "Cluster_type score" = "Cluster_Type",
@@ -161,7 +134,7 @@ ui <- fluidPage(
                   selected = "Activity score"),
       # Chose step for barplot (as a threshold to draw a bar)
       sliderInput("plot_step", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
-      sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 100, value = 0),
+      sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 99, value = 0),
       
       # DeepBGC data filtering 
       h3(id="data_filter_header","DeepBGC data filtering:"),
@@ -198,7 +171,14 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output, session) {
-  #
+  #CLEAN THE DIRECTORY
+  files_in_dir <- list.files()
+  # Iterate over those files and if found "_biocircos.csv" add remove them
+  for (file_names in files_in_dir) {
+    if (grepl('_biocircos.csv', file_names, fixed = TRUE)) {
+      file.remove(file_names)
+    } 
+  }
   options(shiny.maxRequestSize=100*1024^2)
   # Small function to make integers zeros
   is.integer0 <- function(x)
@@ -206,14 +186,19 @@ server <- function(input, output, session) {
     is.integer(x) && length(x) == 0L
   }
   
+  check_to_rename <- reactive({list(input$sempi_data, input$anti_data, input$prism_data,
+                                    input$sempi_sco,input$anti_sco, input$prism_sco)})
   biocircos_listen <- reactive({
-    list( input$biocircos_color, vals$arts_data_filtered, input$label_color, input$label_color_class, 
-          input$ref_col_biocircos, vals$deep_data_filtered, vals$gecco_data_filtered, vals$inters_filtered
+    list( input$biocircos_color,vals$need_filter, input$label_color, input$label_color_class, 
+          input$ref_col_biocircos, vals$inters_filtered, input$prism_supp, input$prism_supp_data_input_width,
+          input$arts_width, input$sempi_width, input$rre_width
           )
   })
   inputData <- reactive({
-    list( vals$sempi_data,vals$rre_data,  vals$anti_data, vals$prism_data,
-          vals$arts_data, vals$prism_supp, vals$deep_data, vals$gecco_data
+    list( input$sempi_data,input$rre_data,  input$anti_data, input$prism_data,
+          input$known_data,input$dup_data,  input$prism_supp_data, input$deep_data, input$gecco_data,
+          input$sempi_sco,input$rre_sco,  input$anti_sco, input$prism_sco,
+          input$arts_sco, input$prism_supp_sco, input$deep_sco, input$gecco_sco
     )
   })
   dynamicInput <-  reactive({
@@ -227,8 +212,8 @@ server <- function(input, output, session) {
 
   # Rective vals the app is using
   # Some dataframes that are used through the app + some vectors of untercepted values
-  vals <- reactiveValues(deep_data = NULL, anti_data = NULL, rre_data=NULL, prism_data=NULL, chr_len = NULL, fullness = NULL,
-                         biocircos_deep = NULL, deep_data_input = FALSE,tracklist = NULL, chromosomes = NULL, 
+  vals <- reactiveValues(deep_data = NULL, anti_data = NULL, rre_data=NULL, prism_data=NULL, chr_len = NULL, fullness_deep = NULL,
+                         biocircos_deep = NULL, deep_data_input = FALSE,tracklist = NULL, chromosomes = NULL, fullness_gecco = NULL,
                          anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
                          seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
                          data_upload_count = 0, anti_type=NULL, prism_type=NULL, sempi_data = NULL, sempi_data_input= FALSE,
@@ -239,14 +224,202 @@ server <- function(input, output, session) {
                          known_data_input = F, dup_data_input = F, arts_data=NULL, arts_data_input = F, seg_df_ref_ar = NULL,
                          df_ps = NULL, arts_interact = NULL, rre_more = FALSE, gecco_data = NULL, gecco_data_input = FALSE,
                          gecco_data_filtered = NULL, seg_df_ref_g = NULL, prism_supp_data_input = F, computed  = NULL,
-                         need_filter = F
+                         need_filter = F, filter_data = F, choices = list(ref=NULL, group_by=NULL, ref_col_biocircos=NULL, ref_comparison_gecco=NULL, ref_comparison = NULL),
+                         renamed = NULL, renaming_notification = list(), rename_y_axis = list()
                          )
   
   vals$computed <- list(
     anti=F,deep=F, gecco=F, arts=F, prism=F, sempi=F, prism_supp=F, rre=F
   )
-  
   vals$rename_data <- read.csv("rename.csv")
+  fix_duplicates <-  function(test_score, order_vec, regul_genes_orfs){
+    dupl_names <- regul_genes_orfs[duplicated(regul_genes_orfs)]
+    duplicated_values <- which(duplicated(regul_genes_orfs[order_vec]))
+    test_score <- test_score[order_vec]
+    to_add <- test_score[(which(duplicated(regul_genes_orfs[order_vec])))]
+    test_score <- test_score[-(which(duplicated(regul_genes_orfs[order_vec])))]
+    test_score[duplicated_values-1] <- paste(test_score[duplicated_values-1] , to_add, sep="/")
+    return(test_score)
+  }
+  process_prism_json_suppl <- function(data){
+    types <- sapply(data$prism_results$clusters, function(x){
+      tolower(x$type)
+    })
+    
+    types <- sapply(types, function(x){
+      if (length(unlist(x))>1){
+        tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
+        gsub(" ", "__", tmp)
+      }else{
+        x
+      }
+    })
+    
+    start <- sapply(data$prism_results$clusters, function(x){
+      x$start
+      
+    })
+    end <- sapply(data$prism_results$clusters, function(x){
+      x$end
+      
+    })
+    
+    
+    prism_data <-  data.frame(Cluster=as.numeric(seq(1:length(start))), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
+
+    regul_genes_orfs <- sapply(data$prism_results$regulatory_genes, function(x){
+      x$orf
+    })
+    
+    names <- sapply(data$prism_results$orfs[[1]]$orfs, function(y){
+      y$name
+    })
+    coordinates <- sapply(data$prism_results$orfs[[1]]$orfs, function(y){
+      y$coordinates
+    })
+    
+    test_coords <- as.matrix(coordinates[, names %in% regul_genes_orfs ])
+    
+    
+    reg_genes <-data.frame(t(test_coords))
+    colnames(reg_genes) <- c("Start", "Stop")
+    reg_genes$Type <- 'regulatory'
+    reg_genes$Type2 <- reg_genes$Type
+    
+    test_name <- names[names %in% regul_genes_orfs]
+    order_vec <- order(match(regul_genes_orfs, test_name))
+    
+    
+    test_score <- sapply(data$prism_results$regulatory_genes, function(x){
+      x$score
+    })
+    reg_genes$Score  <- fix_duplicates(test_score , order_vec, regul_genes_orfs)
+    test_name <- sapply(data$prism_results$regulatory_genes, function(x){
+      x$name
+    })
+    reg_genes$Name  <- fix_duplicates(test_name , order_vec, regul_genes_orfs)
+    test_full_name<- sapply(data$prism_results$regulatory_genes, function(x){
+      x$full_name
+    })
+    reg_genes$Full_name  <- fix_duplicates(test_full_name , order_vec, regul_genes_orfs)
+    resist_genes_orfs <- sapply(data$prism_results$resistance_genes, function(x){
+      x$orf
+    })
+    
+    test_coords_res <- as.matrix(coordinates[, names %in% resist_genes_orfs ])
+    
+    
+    res_genes <-data.frame(t(test_coords_res))
+    
+    colnames(res_genes) <- c("Start", "Stop")
+    res_genes$Type <- 'resistance'
+    res_genes$Type2 <- res_genes$Type
+    test_name <- names[names %in% resist_genes_orfs]
+    order_vec <- order(match(resist_genes_orfs, test_name))
+    
+    
+    test_score <- sapply(data$prism_results$resistance_genes, function(x){
+      x$score
+    })
+    res_genes$Score  <- fix_duplicates(test_score , order_vec, resist_genes_orfs)
+    test_name <- sapply(data$prism_results$resistance_genes, function(x){
+      x$name
+    })
+    res_genes$Name  <- fix_duplicates(test_name , order_vec, resist_genes_orfs)
+    test_full_name<- sapply(data$prism_results$resistance_genes, function(x){
+      x$full_name
+    })
+    res_genes$Full_name  <- fix_duplicates(test_full_name , order_vec, resist_genes_orfs)
+    
+    final_reg <- rbind(res_genes, reg_genes)
+    final_reg$ID <- seq(1:dim(final_reg)[1])
+    final_reg$Cluster <- final_reg$ID
+    rownames(final_reg) <- as.numeric(seq(1:dim(final_reg)[1]))
+    return(list(prism_data, final_reg))
+  }
+  filter_deepbgc <- function(){
+    score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
+    score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
+    score_c <- apply(vals$deep_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
+    deep_data_chromo <- vals$deep_data %>%
+      mutate(score = apply(vals$deep_data %>%
+                             select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
+    # Cluster_type column. Here extract colnames, and assign max value to a new column
+    deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
+    # If max score is under_threshold, print "under_threshold"
+    deep_data_chromo <- deep_data_chromo%>%
+      mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "under_threshold"))
+    #Finally store deepbgc data in plotting variable. Do final scores processing 
+    biocircos_deep <- deep_data_chromo%>%
+      mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
+      filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , 
+             score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
+             num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
+    biocircos_deep['Start'] <- biocircos_deep$nucl_start
+    biocircos_deep['Stop'] <- biocircos_deep$nucl_end
+    biocircos_deep['Type'] <- biocircos_deep$product_class
+    biocircos_deep['Type2'] <- biocircos_deep$product_class
+    biocircos_deep['Cluster'] <- biocircos_deep$ID
+    return(biocircos_deep)
+  }
+  filter_gecco <- function(){
+    score_a_gecco <- apply(vals$gecco_data %>% select(c("average_p")),1, function(x) max(x))
+    score_c_gecco <- apply(vals$gecco_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
+    # Store master prism data in local variable
+    gecco_data <- vals$gecco_data %>%
+      mutate(score = apply(vals$gecco_data %>%
+                             dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) %>%
+      mutate(Cluster_type = ifelse(score>as.numeric(input$score_cluster_gecco)/100, Type2, "under_threshold")) %>%
+      mutate( Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
+      filter(score_a >= as.numeric(input$score_average_gecco )/ 100, score_c >=as.numeric(input$score_cluster_gecco)/100 ,
+             num_domains >= input$domains_filter_gecco, num_prot>=input$prot_filter_gecco)
+    return(gecco_data)
+  }
+  rename_vector <- function(data, renamed_dataframe){
+    type <- str_split(data$Type2, "__")
+    type_2 <- sapply(type, function(x){
+      sapply(x, function(y){
+        if (y %in% renamed_dataframe$Code){
+          renamed <- as.character(renamed_dataframe$Group[renamed_dataframe$Code == y])
+          if( (length(renamed) >1) & (!( as.character(y) %in% names(vals$renaming_notification)))){
+            showNotification(paste("The ", as.character(y), " type have multiple renaming options: ", paste(renamed, collapse = ", ")), 
+                             type = "warning", duration = NULL)
+            showNotification(paste("The  ", renamed[[1]], " was chosen."), type = "warning", duration=NULL)
+            vals$renaming_notification[[as.character(y)]] <- renamed[[1]] 
+          }
+          renamed[[1]]
+        } else {
+          y
+        }
+        
+      })
+      
+    })
+    type_3 <- sapply(type_2, function(x){
+      dupl <-  x[!duplicated(x)]
+      paste(dupl, collapse = "__")
+    })
+    type_4 <- sapply(type_3, function(y){
+      if (y %in% as.character(renamed_dataframe$Code)){
+        as.character(renamed_dataframe$Group[renamed_dataframe$Code == y])[[1]]
+      } else {
+        y
+      }
+    })
+    return(as.character(type_4))
+  }
+  correct_width <- function(data, label){
+    if ((label == 'SEMPI')&(input$sempi_width == T)){
+      data$Stop <- data$Stop + 30000
+    } else if ((label == 'PRISM-Supp')&(input$prism_supp_data_input_width == T)){
+      data$Stop <- data$Stop + 20000
+    } else if ((label == 'ARTS')&(input$arts_width == T)){
+      data$Stop <- data$Stop + 30000
+    } else if ((label == 'RRE-Finder')&(input$rre_width == T)){
+      data$Stop <- data$Stop + 50000
+    }
+    return(data)
+  }
   
   # Upload example data
   observeEvent(input$anti_sco,{
@@ -263,6 +436,21 @@ server <- function(input, output, session) {
     write.csv(vals$anti_data, "anti_data.csv", row.names = F)
     vals$anti_data_input = TRUE 
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$choices$ref <- c(vals$choices$ref, "Antismash" = "Antismash")
+    vals$choices$group_by <- c(vals$choices$group_by, "Antismash" = "A")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "Antismash" = "Antismash")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Antismash" = "A")
+    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "Antismash" = "A")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
+    updateSelectInput(session, "ref_comparison_gecco",
+                      choices = vals$choices$ref_comparison_gecco )
+    updateSelectInput(session, "ref_comparison",
+                      choices = vals$choices$ref_comparison )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "Antismash" )
@@ -304,10 +492,20 @@ server <- function(input, output, session) {
     names(gecco_data)[names(gecco_data) == "start"] <- "Start"
     names(gecco_data)[names(gecco_data) == "end"] <-  "Stop"
     vals$gecco_data <- gecco_data
+    vals$gecco_data_filtered <- filter_gecco()
     # Save file
     write.csv(vals$gecco_data, "gecco_data.csv", row.names = F)
     vals$gecco_data_input = TRUE 
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$choices$ref <- c(vals$choices$ref, "GECCO" = "GECCO")
+    vals$choices$group_by <- c(vals$choices$group_by, "GECCO" = "G")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "GECCO" = "GECCO")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "GECCO" )
@@ -322,100 +520,25 @@ server <- function(input, output, session) {
   
   observeEvent(input$prism_sco,{
     # Read data
+    
       data <- fromJSON(file = "example_data/sco_prism.json")
-      
-      
-      types <- sapply(data$prism_results$clusters, function(x){
-        tolower(x$type)
-      })
-      
-      types <- sapply(types, function(x){
-        if (length(unlist(x))>1){
-          tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
-          gsub(" ", "__", tmp)
-        }else{
-          x
-        }
-      })
-      
-      start <- sapply(data$prism_results$clusters, function(x){
-        x$start
-        
-      })
-      end <- sapply(data$prism_results$clusters, function(x){
-        x$end
-        
-      })
-      
-      
-      prism_data <-  data.frame(Cluster=as.numeric(seq(1:length(start))), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
-      vals$biocircos_color = F
-      
-      regul_genes_orfs <- sapply(data$prism_results$regulatory_genes, function(x){
-        x$orf
-      })
-      
-      location <-  sapply(data$prism_results$orfs[[1]]$orfs, function(y){
-        sapply(regul_genes_orfs, function(x){
-          if (y$name == x) {
-            y$coordinates
-          }
-        })
-      }) 
-      
-      location <- Filter(Negate(is.null), location)
-      
-      reg_genes <-data.frame(t(data.frame(sapply(location, function(x){unlist(x)}))))
-      colnames(reg_genes) <- c("Start", "Stop")
-      reg_genes$Type <- 'regulatory'
-      reg_genes$Type2 <- reg_genes$Type
-      reg_genes$Score <- sapply(data$prism_results$regulatory_genes, function(x){
-        x$score
-      })
-      reg_genes$Name <- sapply(data$prism_results$regulatory_genes, function(x){
-        x$name
-      })
-      reg_genes$Full_name <- sapply(data$prism_results$regulatory_genes, function(x){
-        x$full_name
-      })
-      
-      resist_genes_orfs <- sapply(data$prism_results$resistance_genes, function(x){
-        x$orf
-      })
-      
-      location <-  sapply(data$prism_results$orfs[[1]]$orfs, function(y){
-        sapply(resist_genes_orfs, function(x){
-          if (y$name == x) {
-            y$coordinates
-          }
-        })
-      })
-      
-      location <- Filter(Negate(is.null), location)
-      
-      res_genes <-data.frame(t(data.frame(sapply(location, function(x){unlist(x)}))))
-      colnames(res_genes) <- c("Start", "Stop")
-      res_genes$Type <- 'resistance'
-      res_genes$Type2 <- res_genes$Type
-      res_genes$Score <- sapply(data$prism_results$resistance_genes, function(x){
-        x$score
-      })
-      res_genes$Name <- sapply(data$prism_results$resistance_genes, function(x){
-        x$name
-      })
-      res_genes$Full_name <- sapply(data$prism_results$resistance_genes, function(x){
-        x$full_name
-      })
-      
-      final_reg <- rbind(res_genes, reg_genes)
-      final_reg$ID <- seq(1:dim(final_reg)[1])
-      final_reg$Cluster <- final_reg$ID
-      rownames(final_reg) <- as.numeric(seq(1:dim(final_reg)[1]))
-      vals$prism_supp <- final_reg
-      vals$prism_supp_data <- final_reg
+      processed_data <- process_prism_json_suppl(data)
+      updateCheckboxInput(inputId = "prism_supp", value = T)
+      prism_data <- processed_data[[1]]
+      vals$prism_supp_data_input = T
+      vals$prism_supp <- processed_data[[2]]
+      vals$prism_supp_data <- processed_data[[2]]
       vals$prism_json = T
-      vals$prism_supp_data_input=T
       
+      vals$choices$ref <- c(vals$choices$ref, "PRISM-supp" = "PRISM-supp")
+      vals$choices$group_by <- c(vals$choices$group_by, "PRISM-supp" = "PS")
+      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-supp" = "PRISM-supp")
+      updateSelectInput(session, "ref",
+                        choices = vals$choices$ref )
+      updateSelectInput(session, "group_by",
+                        choices = vals$choices$group_by )
+      updateSelectInput(session, "ref_col_biocircos",
+                        choices = vals$choices$ref_col_biocircos )
     prism_data$Type <- str_trim(tolower(prism_data$Type))
     prism_data['Type2'] <- str_trim(tolower(prism_data$Type))
     vals$prism_data <- prism_data
@@ -429,6 +552,21 @@ server <- function(input, output, session) {
     write.csv(vals$prism_data, "prism_data.csv", row.names = F)
     vals$prism_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$choices$ref <- c(vals$choices$ref, "PRISM" = "PRISM")
+    vals$choices$group_by <- c(vals$choices$group_by, "PRISM" = "P")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM" = "PRISM")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "PRISM" = "P")
+    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "PRISM" = "P")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
+    updateSelectInput(session, "ref_comparison_gecco",
+                      choices = vals$choices$ref_comparison_gecco )
+    updateSelectInput(session, "ref_comparison",
+                      choices = vals$choices$ref_comparison )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "PRISM" )
@@ -457,6 +595,21 @@ server <- function(input, output, session) {
     write.csv(vals$sempi_data, "sempi_data.csv", row.names = F)
     vals$sempi_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$choices$ref <- c(vals$choices$ref, "SEMPI" = "SEMPI")
+    vals$choices$group_by <- c(vals$choices$group_by, "SEMPI" = "S")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "SEMPI" = "SEMPI")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "SEMPI" = "S")
+    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "SEMPI" = "S")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
+    updateSelectInput(session, "ref_comparison_gecco",
+                      choices = vals$choices$ref_comparison_gecco )
+    updateSelectInput(session, "ref_comparison",
+                      choices = vals$choices$ref_comparison )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "SEMPI" )
@@ -550,9 +703,11 @@ server <- function(input, output, session) {
       dup_table <- vals$dup_data
       known_table <- vals$known_data
       arts_data <- rbind(dup_table, known_table)
+      arts_data <- arts_data %>%
+        dplyr::arrange(Start)
       arts_data$ID <- seq(1:dim(arts_data)[1])
       arts_data$Cluster <- arts_data$ID
-      vals$arts_data <- arts_data
+      vals$arts_data <- arts_data 
       vals$data_upload_count <-  vals$data_upload_count +1
       vals$arts_data_input <- T
       dup_table_id <- arts_data %>%
@@ -561,6 +716,15 @@ server <- function(input, output, session) {
                         choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
                         selected = "All" )
       vals$upl_arts = T
+      vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
+      vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "AR")
+      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
+      updateSelectInput(session, "ref",
+                        choices = vals$choices$ref )
+      updateSelectInput(session, "group_by",
+                        choices = vals$choices$group_by )
+      updateSelectInput(session, "ref_col_biocircos",
+                        choices = vals$choices$ref_col_biocircos )
       if (vals$data_upload_count == 1){
         updateSelectInput(session, "ref",
                           selected = "ARTS" )
@@ -586,6 +750,16 @@ server <- function(input, output, session) {
     write.csv(vals$deep_data, "deep_data.csv", row.names = F)
     vals$deep_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$deep_data_filtered <- filter_deepbgc()
+    vals$choices$ref <- c(vals$choices$ref, "DeepBGC" = "DeepBGC")
+    vals$choices$group_by <- c(vals$choices$group_by, "DeepBGC" = "D")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "DeepBGC" = "DeepBGC")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "DeepBGC" )
@@ -618,6 +792,15 @@ server <- function(input, output, session) {
     
     vals$rre_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$choices$ref <- c(vals$choices$ref, "RRE-Finder" = "RRE-Finder")
+    vals$choices$group_by <- c(vals$choices$group_by, "RRE-Finder" = "R")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "RRE-Finder" = "RRE")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "RRE-Finder" )
@@ -640,7 +823,6 @@ server <- function(input, output, session) {
     # Read data
     if (input$anti_input_options==T){
       anti_data <- read.csv(input$anti_data$datapath)
-      vals$biocircos_color = T
     }else{
        data <- fromJSON(file = input$anti_data$datapath)
         types <- sapply(data$records, function(y){
@@ -685,8 +867,7 @@ server <- function(input, output, session) {
         anti_data$Cluster <- as.numeric(anti_data$Cluster)
         anti_data$Start <- as.numeric(anti_data$Start)
         anti_data$Stop <- as.numeric(anti_data$Stop)
-        vals$biocircos_color = F
-        
+
     }
 
     # Add chromosome column
@@ -700,6 +881,21 @@ server <- function(input, output, session) {
     write.csv(vals$anti_data, "anti_data.csv", row.names = F)
     vals$anti_data_input = TRUE 
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$choices$ref <- c(vals$choices$ref, "Antismash" = "Antismash")
+    vals$choices$group_by <- c(vals$choices$group_by, "Antismash" = "A")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "Antismash" = "Antismash")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Antismash" = "A")
+    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "Antismash" = "A")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
+    updateSelectInput(session, "ref_comparison_gecco",
+                      choices = vals$choices$ref_comparison_gecco )
+    updateSelectInput(session, "ref_comparison",
+                      choices = vals$choices$ref_comparison )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "Antismash" )
@@ -729,6 +925,21 @@ server <- function(input, output, session) {
     write.csv(vals$sempi_data, "sempi_data.csv", row.names = F)
     vals$sempi_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$choices$ref <- c(vals$choices$ref, "SEMPI" = "SEMPI")
+    vals$choices$group_by <- c(vals$choices$group_by, "SEMPI" = "S")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "SEMPI" = "SEMPI")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "SEMPI" = "S")
+    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "SEMPI" = "S")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
+    updateSelectInput(session, "ref_comparison_gecco",
+                      choices = vals$choices$ref_comparison_gecco )
+    updateSelectInput(session, "ref_comparison",
+                      choices = vals$choices$ref_comparison )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "SEMPI" )
@@ -768,10 +979,20 @@ server <- function(input, output, session) {
     names(gecco_data)[names(gecco_data) == "start"] <- "Start"
     names(gecco_data)[names(gecco_data) == "end"] <-  "Stop"
     vals$gecco_data <- gecco_data
+    vals$gecco_data_filtered <- filter_gecco()
     # Save file
     write.csv(vals$gecco_data, "gecco_data.csv", row.names = F)
     vals$gecco_data_input = TRUE 
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$choices$ref <- c(vals$choices$ref, "GECCO" = "GECCO")
+    vals$choices$group_by <- c(vals$choices$group_by, "GECCO" = "G")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "GECCO" = "GECCO")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "GECCO" )
@@ -816,9 +1037,20 @@ server <- function(input, output, session) {
     vals$known_data_input <- TRUE
     write.csv(vals$known_data, "knownhits_data.csv", row.names = F)
     if ((vals$dup_data_input == T)){
+      vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
+      vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "AR")
+      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
+      updateSelectInput(session, "ref",
+                        choices = vals$choices$ref )
+      updateSelectInput(session, "group_by",
+                        choices = vals$choices$group_by )
+      updateSelectInput(session, "ref_col_biocircos",
+                        choices = vals$choices$ref_col_biocircos )
       dup_table <- vals$dup_data
       known_table <- vals$known_data
       arts_data <- rbind(dup_table, known_table)
+      arts_data <- arts_data %>%
+        dplyr::arrange(Start)
       arts_data$ID <- seq(1:dim(arts_data)[1])
       arts_data$Cluster <- arts_data$ID
       vals$arts_data <- arts_data
@@ -885,9 +1117,20 @@ server <- function(input, output, session) {
     vals$dup_data_input = T
     write.csv(dup_table, "duptable_data.csv", row.names = F)
     if ((vals$known_data_input == T)){
+      vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
+      vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "AR")
+      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
+      updateSelectInput(session, "ref",
+                        choices = vals$choices$ref )
+      updateSelectInput(session, "group_by",
+                        choices = vals$choices$group_by )
+      updateSelectInput(session, "ref_col_biocircos",
+                        choices = vals$choices$ref_col_biocircos )
       dup_table <- vals$dup_data
       known_table <- vals$known_data
       arts_data <- rbind(dup_table, known_table)
+      arts_data <- arts_data %>%
+        dplyr::arrange(Start)
       arts_data$ID <- seq(1:dim(arts_data)[1])
       arts_data$Cluster <- arts_data$ID
       vals$arts_data <- arts_data
@@ -913,102 +1156,40 @@ server <- function(input, output, session) {
     # Read data
     if (input$prism_input_options == T){
       prism_data <- read.csv(input$prism_data$datapath)
-      vals$biocircos_color = T
     } else{
       data <- fromJSON(file = input$prism_data$datapath)
-      
-      
-      types <- sapply(data$prism_results$clusters, function(x){
-        tolower(x$type)
-      })
-      
-      types <- sapply(types, function(x){
-        if (length(unlist(x))>1){
-          tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
-          gsub(" ", "__", tmp)
-        }else{
-          x
-        }
-      })
-
-      start <- sapply(data$prism_results$clusters, function(x){
-        x$start
-        
-      })
-      end <- sapply(data$prism_results$clusters, function(x){
-        x$end
-        
-      })
-      
-      prism_data <-  data.frame(Cluster=as.numeric(seq(1:length(start))), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
-      vals$biocircos_color = F
-      
-      regul_genes_orfs <- sapply(data$prism_results$regulatory_genes, function(x){
-        x$orf
-      })
-      
-      location <-  sapply(data$prism_results$orfs[[1]]$orfs, function(y){
-        sapply(regul_genes_orfs, function(x){
-          if (y$name == x) {
-            y$coordinates
-          }
-        })
-      }) 
-      
-      location <- Filter(Negate(is.null), location)
-      
-      reg_genes <-data.frame(t(data.frame(sapply(location, function(x){unlist(x)}))))
-      colnames(reg_genes) <- c("Start", "Stop")
-      reg_genes$Type <- 'regulatory'
-      reg_genes$Type2 <- reg_genes$Type
-      reg_genes$Score <- sapply(data$prism_results$regulatory_genes, function(x){
-        x$score
-      })
-      reg_genes$Name <- sapply(data$prism_results$regulatory_genes, function(x){
-        x$name
-      })
-      reg_genes$Full_name <- sapply(data$prism_results$regulatory_genes, function(x){
-        x$full_name
-      })
-      
-      resist_genes_orfs <- sapply(data$prism_results$resistance_genes, function(x){
-        x$orf
-      })
-      
-      location <-  sapply(data$prism_results$orfs[[1]]$orfs, function(y){
-        sapply(resist_genes_orfs, function(x){
-          if (y$name == x) {
-            y$coordinates
-          }
-        })
-      })
-      
-      location <- Filter(Negate(is.null), location)
-      
-      res_genes <-data.frame(t(data.frame(sapply(location, function(x){unlist(x)}))))
-      colnames(res_genes) <- c("Start", "Stop")
-      res_genes$Type <- 'resistance'
-      res_genes$Type2 <- res_genes$Type
-      res_genes$Score <- sapply(data$prism_results$resistance_genes, function(x){
-        x$score
-      })
-      res_genes$Name <- sapply(data$prism_results$resistance_genes, function(x){
-        x$name
-      })
-      res_genes$Full_name <- sapply(data$prism_results$resistance_genes, function(x){
-        x$full_name
-      })
-      
-      final_reg <- rbind(res_genes, reg_genes)
-      final_reg$ID <- seq(1:dim(final_reg)[1])
-      final_reg$Cluster <- final_reg$ID
-      rownames(final_reg) <- as.numeric(seq(1:dim(final_reg)[1]))
-      vals$prism_supp <- final_reg
-      vals$prism_supp_data <- final_reg
-      vals$prism_json = T
+      processed_data <- process_prism_json_suppl(data)
+      updateCheckboxInput(inputId = "prism_supp", value = T)
+      prism_data <- processed_data[[1]]
+      vals$prism_supp <- processed_data[[2]]
       vals$prism_supp_data_input = T
-      
+      vals$prism_supp_data <- processed_data[[2]]
+      vals$prism_json = T
+      vals$choices$ref <- c(vals$choices$ref, "PRISM-supp" = "PRISM-supp")
+      vals$choices$group_by <- c(vals$choices$group_by, "PRISM-supp" = "PS")
+      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-supp" = "PRISM-supp")
+      updateSelectInput(session, "ref",
+                        choices = vals$choices$ref )
+      updateSelectInput(session, "group_by",
+                        choices = vals$choices$group_by )
+      updateSelectInput(session, "ref_col_biocircos",
+                        choices = vals$choices$ref_col_biocircos )
     }
+    vals$choices$ref <- c(vals$choices$ref, "PRISM" = "PRISM")
+    vals$choices$group_by <- c(vals$choices$group_by, "PRISM" = "P")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM" = "PRISM")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "PRISM" = "P")
+    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "PRISM" = "P")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
+    updateSelectInput(session, "ref_comparison_gecco",
+                      choices = vals$choices$ref_comparison_gecco )
+    updateSelectInput(session, "ref_comparison",
+                      choices = vals$choices$ref_comparison )
     prism_data$Type <- str_trim(tolower(prism_data$Type))
     prism_data['Type2'] <- str_trim(tolower(prism_data$Type))
     vals$prism_data <- prism_data
@@ -1051,6 +1232,16 @@ server <- function(input, output, session) {
     write.csv(vals$deep_data, "deep_data.csv", row.names = F)
     vals$deep_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$deep_data_filtered <- filter_deepbgc()
+    vals$choices$ref <- c(vals$choices$ref, "DeepBGC" = "DeepBGC")
+    vals$choices$group_by <- c(vals$choices$group_by, "DeepBGC" = "D")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "DeepBGC" = "DeepBGC")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "DeepBGC" )
@@ -1081,6 +1272,15 @@ server <- function(input, output, session) {
     write.csv(vals$rre_data, "rre_data.csv", row.names = F)
     vals$rre_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    vals$choices$ref <- c(vals$choices$ref, "RRE-Finder" = "RRE-Finder")
+    vals$choices$group_by <- c(vals$choices$group_by, "RRE-Finder" = "R")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "RRE-Finder" = "RRE")
+    updateSelectInput(session, "ref",
+                      choices = vals$choices$ref )
+    updateSelectInput(session, "group_by",
+                      choices = vals$choices$group_by )
+    updateSelectInput(session, "ref_col_biocircos",
+                      choices = vals$choices$ref_col_biocircos )
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "RRE-Finder" )
@@ -1139,14 +1339,14 @@ server <- function(input, output, session) {
       }
       if (input$hide_viz == F){
         if (vals$prism_json == T){
-          showElement(selector = "#prism_supp_width")
+          showElement(selector = "#prism_supp_data_input_width")
         }
       }
     } else{
       hideElement(selector = "#prism_header")
       hideElement(selector = "#prism_hybrid")
       hideElement(selector = "#prism_supp")
-      hideElement(selector = "#prism_supp_width")
+      hideElement(selector = "#prism_supp_data_input_width")
     }
   })
   
@@ -1156,10 +1356,12 @@ server <- function(input, output, session) {
       if (input$hide_anti == F){
         showElement(selector = "#sempi_header")
         showElement(selector = "#sempi_hybrid")
+        showElement(selector = "#sempi_width")
       }
     } else{
       hideElement(selector = "#sempi_header")
       hideElement(selector = "#sempi_hybrid")
+      hideElement(selector = "#sempi_width")
     }
   })
 
@@ -1248,15 +1450,21 @@ server <- function(input, output, session) {
       }
       showTab("main", "2")
       showTab("main", "3")
-      if (vals$gecco_data_input == T) {
+      if ((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )){
         showTab("main", "5")
       } else {
         hideTab("main", "5")
+        if ((vals$gecco_data_input == T) & (vals$data_upload_count >1)){
+          showNotification(paste("It seems that you would like to compare the GECCO data to the reference (in a new tab)? Please upload Antismash, SEMPI or PRISM datasets to do that."), type = "message", duration=10)
+        }
       }
-      if (vals$deep_data_input == T) {
+      if ((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )) {
         showTab("main", "1")
       } else {
         hideTab("main", "1")
+        if ((vals$deep_data_input == T) & (vals$data_upload_count >1)){
+          showNotification(paste("It seems that you would like to compare the DeepBGC data to the reference (in a new tab)? Please upload Antismash, SEMPI or PRISM datasets to do that."), type = "message", duration=10)
+        }
       }
     }
     if (vals$data_upload_count <1){
@@ -1332,7 +1540,9 @@ server <- function(input, output, session) {
       types <- sapply(data_split, function(x){
         if (length(unlist(x))>1){
           "hybrid"
-        } else{
+        } else if (unlist(x) == 'nrps-pks'){
+          "hybrid"
+        } else {
           x
         }
       })
@@ -1363,38 +1573,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$rename, {
-    rename_vector <- function(data, renamed_dataframe){
-      type <- str_split(data$Type, "__")
-      type_2 <- sapply(type, function(x){
-        sapply(x, function(y){
-          if (y %in% renamed_dataframe$Code){
-            renamed <- as.character(renamed_dataframe$Group[renamed_dataframe$Code == y])
-            if (length(renamed) >1){
-              showNotification(paste("The ", as.character(y), " type have multiple renaming options: ", paste(renamed, collapse = ", ")), 
-                               type = "warning", duration = NULL)
-              showNotification(paste("The  ", renamed[[1]], " was chosen."), type = "warning", duration=NULL)
-            }
-            renamed[[1]]
-          } else {
-            y
-          }
-          
-        })
-        
-      })
-      type_3 <- sapply(type_2, function(x){
-        dupl <-  x[!duplicated(x)]
-        paste(dupl, collapse = "__")
-      })
-      type_4 <- sapply(type_3, function(y){
-          if (y %in% as.character(renamed_dataframe$Code)){
-            as.character(renamed_dataframe$Group[renamed_dataframe$Code == y])[[1]]
-          } else {
-            y
-          }
-      })
-      return(as.character(type_4))
-    }
+    whereami::cat_where(whereami::whereami())
     rename_data <- vals$rename_data
     if (vals$anti_data_input == T){
       anti_data <- read.csv("anti_data.csv")
@@ -1416,15 +1595,47 @@ server <- function(input, output, session) {
       prism_data['Type2'] <-  vals$prism_type
        vals$prism_data <- prism_data
     }
-    vals$biocircos_color = T
+      showElement(selector = "#reset_name")
+      hideElement(selector = "#rename")
+    vals$renamed <- T
+    showNotification(paste("Please note: SEMPI, PRISM and Antismash input data will be renamed on upload"), type = "warning", duration=10)
       })
+  observeEvent(check_to_rename(), {
+    req(vals$renamed == T)
+    whereami::cat_where(whereami::whereami())
+    rename_data <- vals$rename_data
+    if (vals$anti_data_input == T){
+      anti_data <- read.csv("anti_data.csv")
+      vals$anti_type <- rename_vector(anti_data, rename_data)
+      anti_data['Type2'] <- vals$anti_type
+      vals$anti_data <- anti_data
+    }
+    
+    if (vals$sempi_data_input == T){
+      sempi_data <- read.csv("sempi_data.csv")
+      vals$sempi_type <- rename_vector(sempi_data, rename_data)
+      sempi_data['Type2'] <- vals$sempi_type
+      vals$sempi_data <- sempi_data
+    }
+    
+    if(vals$prism_data_input == T){
+      prism_data <- read.csv("prism_data.csv")
+      vals$prism_type <- rename_vector(prism_data, rename_data)
+      prism_data['Type2'] <-  vals$prism_type
+      vals$prism_data <- prism_data
+    }
+  })
   
   observeEvent(input$reset_name, {
-
     vals$anti_data['Type2']  <- vals$anti_data['Type']
     vals$sempi_data['Type2'] <- vals$sempi_data['Type']
     vals$ prism_data['Type2'] <- vals$ prism_data['Type']
-    vals$biocircos_color = FALSE
+    updateCheckboxInput(inputId = "anti_hybrid", value = F)
+    updateCheckboxInput(inputId = "sempi_hybrid", value =F)
+    updateCheckboxInput(inputId = "prism_hybrid", value = F)
+      showElement(selector = "#rename")
+      hideElement(selector = "#reset_name")
+    vals$renamed <- F
   })
   
   observeEvent(input$rename_data,{
@@ -1576,6 +1787,9 @@ server <- function(input, output, session) {
       hideElement(selector = "#label_color_class")
       hideElement(selector = "#ref_col_biocircos")
       hideElement(selector = "#arts_header")
+      hideElement(selector = "#arts_width")
+      hideElement(selector = "#sempi_width")
+      hideElement(selector = "#prism_supp_data_input_width")
     } else{
       showElement(selector = "#rename_data")
       showElement(selector = "#rename")
@@ -1585,11 +1799,16 @@ server <- function(input, output, session) {
       } else {
         hideElement(selector = "#rre_width")
       }
+      if (vals$sempi_data_input == T){
+        showElement(selector = "#sempi_width")
+      } else {
+        hideElement(selector = "#sempi_width")
+      }
       if (vals$prism_json == T){
-        showElement(selector = "#prism_supp_width")
+        showElement(selector = "#prism_supp_data_input_width")
       }
       else {
-        hideElement(selector = "#prism_supp_width")
+        hideElement(selector = "#prism_supp_data_input_width")
       }
       if (vals$data_upload_count > 1){
         showElement(selector = "#biocircos_color")
@@ -1607,8 +1826,10 @@ server <- function(input, output, session) {
       }
       if (vals$arts_data_input == T){
         showElement(selector = "#arts_header")
+        showElement(selector = "#arts_width")
       } else {
         hideElement(selector = "#arts_header")
+        hideElement(selector = "#arts_width")
       }
       
     }
@@ -1749,10 +1970,10 @@ server <- function(input, output, session) {
       prism_supp_inter <- vals$prism_supp_data %>%
         select(Start,Stop)
       prism_supp_inter$seqnames <- "chr"
-      if (vals$prism_supp_data_input_width == TRUE) {
-        Stop_vals_prism_supp <- as.numeric(vals$prism_supp$Stop)+50000
+      if (input$prism_supp_data_input_width == TRUE) {
+        Stop_vals_prism_supp <- as.numeric(vals$prism_supp_data$Stop)+50000
       } else{
-        Stop_vals_prism_supp <- as.numeric(vals$prism_supp$Stop)
+        Stop_vals_prism_supp <- as.numeric(vals$prism_supp_data$Stop)
       }
     }
     if (vals$arts_data_input == T){
@@ -1788,14 +2009,12 @@ server <- function(input, output, session) {
 #     computed <- list(
 #      anti=F,deep=F, gecco=F, arts=F, prism=F, sempi=F, prism_supp=F, rre=F
 #    )
-    
-    
     index = 1
     for (i in data_uploads){
       index_2 = 1
       j = soft_names[index]
       for (p in data_uploads){
-      x = soft_names[index_2]
+        x = soft_names[index_2]
         if ((vals[[i]] == TRUE) & (vals$computed[[j]]==F) & (j!= x)){
           if ((vals[[p]] == TRUE) & (j != soft_names[index_2])){
             res <- get_inter( eval(as.name(paste(j, '_inter', sep = ""))), eval(as.name(paste(x, '_inter', sep = "")))) 
@@ -1823,6 +2042,7 @@ server <- function(input, output, session) {
      vals$inters_filtered <- inters 
    } else{
      vals$need_filter <- T
+     vals$filter_data <- T
    }
    
    
@@ -1864,30 +2084,12 @@ server <- function(input, output, session) {
     whereami::cat_where(whereami::whereami())
     inters <- vals$inters
     if (vals$deep_data_input == TRUE){
-      # Get vector of max values from chosen columns from deepbgc data
-      score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
-      score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
-      score_c <- apply(vals$deep_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
-      deep_data_chromo <- vals$deep_data %>%
-        mutate(score = apply(vals$deep_data %>%
-                               select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
-      # Cluster_type column. Here extract colnames, and assign max value to a new column
-      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
-      # If max score is under_threshold, print "under_threshold"
-      deep_data_chromo <- deep_data_chromo%>%
-        mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "under_threshold"))
-      #Finally store deepbgc data in plotting variable. Do final scores processing 
-      biocircos_deep <- deep_data_chromo%>%
-        mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
-        filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , 
-               score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
-               num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
-      biocircos_deep['Start'] <- biocircos_deep$nucl_start
-      biocircos_deep['Stop'] <- biocircos_deep$nucl_end
-      biocircos_deep['Type'] <- biocircos_deep$product_class
-      biocircos_deep['Type2'] <- biocircos_deep$product_class
-      biocircos_deep['Cluster'] <- biocircos_deep$ID
-      vals$deep_data_filtered <- biocircos_deep
+      if (vals$need_filter == F) {
+        biocircos_deep <- filter_deepbgc()
+        vals$deep_data_filtered <- biocircos_deep
+      } else {
+        biocircos_deep <-  vals$deep_data_filtered
+      }
       new_deep <- lapply(inters$deep, function(x){
         new_to <- x$to[x$to %in% biocircos_deep$Cluster]
         new_from <- x$from[x$to %in% biocircos_deep$Cluster]
@@ -1904,18 +2106,12 @@ server <- function(input, output, session) {
       inters <- new_inters
     }
     if (vals$gecco_data_input == TRUE){
-      score_a_gecco <- apply(vals$gecco_data %>% select(c("average_p")),1, function(x) max(x))
-      score_c_gecco <- apply(vals$gecco_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
-      # Store master prism data in local variable
-      gecco_data <- vals$gecco_data %>%
-        mutate(score = apply(vals$gecco_data %>%
-                               dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) %>%
-        mutate(Cluster_type = ifelse(score>as.numeric(input$score_cluster_gecco)/100, Type2, "under_threshold")) %>%
-        mutate( Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
-        filter(score_a >= as.numeric(input$score_average_gecco )/ 100, score_c >=as.numeric(input$score_cluster_gecco)/100 ,
-               num_domains >= input$domains_filter_gecco, num_prot>=input$prot_filter_gecco)
-      
-      vals$gecco_data_filtered <- gecco_data 
+      if (vals$need_filter == F) {
+        gecco_data <- filter_gecco()
+        vals$gecco_data_filtered <- gecco_data 
+      } else {
+        gecco_data <- vals$gecco_data_filtered
+      }
       new_gecco <- lapply(inters$gecco, function(x){
         new_to <- x$to[x$to %in% gecco_data$Cluster]
         new_from <- x$from[x$to %in% gecco_data$Cluster]
@@ -1934,7 +2130,7 @@ server <- function(input, output, session) {
     if (vals$arts_data_input == TRUE){
       if (input$dup_choice != "All"){
         vals$arts_data_filtered <- data.frame(vals$arts_data) %>%
-          filter(Core == input$dup_choice | Core == "Not_core")
+          filter(Core == str_split(str_split(input$dup_choice, " ,")[[1]][[2]], "Core:")[[1]][[2]] | Core == "Not_core")
         new_arts <- lapply(inters$arts, function(x){
           new_to <- x$to[x$to %in% vals$arts_data_filtered$Cluster]
           new_from <- x$from[x$to %in% vals$arts_data_filtered$Cluster]
@@ -1951,40 +2147,29 @@ server <- function(input, output, session) {
         inters <- new_inters
       } else {
         vals$arts_data_filtered <- vals$arts_data
+        vals$inters_filtered <- inters
+        
       }
     }
     if ((vals$gecco_data_input == F) & (vals$deep_data_input == F )& (vals$arts_data_input == F )) {
       vals$inters_filtered <- inters
     }
     vals$need_filter <- F
+    vals$filter_data <- F
+    
   })
   
   observeEvent(biocircos_listen(), {
     req(vals$data_upload_count >=2)
-    whereami::cat_where(whereami::whereami())
-    #BioCircos!
-    Biocircos_chromosomes <- list()
-    arcs_chromosomes <- c()
-    arcs_begin <- c()
-    arcs_end <- c()
-    arc_labels <- c()
-    arc_col <- c()
-    
-    inters <- vals$inters_filtered
-    
-    rename_data <- vals$rename_data
-    
-    # ANTISMASH
-    if (vals$anti_data_input == TRUE){
-      # Store data in local variable
-      biocircos_anti <- vals$anti_data
+    initialize_biocircos <- function(biocircos_anti, name,Biocircos_chromosomes, arcs_chromosomes, arcs_begin , arcs_end, arc_labels, arc_col, rename_data ){
       #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["Antismash"]] <- vals$chr_len  
+      Biocircos_chromosomes[[name]] <- vals$chr_len  
       #Add arcs. Quantity of arcs is length of dataframes
-      arcs_chromosomes <- c(arcs_chromosomes,rep("Antismash", length(biocircos_anti$Cluster)) )
+      arcs_chromosomes <- c(arcs_chromosomes,rep(name, length(biocircos_anti$Cluster)) )
       # Add arcs begin positions. (Start column)
       arcs_begin <- c(arcs_begin, biocircos_anti$Start)
       # Stop position of arcs. 
+      biocircos_anti <- correct_width(biocircos_anti, name)
       arcs_end <- c(arcs_end, biocircos_anti$Stop )
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels, biocircos_anti$Type)
@@ -2000,212 +2185,51 @@ server <- function(input, output, session) {
         arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
       }
       arc_col <- c(arc_col,as.character(arc_colors) )
+      return(list(Biocircos_chromosomes,arcs_chromosomes, arcs_begin , arcs_end, arc_labels, arc_col))
     }
+    whereami::cat_where(whereami::whereami())
+    #BioCircos!
+    Biocircos_chromosomes <- list()
+    arcs_chromosomes <- c()
+    arcs_begin <- c()
+    arcs_end <- c()
+    arc_labels <- c()
+    arc_col <- c()
     
-    #DEEPBGC
-    if (vals$deep_data_input == TRUE){
-      biocircos_deep <- vals$deep_data_filtered
-      #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["DeepBGC"]] <- vals$chr_len
-      #Add arcs. Quantity of arcs is length of dataframes
-      arcs_chromosomes <- c(arcs_chromosomes, rep("DeepBGC", length(biocircos_deep$bgc_candidate_id)))
-      # Add arcs begin positions. (Start column)
-      arcs_begin <- c(arcs_begin, biocircos_deep$nucl_start )
-      # Stop position of arcs. 
-      arcs_end <- c(arcs_end, biocircos_deep$nucl_end)
-      # Add Arcs labels. Can add only one label...
-      arc_labels <- c(arc_labels, biocircos_deep$product_class)
-      if ((input$biocircos_color == T)){
-        arc_colors <- sapply(biocircos_deep$Type, function(x){
-          if (x %in% rename_data$Group_color){
-            rename_data$Color[rename_data$Group_color == x]
-          } else {
-            rename_data$Color[rename_data$Group_color == 'base']
-          }
-        })
-      } else {
-        arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
-      }
-      arc_col <- c(arc_col,as.character(arc_colors) )
-    }
-    
-    #RRE-FINDER
-    if (vals$rre_data_input == TRUE){
-      biocircos_rre <- data.frame(vals$rre_data)
-      biocircos_rre$Start <- as.numeric(biocircos_rre$Start)
-      biocircos_rre$Stop <- as.numeric(biocircos_rre$Stop)
-      #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["RRE"]] <- vals$chr_len
-      #Add arcs. Quantity of arcs is length of dataframes
-      arcs_chromosomes <- c(arcs_chromosomes, rep("RRE", length(biocircos_rre$Locus_tag)))
-      # Add arcs begin positions. (Start column)
-      arcs_begin <- c(arcs_begin, biocircos_rre$Start)
-      # Stop position of arcs. 
-      if (input$rre_width == TRUE) {
-        arcs_end <- c(arcs_end,  as.numeric(biocircos_rre$Stop)+50000)
-      }else{
-        arcs_end <- c(arcs_end,  as.numeric(biocircos_rre$Stop))
-      }
-      # Add Arcs labels. Can add only one label...
-      arc_labels <- c(arc_labels,  biocircos_rre$E.value)
-      if ((input$biocircos_color == T)){
-        arc_colors <- sapply(biocircos_rre$Type, function(x){
-          if (x %in% rename_data$Group_color){
-            rename_data$Color[rename_data$Group_color == x]
-          } else {
-            rename_data$Color[rename_data$Group_color == 'base']
-          }
-        })
-      } else {
-        arc_colors <-rename_data$Color[rename_data$Group_color == 'base']
-      }
-      arc_col <- c(arc_col,as.character(arc_colors) )
-    }
-    
-    # PRISM
-    if (vals$prism_data_input == TRUE){
-      # Store data in local variable
-      biocircos_prism <- vals$prism_data
-      #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["PRISM"]] <- vals$chr_len
-      #Add arcs. Quantity of arcs is length of dataframes
-      arcs_chromosomes <- c(arcs_chromosomes, rep("PRISM", length(biocircos_prism$Cluster)))
-      # Add arcs begin positions. (Start column)
-      arcs_begin <- c(arcs_begin, biocircos_prism$Start )
-      # Stop position of arcs.
-      arcs_end <- c(arcs_end, biocircos_prism$Stop )
-      # Add Arcs labels. Can add only one label...
-      arc_labels <- c(arc_labels,biocircos_prism$Type )
-      if ((input$biocircos_color == T)){
-        arc_colors <- sapply(biocircos_prism$Type2, function(x){
-          if (x %in% rename_data$Group_color){
-            rename_data$Color[rename_data$Group_color == x]
-          } else {
-            rename_data$Color[rename_data$Group_color == 'base']
-          }
-        })
-      } else {
-        arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
-      }
-      arc_col <- c(arc_col,as.character(arc_colors) )
-    }
-    
-    #SEMPI
-    if (vals$sempi_data_input == TRUE){
-      # Store data in local variable
-      biocircos_sempi <- vals$sempi_data
-      #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["SEMPI"]] <- vals$chr_len
-      #Add arcs. Quantity of arcs is length of dataframes
-      arcs_chromosomes <- c(arcs_chromosomes, rep("SEMPI", length(biocircos_sempi$Cluster)))
-      
-      # Add arcs begin positions. (Start column)
-      arcs_begin <- c(arcs_begin, biocircos_sempi$Start )
-      # Stop position of arcs.
-      arcs_end <- c(arcs_end, biocircos_sempi$Stop )
-      # Add Arcs labels. Can add only one label...
-      arc_labels <- c(arc_labels,biocircos_sempi$Type )
-      if ((input$biocircos_color == T)){
-        arc_colors <- sapply(biocircos_sempi$Type2, function(x){
-          if (x %in% rename_data$Group_color){
-            rename_data$Color[rename_data$Group_color == x]
-          } else {
-            rename_data$Color[rename_data$Group_color == 'base']
-          }
-        })
-      } else {
-        arc_colors <-  rename_data$Color[rename_data$Group_color == 'base']
-      }
-      arc_col <- c(arc_col,as.character(arc_colors) )
-    }
-    
-    if (vals$prism_supp_data_input == TRUE){
-      # Store data in local variable
-      biocircos_prism_supp <- vals$prism_supp
-      #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["PRISM-supp"]] <- vals$chr_len
-      #Add arcs. Quantity of arcs is length of dataframes
-      arcs_chromosomes <- c(arcs_chromosomes, rep("PRISM-supp", length(biocircos_prism_supp$Cluster)))
-      # Add arcs begin positions. (Start column)
-      arcs_begin <- c(arcs_begin, biocircos_prism_supp$Start )
-      if (vals$prism_supp_data_input_width == TRUE) {
-        arcs_end <- c(arcs_end,  as.numeric(biocircos_prism_supp$Stop)+50000)
-      }else{
-        arcs_end <- c(arcs_end,  as.numeric(biocircos_prism_supp$Stop))
-      }
-      # Add Arcs labels. Can add only one label...
-      arc_labels <- c(arc_labels,biocircos_prism_supp$Type )
-      if ((input$biocircos_color == T)){
-        arc_colors <- sapply(biocircos_prism_supp$Type2, function(x){
-          if (x %in% rename_data$Group_color){
-            rename_data$Color[rename_data$Group_color == x]
-          } else {
-            rename_data$Color[rename_data$Group_color == 'base']
-          }
-        })
-      } else {
-        arc_colors <-  rename_data$Color[rename_data$Group_color == 'base']
-      }
-      arc_col <- c(arc_col,as.character(arc_colors) )
+    if (is.null(vals$inters_filtered)){
+      inters <- vals$inters
+    } else {
+      inters <- vals$inters_filtered
     }
     
     
-    if (vals$arts_data_input == TRUE){
-      biocircos_arts <- data.frame(vals$arts_data_filtered)
-      #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["ARTS"]] <- vals$chr_len
-      #Add arcs. Quantity of arcs is length of dataframes
-      arcs_chromosomes <- c(arcs_chromosomes, rep("ARTS", length(biocircos_arts$Cluster)))
-      # Add arcs begin positions. (Start column)
-      arcs_begin <- c(arcs_begin, biocircos_arts$Start)
-      # Stop position of arcs. 
-      if (input$arts_width == TRUE) {
-        arcs_end <- c(arcs_end,  as.numeric(biocircos_arts$Stop)+20000)
-      }else{
-        arcs_end <- c(arcs_end,  as.numeric(biocircos_arts$Stop))
+    rename_data <- vals$rename_data
+    data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
+                      "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
+    soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
+    soft <- c("Antismash","SEMPI","PRISM","PRISM-Supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
+   data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data","deep_data_filtered" ,"gecco_data_filtered", "rre_data")
+    index <- 1
+   # browser()
+    for (upload in data_uploads){
+      if (vals[[upload]] == T){
+        # Store data in local variable
+        init_data <- initialize_biocircos(vals[[data_to_use[index]]], soft[index], Biocircos_chromosomes, arcs_chromosomes, arcs_begin , arcs_end, arc_labels, arc_col, rename_data )
+        #Make chromosome list for Biocircos plot. Use chr_len as an input
+        Biocircos_chromosomes <- init_data[[1]]
+        #Add arcs. Quantity of arcs is length of dataframes
+        arcs_chromosomes <- init_data[[2]]
+        # Add arcs begin positions. (Start column)
+        arcs_begin <- init_data[[3]]
+        # Stop position of arcs. 
+        arcs_end <- init_data[[4]]
+        # Add Arcs labels. Can add only one label...
+        arc_labels <- init_data[[5]]
+        
+        arc_col <- init_data[[6]]
       }
-      # Add Arcs labels. Can add only one label...
-      arc_labels <- c(arc_labels,  biocircos_arts$Type2)
-      if ((input$biocircos_color == T)){
-        arc_colors <- sapply(biocircos_arts$Type2, function(x){
-          if (x %in% rename_data$Group_color){
-            rename_data$Color[rename_data$Group_color == x]
-          } else {
-            rename_data$Color[rename_data$Group_color == 'base']
-          }
-        })
-      } else {
-        arc_colors <-rename_data$Color[rename_data$Group_color == 'base']
-      }
-      arc_col <- c(arc_col,as.character(arc_colors) )
+      index <- index +1 
     }
-    
-    if (vals$gecco_data_input == TRUE){
-      biocircos_gecco <- vals$gecco_data_filtered
-      #Make chromosome list for Biocircos plot. Use chr_len as an input
-      Biocircos_chromosomes[["GECCO"]] <- vals$chr_len  
-      #Add arcs. Quantity of arcs is length of dataframes
-      arcs_chromosomes <- c(arcs_chromosomes,rep("GECCO", length(biocircos_gecco$Cluster)) )
-      # Add arcs begin positions. (Start column)
-      arcs_begin <- c(arcs_begin, biocircos_gecco$Start)
-      # Stop position of arcs. 
-      arcs_end <- c(arcs_end, biocircos_gecco$Stop )
-      # Add Arcs labels. Can add only one label...
-      arc_labels <- c(arc_labels, biocircos_gecco$Type)
-      if ((input$biocircos_color == T)){
-        arc_colors <- sapply(biocircos_gecco$Type2, function(x){
-          if (x %in% rename_data$Group_color){
-            rename_data$Color[rename_data$Group_color == x]
-          } else {
-            rename_data$Color[rename_data$Group_color == 'base']
-          }
-        })
-      } else {
-        arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
-      }
-      arc_col <- c(arc_col,as.character(arc_colors) )
-    }
-    
     # Add to tracklist. Then it can be populated with links
     tracklist <- BioCircosArcTrack('myArcTrack', arcs_chromosomes, arcs_begin, arcs_end, 
                                    minRadius = 0.90, maxRadius = 0.97, labels = arc_labels,colors = arc_col )
@@ -2234,19 +2258,20 @@ server <- function(input, output, session) {
       # Add link end. Just populate second output from the vectors, used above. 
       chromosomes_end <- c(rep(data1_label, length(inter_s_rre_n)))
       # Add links start positions as a start from dataframe. This vector is for chromosome start
-      link_pos_start <- as.numeric(c(data2$Start[data2$Cluster %in% inter_rre_s] ))
+      link_pos_start <- as.numeric(c(data2$Start[match(inter_rre_s,data2$Cluster)] ))
       # Add links start positions as a start from dataframe. For chromosome start variable
-      link_pos_start_1 <- as.numeric(c(data2$Stop[data2$Cluster %in% inter_rre_s]))
+      link_pos_start_1 <- as.numeric(c(data2$Stop[match(inter_rre_s,data2$Cluster)]))
       # Add links start position for a chromosome stop variable
-      link_pos_end <- as.numeric(c( data1$Start[data1$Cluster %in% inter_s_rre_n]))
+      link_pos_end <- as.numeric(c( data1$Start[match(inter_s_rre_n,data1$Cluster)]))
       # Add links start position for a chromosome stop position
-      link_pos_end_2 <- as.numeric(c(data1$Stop[data1$Cluster %in% inter_s_rre_n]))
+      link_pos_end_2 <- as.numeric(c(data1$Stop[match(inter_s_rre_n,data1$Cluster)]))
       label_1 <- c(sapply(inter_rre_s, function(x){x = paste(paste0(data2_label,":"), x, ",", data2$Type[data2$Cluster == x])})) 
       label_2 <- c(sapply(inter_s_rre_n, function(x){x = paste(paste0(data1_label, ":"), x, ",", data1$Type[data1$Cluster == x])}))
+      #browser()
       if (!is.null(inter_rre_s)){
         if (class == 'P'){
-          subset_vec <- data2$Type2[data2$Cluster %in% inter_rre_s] == data1$Type2[data1$Cluster %in% inter_s_rre_n]
-          label_color <- as.character(c(sapply(data2$Type2[data2$Cluster %in% inter_rre_s], function (x){
+          subset_vec <- data2$Type2[match(inter_rre_s, data2$Cluster)] == data1$Type2[match(inter_s_rre_n, data1$Cluster)]
+          label_color <- as.character(c(sapply(data2$Type2[match(inter_rre_s, data2$Cluster )], function (x){
             if (x %in% rename_data$Group_color) {
               as.character(rename_data$Color[rename_data$Group_color == x])
             }
@@ -2264,8 +2289,8 @@ server <- function(input, output, session) {
             }
           }
         } else if (class == 'H'){
-          if (grep(data1_label, rename_data$Hierarchy) < (grep(data2_label, rename_data$Hierarchy))){
-            label_color <- as.character(c(sapply(data1$Type2[data1$Cluster %in% inter_s_rre_n], function (x){
+          if (grep(paste0("^", data1_label, "$"), rename_data$Hierarchy) < (grep(paste0("^", data2_label, "$"), rename_data$Hierarchy))){
+            label_color <- as.character(c(sapply(data1$Type2[match(inter_s_rre_n, data1$Cluster )], function (x){
               if (x %in% rename_data$Group_color) {
                 as.character(rename_data$Color[rename_data$Group_color == x])
               }
@@ -2274,7 +2299,7 @@ server <- function(input, output, session) {
               }
             })))
           } else {
-            label_color <-as.character( c(sapply(data2$Type2[data2$Cluster %in% inter_rre_s], function (x){
+            label_color <-as.character( c(sapply(data2$Type2[ match(inter_rre_s, data2$Cluster )], function (x){
               if (x %in% rename_data$Group_color) {
                 as.character(rename_data$Color[rename_data$Group_color == x])
               }
@@ -2285,7 +2310,7 @@ server <- function(input, output, session) {
           }
         }else if (class == 'R'){
           if (data2_label == input$ref_col_biocircos){
-            label_color <- as.character(c(sapply(data1$Type2[data1$Cluster %in% inter_s_rre_n], function (x){
+            label_color <- as.character(c(sapply(data1$Type2[match(inter_s_rre_n, data1$Cluster)], function (x){
               if (x %in% rename_data$Group_color) {
                 as.character(rename_data$Color[rename_data$Group_color == x])
               }
@@ -2294,7 +2319,7 @@ server <- function(input, output, session) {
               }
             })))
           } else if (data1_label == input$ref_col_biocircos){
-            label_color <- as.character(c(sapply(data2$Type2[data2$Cluster %in% inter_rre_s], function (x){
+            label_color <- as.character(c(sapply(data2$Type2[match(inter_rre_s,data2$Cluster)], function (x){
               if (x %in% rename_data$Group_color) {
                 as.character(rename_data$Color[rename_data$Group_color == x])
               }
@@ -2312,583 +2337,44 @@ server <- function(input, output, session) {
       return(list( inter_s_rre_n, inter_s_rre_n, chromosomes_start, chromosomes_end, link_pos_start, link_pos_start_1, link_pos_end, 
                    link_pos_end_2, label_1, label_2, label_color))
     }
-    
-    
-    
-    if (vals$gecco_data_input == TRUE){
-      if (vals$anti_data_input == TRUE){
-        output <- add_biocircos_data(inters$gecco$anti$from, inters$gecco$anti$to, biocircos_anti, biocircos_gecco, "Antismash", "GECCO", rename_data, input$label_color_class)
-        
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
+    data_uploads_2 <- data_uploads
+    soft_2 <- soft
+    soft_names_2 <- soft_names
+    data_to_use_2 <- data_to_use
+    index <- 1
+    for (upload in data_uploads){
+      data_uploads_2 <- data_uploads_2[-1]
+      soft_2 <- soft_2[-1]
+      soft_names_2 <- soft_names_2[-1]
+      data_to_use_2 <- data_to_use_2[-1]
+      index2 <- 1
+      if (vals[[upload]] == T){
+        for (upload2 in data_uploads_2){
+          if ((vals[[upload2]]==T) & (length(data_uploads_2) > 0) & (soft[index] != soft_2[index2])){
+            output <- add_biocircos_data(inters[[soft_names[index]]][[soft_names_2[index2]]]$from, inters[[soft_names[index]]][[soft_names_2[index2]]]$to, vals[[data_to_use_2[index2]]], vals[[data_to_use[index]]], soft_2[index2], soft[index], rename_data, input$label_color_class)
+            
+            chromosomes_start <- c(chromosomes_start, output[[3]])
+            # Add link end. Just populate second output from the vectors, used above. 
+            chromosomes_end <- c(chromosomes_end, output[[4]] )
+            # Add links start positions as a start from dataframe. This vector is for chromosome start
+            link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
+            # Add links start positions as a start from dataframe. For chromosome start variable
+            link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
+            # Add links start position for a chromosome stop variable
+            link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
+            # Add links start position for a chromosome stop position
+            link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
+            label_1 <- c(label_1, output[[9]])
+            label_2 <- c(label_2, output[[10]])
+            label_color = c(label_color, output[[11]] )
+          }
+          index2 <- index2 +1
+        }
+        write.csv(vals[[data_to_use[index]]], paste0(soft_names[index], "_biocircos.csv"), row.names = F)
       }
-      # Get interception of antismash with PRISM
-      if (vals$prism_data_input == TRUE){
-        output <- add_biocircos_data(inters$gecco$prism$from, inters$gecco$prism$to, biocircos_prism, biocircos_gecco, "PRISM", "GECCO", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Get interception of antismash with deepbgc
-      if (vals$deep_data_input == TRUE){
-        output <- add_biocircos_data(inters$gecco$deep$from, inters$gecco$deep$to, biocircos_deep, biocircos_gecco, "DeepBGC", "GECCO", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-        # Safe used local variables to the reactive ones
-      } 
-      # Get interception of antismash with RREFinder
-      if (vals$rre_data_input == TRUE){
-        output <- add_biocircos_data(inters$gecco$rre$from, inters$gecco$rre$to, biocircos_rre, biocircos_gecco, "RRE", "GECCO", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Get interception of antismash with SEMPI
-      if (vals$sempi_data_input == TRUE){
-        output <- add_biocircos_data(inters$gecco$sempi$from, inters$gecco$sempi$to, biocircos_sempi, biocircos_gecco, "SEMPI", "GECCO", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$prism_supp_data_input == TRUE){
-        output <- add_biocircos_data(inters$gecco$prism_supp$from, inters$gecco$prism_supp$to, biocircos_prism_supp, biocircos_gecco, "PRISM-supp", "GECCO", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$arts_data_input == TRUE){
-        output <- add_biocircos_data(inters$gecco$arts$from, inters$gecco$arts$to, biocircos_arts, biocircos_gecco, "ARTS", "GECCO", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Write csvs with locally used variables
-      vals$biocircos_gecco <- biocircos_gecco
-      write.csv(biocircos_gecco, "gecco_biocircos.csv", row.names = F)
+      index <- index +1 
     }
-    
-    # ANTISMASH
-    if (vals$anti_data_input == TRUE){
-      
-      # Get interception of antismash with PRISM
-      if (vals$prism_data_input == TRUE){
-        output <- add_biocircos_data(inters$anti$prism$from, inters$anti$prism$to, biocircos_prism, biocircos_anti, "PRISM", "Antismash", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Get interception of antismash with deepbgc
-      if (vals$deep_data_input == TRUE){
-        output <- add_biocircos_data(inters$anti$deep$from, inters$anti$deep$to, biocircos_deep, biocircos_anti, "DeepBGC", "Antismash", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-        # Safe used local variables to the reactive ones
-      } 
-      # Get interception of antismash with RREFinder
-      if (vals$rre_data_input == TRUE){
-        output <- add_biocircos_data(inters$anti$rre$from, inters$anti$rre$to, biocircos_rre, biocircos_anti, "RRE", "Antismash", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Get interception of antismash with SEMPI
-      if (vals$sempi_data_input == TRUE){
-        output <- add_biocircos_data(inters$anti$sempi$from, inters$anti$sempi$to, biocircos_sempi, biocircos_anti, "SEMPI", "Antismash", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$prism_supp_data_input == TRUE){
-        output <- add_biocircos_data(inters$anti$prism_supp$from, inters$anti$prism_supp$to, biocircos_prism_supp, biocircos_anti, "PRISM-supp", "Antismash", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$arts_data_input == TRUE){
-        output <- add_biocircos_data(inters$anti$arts$from, inters$anti$arts$to, biocircos_arts, biocircos_anti, "ARTS", "Antismash", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Write csvs with locally used variables
-      write.csv(biocircos_anti, "antismash_biocircos.csv", row.names = F)
-    }
-    
-    # DEEPBGC 
-    if (vals$deep_data_input == TRUE){
-      
-      # Get interception of DeepBGC with rrefinder
-      if (vals$rre_data_input == TRUE){
-        output <- add_biocircos_data(inters$deep$rre$from, inters$deep$rre$to, biocircos_rre, biocircos_deep, "RRE", "DeepBGC", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-        # Safe used local variables to the reactive ones
-      }
-      # Get interception of DeepBGC with PRISM
-      if (vals$prism_data_input == TRUE){
-        output <- add_biocircos_data(inters$deep$prism$from, inters$deep$prism$to, biocircos_prism, biocircos_deep, "PRISM", "DeepBGC", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-        # Safe used local variables to the reactive ones
-      }
-      # Get interception of DeepBGC with SEMPI
-      if (vals$sempi_data_input == TRUE){
-        output <- add_biocircos_data(inters$deep$sempi$from, inters$deep$sempi$to, biocircos_sempi, biocircos_deep, "SEMPI", "DeepBGC", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$prism_supp_data_input == TRUE){
-        output <- add_biocircos_data(inters$deep$prism_supp$from, inters$deep$prism_supp$to, biocircos_prism_supp, biocircos_deep, "PRISM-supp", "DeepBGC", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$arts_data_input == TRUE){
-        output <- add_biocircos_data(inters$deep$arts$from, inters$deep$arts$to, biocircos_arts, biocircos_deep, "ARTS", "DeepBGC", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Safe used local variables to the reactive ones
-      vals$biocircos_deep <- biocircos_deep
-      # Write csvs with locally used variables
-      write.csv(biocircos_deep, "deepbgc_biocircos.csv", row.names = F)
-    }
-    
-    # PRISM
-    if (vals$prism_data_input == TRUE){
-      
-      # Get interception of PRISM with rrefinder
-      if (vals$rre_data_input == TRUE){
-        output <- add_biocircos_data(inters$prism$rre$from, inters$prism$rre$to, biocircos_rre, biocircos_prism, "RRE", "PRISM", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Get interception of PRISM with SEMPI
-      if (vals$sempi_data_input == TRUE){
-        output <- add_biocircos_data(inters$prism$sempi$from, inters$prism$sempi$to, biocircos_sempi, biocircos_prism, "SEMPI", "PRISM", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$prism_supp_data_input == TRUE){
-        output <- add_biocircos_data(inters$prism$prism_supp$from, inters$prism$prism_supp$to, biocircos_prism_supp, biocircos_prism, "PRISM-supp", "PRISM", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$arts_data_input == TRUE){
-        output <- add_biocircos_data(inters$prism$arts$from, inters$prism$arts$to, biocircos_arts, biocircos_prism, "ARTS", "PRISM", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Write csvs with locally used variables
-      write.csv(biocircos_prism, "prism_biocircos.csv", row.names = F)
-    }
-    
-    # RRE-FINDER 
-    if (vals$rre_data_input == TRUE){
-      
-      # Get interception of RRE with SEMPI
-      if (vals$sempi_data_input == TRUE){
-        output <- add_biocircos_data(inters$rre$sempi$from, inters$rre$sempi$to, biocircos_sempi, biocircos_rre, "SEMPI", "RRE", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$prism_supp_data_input == TRUE){
-        output <- add_biocircos_data(inters$rre$prism_supp$from, inters$rre$prism_supp$to, biocircos_prism_supp, biocircos_rre, "PRISM-supp", "RRE", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$arts_data_input == TRUE){
-        output <- add_biocircos_data(inters$rre$arts$from, inters$rre$arts$to, biocircos_arts, biocircos_rre, "ARTS", "RRE", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Write csvs with locally used variables
-      write.csv(biocircos_rre, "rre_biocircos.csv", row.names = F)
-    }
-    
-    #SEMPI 
-    if (vals$sempi_data_input == TRUE){
-      if (vals$prism_supp_data_input == TRUE){
-        output <- add_biocircos_data(inters$sempi$prism_supp$from, inters$sempi$prism_supp$to,biocircos_prism_supp, biocircos_sempi, "PRISM-supp", "SEMPI", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      if (vals$arts_data_input == TRUE){
-        output <- add_biocircos_data(inters$sempi$arts$from, inters$sempi$arts$to,biocircos_arts, biocircos_sempi, "ARTS", "SEMPI", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      # Write csvs with locally used variables
-      write.csv(biocircos_sempi, "sempi_biocircos.csv", row.names = F)
-    }
-    
-    if (vals$prism_supp_data_input == TRUE){
-      if (vals$arts_data_input == TRUE){
-        output <- add_biocircos_data(inters$prism_supp$arts$from, inters$prism_supp$arts$to,biocircos_arts, biocircos_prism_supp, "ARTS", "PRISM-supp", rename_data, input$label_color_class)
-        # Add link start. Just populate certain chromosome name times the lenght of interception 
-        chromosomes_start <- c(chromosomes_start, output[[3]])
-        # Add link end. Just populate second output from the vectors, used above. 
-        chromosomes_end <- c(chromosomes_end, output[[4]] )
-        # Add links start positions as a start from dataframe. This vector is for chromosome start
-        link_pos_start <- as.numeric(c(link_pos_start, output[[5]]))
-        # Add links start positions as a start from dataframe. For chromosome start variable
-        link_pos_start_1 <- as.numeric(c(link_pos_start_1, output[[6]]))
-        # Add links start position for a chromosome stop variable
-        link_pos_end <- as.numeric(c(link_pos_end, output[[7]]))
-        # Add links start position for a chromosome stop position
-        link_pos_end_2 <- as.numeric(c(link_pos_end_2,output[[8]]))
-        label_1 <- c(label_1, output[[9]])
-        label_2 <- c(label_2, output[[10]])
-        label_color = c(label_color, output[[11]] )
-      }
-      #Write csvs with locally used variables
-      write.csv(biocircos_prism_supp, "prism_supp_biocircos.csv", row.names = F)
-    }
-    
-    if (vals$arts_data_input == TRUE){
-      #Write csvs with locally used variables
-      write.csv(biocircos_arts, "arts_biocircos.csv", row.names = F)
-    }
-    
+   
     
     
     
@@ -2896,7 +2382,7 @@ server <- function(input, output, session) {
     link_labels <- mapply(function(x,y)  paste(x, y, sep = " | "), label_1, label_2 )
     
     # Add links and labels to the track list for subsequent visualization 
-    if (input$label_color == T){
+    if ((input$label_color == T) & (length(chromosomes_start) > 0)){
       group_colors <- count(unlist(label_color))
       for (i in seq(1:dim(group_colors)[1])){
         subset <- unname( which(label_color %in% group_colors$x[i]))
@@ -2905,11 +2391,13 @@ server <- function(input, output, session) {
                                                    link_pos_end_2[subset], maxRadius = 0.85, labels = link_labels[subset],
                                                    displayLabel = FALSE, color = group_colors$x[i])
       }
-    } else{
+    } else if ((input$label_color == F) & (length(chromosomes_start) > 0)){
       tracklist = tracklist + BioCircosLinkTrack('myLinkTrack_master', chromosomes_start, link_pos_start, 
                                                  link_pos_start_1, chromosomes_end, link_pos_end, 
                                                  link_pos_end_2, maxRadius = 0.85, labels = link_labels,
-                                                 displayLabel = FALSE, color = rename_data$Color[rename_data$Group_color == 'base'])
+                                                displayLabel = FALSE, color = rename_data$Color[rename_data$Group_color == 'base'])
+    } else{
+      showNotification(paste("No interceptions are being made in the Biocircos plot. Please provide data with clusters that do have intercepting borders"), type = "warning", duration=NULL)
     }
     
     vals$tracklist <- tracklist
@@ -2919,6 +2407,7 @@ server <- function(input, output, session) {
 
   # Render barplot
   output$deep_barplot <- renderPlot({
+    req((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) ))
     whereami::cat_where(whereami::whereami())
     
     # Create empty dataframe to populate later
@@ -3002,7 +2491,7 @@ server <- function(input, output, session) {
     }
     
     # Store dataframe in reactive value for later use.
-    vals$fullness <- data.frame(fullnes_of_annotation)
+    vals$fullness_deep <- data.frame(fullnes_of_annotation)
     write.csv(fullnes_of_annotation, "fullness.csv", row.names = F)
     
     # Make text to show on a barplot to point on additional scores' thresholds
@@ -3021,12 +2510,13 @@ server <- function(input, output, session) {
   
   # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data
   output$deep_rate <- renderPlotly({
+    req(!is.null(vals$fullness_deep))
     whereami::cat_where(whereami::whereami())
     
     # Reuse stored dataframe from previous plot
     # This dataframe stores data for number of intercepted/non intercepted clusters for DeepBGC and antismash data 
     # For more information please see previous renderPlot
-    fullnes_of_annotation <- data.frame(vals$fullness)
+    fullnes_of_annotation <- data.frame(vals$fullness_deep)
     
     # Store dataframe into variable. Widen it to calculate rates
     test <- fullnes_of_annotation %>%
@@ -3075,6 +2565,7 @@ server <- function(input, output, session) {
   
   # Render barplot
   output$gecco_barplot <- renderPlot({
+    req((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) ))
     whereami::cat_where(whereami::whereami())
     # Create empty dataframe to populate later
     fullnes_of_annotation <- data.frame(NA, NA, NA)
@@ -3157,7 +2648,7 @@ server <- function(input, output, session) {
     }
     
     # Store dataframe in reactive value for later use.
-    vals$fullness <- data.frame(fullnes_of_annotation)
+    vals$fullness_gecco <- data.frame(fullnes_of_annotation)
     write.csv(fullnes_of_annotation, "fullness.csv", row.names = F)
     
     # Make text to show on a barplot to point on additional scores' thresholds
@@ -3175,11 +2666,12 @@ server <- function(input, output, session) {
   
   # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data
   output$gecco_rate <- renderPlotly({
+    req(!is.null(vals$fullness_gecco))
     whereami::cat_where(whereami::whereami())
     # Reuse stored dataframe from previous plot
     # This dataframe stores data for number of intercepted/non intercepted clusters for DeepBGC and antismash data 
     # For more information please see previous renderPlot
-    fullnes_of_annotation <- data.frame(vals$fullness)
+    fullnes_of_annotation <- data.frame(vals$fullness_gecco)
     
     # Store dataframe into variable. Widen it to calculate rates
     test <- fullnes_of_annotation %>%
@@ -3229,105 +2721,47 @@ server <- function(input, output, session) {
   # Render interactive plot, which shows bgcs of antismash, intercepted with chosen app. Also all app bgs. On hover shows all available information
   # For antismash and PRISM data showed only ID, Start, Stop, Type
   output$deep_reference <- renderPlotly({
-
+    req(vals$data_upload_count >=1)
     whereami::cat_where(whereami::whereami())
-   # req(vals$data_upload_count >=1)
+    req(vals$data_upload_count >=1)
     data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
                       "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
     soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
     soft <- c("Antismash","SEMPI","PRISM","PRISM_SUPPORT","ARTS","DeepBGC","GECCO","RRE-Finder" )
     abbr <- c("A", "S", "P", "P-supp", "AR", "D", "G", "RRE")
+    soft_ref <- c("Antismash","SEMPI","PRISM","PRISM-supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
+    soft_width <-  c("Antismash","SEMPI","PRISM","PRISM-Supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
+    data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data","deep_data_filtered" ,
+                      "gecco_data_filtered", "rre_data")
+    soft_datafr <- c("seg_df_ref_a", "seg_df_ref_s" , "seg_df_ref_p", "seg_df_ref_p_s", "seg_df_ref_ar", "seg_df_ref_d", 
+                     "seg_df_ref_g", "seg_df_ref_r")
     
     inters <- vals$inters_filtered
-    
     # GENERATE DATA
-    if (vals$anti_data_input == TRUE){
-      # Store antismash data in local variable, with column renaming
-      anti_data <-  vals$anti_data 
-      # Extract only Start and Stop from antismash data into matrix
-      anti_inter <- vals$anti_data %>%
-        select(Start, Stop)
-      anti_inter$seqnames <- "chr"
-      
+    index <- 1
+    for (upload in data_uploads){
+      if (vals[[upload]] == T){
+      data<- vals[[data_to_use[index]]]
+      assign(paste0(soft_names[index], "_data"),  correct_width(data, soft_width[index]))
       }
-    if (vals$deep_data_input == TRUE){
-      deep_data <- vals$deep_data_filtered
-      deep_inter <- deep_data %>% 
-        select(nucl_start, nucl_end)
-      
-      deep_inter$seqnames <- "chr"
+      index <- index +1
     }
-    if (vals$rre_data_input == TRUE){
-      # Convert numeric columns in a dataframe as a numeric
-      vals$rre_data$Start <- as.numeric(vals$rre_data$Start) 
-      vals$rre_data$Stop <- as.numeric(vals$rre_data$Stop)
-      # Store rre data into local variable
-      rre_data <- data.frame(vals$rre_data)
-      # Start/Stop columns from rre data as matrix
-      rre_inter <- rre_data %>%
-        select(Start, Stop)
-      rre_inter$seqnames <- "chr"
-      if (input$rre_width == TRUE) {
-        Stop_vals_RRE <- as.numeric(vals$rre_data$Stop)+50000
-      } else{
-        Stop_vals_RRE <- as.numeric(vals$rre_data$Stop)
-      }
-    }
-    if (vals$prism_data_input == TRUE){
-      # Store master prism data in local variable
-      prism_data <- vals$prism_data
-      # Start/Stop columns from prism data as matrix
-      prism_inter <- prism_data %>%
-        select(Start,Stop)
-      prism_inter$seqnames <- "chr"
-    }
-    if (vals$sempi_data_input == TRUE){
-      # Store master prism data in local variable
-      sempi_data <- vals$sempi_data
-      # Start/Stop columns from prism data as matrix
-      sempi_inter <- vals$sempi_data %>%
-        select(Start,Stop)
-      sempi_inter$seqnames <- "chr"
-    }
-    if (vals$prism_supp_data_input == T){
-      prism_supp_data <- vals$prism_supp
-      prism_supp_inter <- prism_supp %>%
-        select(Start,Stop)
-      prism_supp_inter$seqnames <- "chr"
-      if (vals$prism_supp_data_input_width == TRUE) {
-        Stop_vals_prism_supp <- as.numeric(vals$prism_supp$Stop)+50000
-      } else{
-        Stop_vals_prism_supp <- as.numeric(vals$prism_supp$Stop)
-      }
-    }
-    if (vals$arts_data_input == T){
-      arts_data <- vals$arts_data_filtered
-      arts_inter <- arts_data %>%
-        select(Start,Stop) 
-      arts_inter$seqnames <- "chr"
-      if (input$arts_width == TRUE) {
-        Stop_vals_arts <- as.numeric(arts_data$Stop)+20000
-      } else{
-        Stop_vals_arts<- as.numeric(arts_data$Stop)
-      }
-    }
-    if (vals$gecco_data_input == TRUE){
-     gecco_data <- vals$gecco_data_filtered
-      # Start/Stop columns from prism data as matrix
-      gecco_inter <- gecco_data %>%
-        select(Start,Stop)
-      gecco_inter$seqnames <- "chr"
-    }
+
+    
     lett <- rev(LETTERS)[1:9]
-    simple_seg <- function(df, letter, software, soft_name ,soft){
-      data <- df[df$Cluster %in% inters[[soft]][[soft_name]]$from, ]
-      
+    simple_seg <- function(df, letter, software, soft_name ,soft, inter=T){
+      if (inter== T){
+        data <- df[df$Cluster %in% inters[[soft]][[soft_name]]$from, ]
+      } else{
+        data <- df
+      }
+
       seg_df <-  data.frame(x=as.numeric(data$Start),
                          y=rep(letter, length(data$Cluster)),
                          xend=as.numeric(  data$Stop),
                          yend=rep(letter, length(data$Cluster)),
                          Type = as.factor(data$Type),
-                         Type2 = as.factor(data$Type),
+                         Type2 = as.factor(data$Type2),
                          Software = rep(software, length(data$Cluster)),
                          ID = data$Cluster,
                          Start = data$Start,
@@ -3360,6 +2794,7 @@ server <- function(input, output, session) {
       }
       }
     geom_sempi <- function(data){
+
       geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
                                   ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
@@ -3383,67 +2818,81 @@ server <- function(input, output, session) {
                 "Num_domains", "Num_proteins", "Average_p", "Max_p")
 
     
+    add_sempi <- function(seg_df, soft, df, inter = T){
+      
+      return(seg_df)
+    }
     
-    add_arts <- function(seg_df, soft, df){
-      if (input$arts_width == TRUE) {
-        Stop_vals_arts_in <- as.numeric(df[df$Cluster %in% inters[[soft]]$arts$from, ]$Stop)+20000
-      } else{
-        Stop_vals_arts_in <- as.numeric(df[df$Cluster %in% inters[[soft]]$arts$from, ]$Stop)
+    add_arts <- function(seg_df, soft, df, inter=T){
+      if (inter == T){
+        subset_df <- df[df$Cluster %in% inters[[soft]]$arts$from, ]
+      }else{
+        subset_df <- df
       }
-      seg_df$Hit = df[df$Cluster %in% inters[[soft]]$arts$from, ]$Hit
-      seg_df$xend = Stop_vals_arts_in
-      seg_df$Core = df[df$Cluster %in% inters[[soft]]$arts$from, ]$Core
-      seg_df$Count = df[df$Cluster %in% inters[[soft]]$arts$from, ]$Count
-      seg_df$E_value = df[df$Cluster %in% inters[[soft]]$arts$from, ]$Evalue
-      seg_df$Bitscore = df[df$Cluster %in% inters[[soft]]$arts$from, ]$Bitscore
-      seg_df$Model = df[df$Cluster %in% inters[[soft]]$arts$from, ]$Model
+      seg_df$Hit = subset_df$Hit
+      seg_df$xend = as.numeric(subset_df$Stop)
+      seg_df$Core = subset_df$Core
+      seg_df$Count = subset_df$Count
+      seg_df$E_value = subset_df$Evalue
+      seg_df$Bitscore = subset_df$Bitscore
+      seg_df$Model = subset_df$Model
       return(seg_df)
     }
-    add_prism_supp <- function(seg_df, soft, df){
-      if (vals$prism_supp_data_input_width == TRUE) {
-        Stop_vals_prism_supp_in <- as.numeric(df[df$Cluster %in% inters[[soft]]$prism_supp$from, ]$Stop)+50000
-      } else{
-        Stop_vals_prism_supp_in <- as.numeric(df[df$Cluster %in% inters[[soft]]$prism_supp$from, ]$Stop)
+    add_prism_supp <- function(seg_df, soft, df, inter=T){
+      if (inter == T){
+        subset_df <- df[df$Cluster %in% inters[[soft]]$prism_supp$from, ]
+      }else{
+        subset_df <- df
       }
-      seg_df$xend <- Stop_vals_prism_supp_in
-      seg_df$Score = df[df$Cluster %in% inters[[soft]]$prism_supp$from, ]$Score
-      seg_df$Name = df[df$Cluster %in% inters[[soft]]$prism_supp$from, ]$Name
-      seg_df$Full_name = df[df$Cluster %in% inters[[soft]]$prism_supp$from, ]$Full_name
+      seg_df$xend <-  as.numeric(subset_df$Stop)
+      seg_df$Score = subset_df$Score
+      seg_df$Name = subset_df$Name
+      seg_df$Full_name = subset_df$Full_name
       return(seg_df)
     }
-    add_deep <- function(seg_df, soft, df){
-      seg_df$num_domains = df[df$Cluster %in% inters[[soft]]$deep$from, ]$num_domains
-      seg_df$deepbgc_score = df[df$Cluster %in% inters[[soft]]$deep$from, ]$deepbgc_score
-      seg_df$activity = df[df$Cluster %in% inters[[soft]]$deep$from, ]$product_activity
+    add_deep <- function(seg_df, soft, df, inter=T){
+      if (inter == T){
+        subset_df <- df[df$Cluster %in% inters[[soft]]$deep$from, ]
+      }else{
+        subset_df <- df
+      }
+      seg_df$num_domains = subset_df$num_domains
+      seg_df$deepbgc_score = subset_df$deepbgc_score
+      seg_df$activity = subset_df$product_activity
       return(seg_df)
     }
-    add_rre <- function(seg_df, soft, df){
-      if (input$rre_width == TRUE) {
-        Stop_vals_RRE_in <- as.numeric(df[df$Cluster %in% inters[[soft]]$rre$from, ]$Stop)+50000
-      } else{
-        Stop_vals_RRE_in <- as.numeric(df[df$Cluster %in% inters[[soft]]$rre$from, ]$Stop)
+    add_rre <- function(seg_df, soft, df, inter=T){
+      if (inter == T){
+        subset_df <- df[df$Cluster %in% inters[[soft]]$rre$from, ]
+      }else{
+        subset_df <- df
       }
       if (vals$rre_more == T){
-        seg_df$xend=Stop_vals_RRE_in
-        seg_df$Score = df[df$Cluster %in% inters[[soft]]$rre$from, ]$Score
-        seg_df$Stop = df[df$Cluster %in% inters[[soft]]$rre$from, ]$Stop
-        seg_df$E_value = df[df$Cluster %in% inters[[soft]]$rre$from, ]$E.value
-        seg_df$P_value = df[df$Cluster %in% inters[[soft]]$rre$from, ]$P.value
-        seg_df$RRE_start = df[df$Cluster %in% inters[[soft]]$rre$from, ]$RRE.start
-        seg_df$RRE_stop = df[df$Cluster %in% inters[[soft]]$rre$from, ]$RRE.end
-        seg_df$Probability = df[df$Cluster %in% inters[[soft]]$rre$from, ]$Probability
+        seg_df$xend=as.numeric(subset_df$Stop)
+        seg_df$Score = subset_df$Score
+        seg_df$Stop = subset_df$Stop
+        seg_df$E_value = subset_df$E.value
+        seg_df$P_value = subset_df$P.value
+        seg_df$RRE_start = subset_df$RRE.start
+        seg_df$RRE_stop = subset_df$RRE.end
+        seg_df$Probability = subset_df$Probability
       } else {
-        seg_df$xend=Stop_vals_RRE_in
-        seg_df$E_value = df[df$Cluster %in% inters[[soft]]$rre$from, ]$E.value
+        seg_df$xend=subset_df$Stop
+        seg_df$E_value = subset_df$E.value
       }
       
      return(seg_df)
     }
-    add_gecco <- function(seg_df, soft, df){
-      seg_df$Num_proteins = df[df$Cluster %in% inters[[soft]]$gecco$from, ]$num_prot
-      seg_df$Num_domains = df[df$Cluster %in% inters[[soft]]$gecco$from, ]$num_domains
-      seg_df$Average_p = df[df$Cluster %in% inters[[soft]]$gecco$from, ]$average_p
-      seg_df$Max_p = df[df$Cluster %in% inters[[soft]]$gecco$from, ]$max_p
+    add_gecco <- function(seg_df, soft, df, inter=T){
+      if (inter == T){
+        subset_df <- df[df$Cluster %in% inters[[soft]]$gecco$from, ]
+      }else{
+        subset_df <- df
+      }
+      seg_df$Num_proteins = subset_df$num_prot
+      seg_df$Num_domains = subset_df$num_domains
+      seg_df$Average_p = subset_df$average_p
+      seg_df$Max_p = subset_df$max_p
       return(seg_df)
     }
     
@@ -3477,594 +2926,125 @@ server <- function(input, output, session) {
       }
     }
     
-    define_spec_seg_df <- function(soft_names, index,seg_df, soft_major, df ){
+    define_spec_seg_df <- function(soft_names, index,seg_df, soft_major, df , inter=T){
+      if (inter == F){
+        soft_major <- "Not applicable"
+      }
       if ((soft_names[index] == "prism_supp") & (soft_names[index] != soft_major)){
-        seg_df <-  add_prism_supp(seg_df, soft_major, df)
+        seg_df <-  add_prism_supp(seg_df, soft_major, df, inter)
       } else if ((soft_names[index] == "arts")& (soft_names[index] != soft_major)){
-        seg_df <- add_arts(seg_df, soft_major, df)
+        seg_df <- add_arts(seg_df, soft_major, df, inter)
       } else if ((soft_names[index] == "deep")& (soft_names[index] != soft_major)){
-        seg_df <- add_deep(seg_df, soft_major, df)
+        seg_df <- add_deep(seg_df, soft_major, df, inter)
       } else if ((soft_names[index] == "gecco")& (soft_names[index] != soft_major)){
-        seg_df <- add_gecco(seg_df, soft_major, df)
+        seg_df <- add_gecco(seg_df, soft_major, df, inter)
       } else if ((soft_names[index] == "rre")& (soft_names[index] != soft_major)){
-        seg_df <- add_rre(seg_df, soft_major, df)
+        seg_df <- add_rre(seg_df, soft_major, df, inter)
+      }else if ((soft_names[index] == "sempi")& (soft_names[index] != soft_major)){
+        seg_df <- add_sempi(seg_df, soft_major, df, inter)
       }
       return(seg_df)
     }
     
-    # MAKE COMPUTATIONS
-    if (vals$gecco_data_input == TRUE){
-      seg_ref_g <- data.frame(x=as.numeric(vals$biocircos_gecco$Start),
-                              y=rep("Z", length(vals$biocircos_gecco$Cluster)),
-                              xend=as.numeric(vals$biocircos_gecco$Stop),
-                              yend=rep("Z", length(vals$biocircos_gecco$Cluster)),
-                              Type = as.factor(vals$biocircos_gecco$Type),
-                              Type2 = as.factor(vals$biocircos_gecco$Type2),
-                              Software = rep("GECCO", length(vals$biocircos_gecco$Cluster)),
-                              ID = vals$biocircos_gecco$Cluster,
-                              Start = vals$biocircos_gecco$Start,
-                              Stop = vals$biocircos_gecco$Stop,
-                              Num_proteins = vals$biocircos_gecco$num_prot,
-                              Num_domains = vals$biocircos_gecco$num_domains,
-                              Average_p = vals$biocircos_gecco$average_p,
-                              Max_p = vals$biocircos_gecco$max_p)
-      seg_ref <- seg_ref_g
-      
-      if (input$ref == "GECCO") {
-        plot <- ggplot(vals$biocircos_gecco, aes(x = vals$chr_len, y = Chr)) + geom_gecco(seg_ref)
-        soft_major <- "gecco"
-        soft_let <- "G"
-        lettrs <- lett[2:length(lett)]
-        labels_1 <- list()
-        index = 1
-        for (i in data_uploads){
-          if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
-            df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-            seg_df <- simple_seg(df, lettrs[index], soft[index], soft_names[index],soft_major)
-            seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
-          labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
-          plot <- add_more_annot(seg_df, plot, soft_names, index)
+# MAKE COMPUTATIONS
+      sup_index <- 1
+      soft_lttrs <- lett
+      rename_y_axis <- vals$rename_y_axis
+      rename_y_axis <- lapply(1:(length( soft_lttrs)-1), function(x){
+        soft_lttrs[x]=soft[x]
+      })
+      names(rename_y_axis) <- soft_lttrs[-length(soft_lttrs)]
+      for (upload in data_uploads){
+        soft_lttr <- soft_lttrs[1]
+        soft_lttrs <- soft_lttrs[-1]
+        if (vals[[upload]] == T){
+          soft_major <- soft_names[sup_index]
+          seg_ref_g <- simple_seg(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), "Z", soft[sup_index], soft_names[sup_index],soft_major, inter = F)
+          seg_ref_g <- define_spec_seg_df(soft_names, sup_index,seg_ref_g, soft_major, eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), inter = F)
+          seg_ref <- seg_ref_g
+          if (input$ref == soft_ref[sup_index]){
+            plot <- ggplot(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), aes(x = vals$chr_len, y = Chr)) + 
+              eval(as.name(paste0("geom_", soft_names[sup_index])))(seg_ref)
+            soft_let <- abbr[sup_index]
+            lettrs <- lett[2:length(lett)]
+            labels_1 <- list()
+            index = 1
+            for (i in data_uploads){
+              if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
+                df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
+                seg_df <- simple_seg(df, lettrs[index], soft[index], soft_names[index],soft_major)
+                seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
+                labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
+                plot <- add_more_annot(seg_df, plot, soft_names, index)
+              }
+              index = index +1
+              
+            }
+            
+            plot <- plot +
+              scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
+              theme(axis.text.y = element_text(size = 10)) +
+              ylab("")+
+              xlab("Chromosome length")+ 
+              theme(legend.title = element_blank()) +
+              ggtitle("Annotations' comparison to the reference")
+            to_plot <- ggplotly(plot, tooltip = tooltip)
+            to_plot <- to_plot %>% 
+              layout(legend=list(font = list(
+                family = "sans-serif",
+                size = 12,
+                color = "#000"),
+                bordercolor = "#FFFFFF",
+                borderwidth = 2,
+                title=list(text='<b> Cluster Types </b>')))
+            
+            
           }
-          index = index +1
-          
-          }
-        
-        plot <- plot +
-          scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
-          theme(axis.text.y = element_text(size = 10)) +
-          ylab("")+
-          xlab("Chromosome length")+ 
-          theme(legend.title = element_blank()) +
-          ggtitle("Annotations' comparison to the reference")
-        to_plot <- ggplotly(plot, tooltip = tooltip)
-        to_plot <- to_plot %>% 
-          layout(legend=list(font = list(
-            family = "sans-serif",
-            size = 12,
-            color = "#000"),
-            bordercolor = "#FFFFFF",
-            borderwidth = 2,
-            title=list(text='<b> Cluster Types </b>')))
-        
-        
-      }
-      vals$seg_df_ref_g <- data.frame(x=as.numeric(vals$biocircos_gecco$Start),
-                                      y=rep("S", length(vals$biocircos_gecco$Cluster)),
-                                      xend=as.numeric(vals$biocircos_gecco$Stop),
-                                      yend=rep("S", length(vals$biocircos_gecco$Cluster)),
-                                      Type = as.factor(vals$biocircos_gecco$Type),
-                                      Type2 = as.factor(vals$biocircos_gecco$Type2),
-                                      Software = rep("GECCO", length(vals$biocircos_gecco$Cluster)),
-                                      ID = vals$biocircos_gecco$Cluster,
-                                      Start = vals$biocircos_gecco$Start,
-                                      Stop = vals$biocircos_gecco$Stop,
-                                      Num_proteins = vals$biocircos_gecco$num_prot,
-                                      Num_domains = vals$biocircos_gecco$num_domains,
-                                      Average_p = vals$biocircos_gecco$average_p,
-                                      Max_p = vals$biocircos_gecco$max_p)
-    }
-    if (vals$anti_data_input == TRUE){
-      seg_ref_a <- data.frame(x=as.numeric(anti_data$Start),
-                              y=rep("Z", length(anti_data$Cluster)),
-                              xend=as.numeric(anti_data$Stop),
-                              yend=rep("Z", length(anti_data$Cluster)),
-                              Type = as.factor(anti_data$Type),
-                              Type2 = as.factor(anti_data$Type2),
-                              Software = rep("Antismash", length(anti_data$Cluster)),
-                              ID = anti_data$Cluster,
-                              Start = anti_data$Start,
-                              Stop = anti_data$Stop)
-      seg_ref <- seg_ref_a
-      if (input$ref == "Antismash") {
-        plot <- ggplot(anti_data, aes(x = vals$chr_len, y = Chr)) + geom_anti(seg_ref)
-        soft_major <- "anti"
-        soft_let <- "A"
-        lettrs <- lett[2:length(lett)]
-        labels_1 <- list()
-        index = 1
-        for (i in data_uploads){
-          if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
-            df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-            seg_df <- simple_seg(df, lettrs[index], soft[index], soft_names[index],soft_major)
-            seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
-            labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
-            plot <- add_more_annot(seg_df, plot, soft_names, index)
-          }
-          index = index +1
-          
+          seg_ref$yend <- rep(soft_lttr, length(eval(as.name(paste(soft_names[sup_index], "_data", sep = "")))$Cluster))
+          seg_ref$y <- rep(soft_lttr, length(eval(as.name(paste(soft_names[sup_index], "_data", sep = "")))$Cluster))
+        vals[[soft_datafr[sup_index]]] <- seg_ref
         }
-        
-        plot <- plot +
-          scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
-          theme(axis.text.y = element_text(size = 10)) +
-          ylab("")+
-          xlab("Chromosome length")+ 
-          theme(legend.title = element_blank()) +
-          ggtitle("Annotations' comparison to the reference")
-        to_plot <- ggplotly(plot, tooltip = tooltip)
-        to_plot <- to_plot %>% 
-          layout(legend=list(font = list(
-            family = "sans-serif",
-            size = 12,
-            color = "#000"),
-            bordercolor = "#FFFFFF",
-            borderwidth = 2,
-            title=list(text='<b> Cluster Types </b>')))
-        
+        sup_index <- sup_index +1
       }
-      vals$seg_df_ref_a <- seg_ref_a
-    }
-    if (vals$deep_data_input == TRUE){
-      # Create a dataframe with all deepbgc data + the additional info to visualize on hover
-      seg_ref_d <- data.frame(x=as.numeric(  deep_data$nucl_start),
-                              y=rep("Z", length(deep_data$ID)),
-                              xend=as.numeric(  deep_data$nucl_end),
-                              yend=rep("Z", length(deep_data$ID)),
-                              Type = as.factor(deep_data$product_class),
-                              Software = rep("DeepBGC", length(deep_data$ID)),
-                              ID = deep_data$ID,
-                              Start = deep_data$Start,
-                              Stop = deep_data$Stop,
-                              num_domains = deep_data$num_domains,
-                              deepbgc_score = deep_data$deepbgc_score,
-                              activity = deep_data$product_activity)
-      seg_ref <- seg_ref_d
-      
-      if (input$ref == "DeepBGC") {
-        plot <- ggplot(deep_data_chromo, aes(x = vals$chr_len, y = Chr)) + geom_deep(seg_ref)
-        soft_major <- "deep"
-        soft_let <- "D"
-        lettrs <- lett[2:length(lett)]
-        labels_1 <- list()
-        index = 1
-        for (i in data_uploads){
-          if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
-            df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-            seg_df <- simple_seg(df, lettrs[index], soft[index], soft_names[index],soft_major)
-            seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
-            labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
-            plot <- add_more_annot(seg_df, plot, soft_names, index)
-          }
-          index = index +1
-          
-        }
-        
-        plot <- plot +
-          scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
-          theme(axis.text.y = element_text(size = 10)) +
-          ylab("")+
-          xlab("Chromosome length")+ 
-          theme(legend.title = element_blank()) +
-          ggtitle("Annotations' comparison to the reference")
-        to_plot <- ggplotly(plot, tooltip = tooltip)
-        to_plot <- to_plot %>% 
-          layout(legend=list(font = list(
-            family = "sans-serif",
-            size = 12,
-            color = "#000"),
-            bordercolor = "#FFFFFF",
-            borderwidth = 2,
-            title=list(text='<b> Cluster Types </b>')))
-      }
-     
-      vals$seg_df_ref_d <- data.frame(x=as.numeric(  deep_data$nucl_start),
-                                      y=rep("X", length(deep_data$ID)),
-                                      xend=as.numeric(  deep_data$nucl_end),
-                                      yend=rep("X", length(deep_data$ID)),
-                                      Type = as.factor(deep_data$product_class),
-                                      Software = rep("DeepBGC", length(deep_data$ID)),
-                                      ID = deep_data$ID,
-                                      Start = deep_data$Start,
-                                      Stop = deep_data$Stop,
-                                      num_domains = deep_data$num_domains,
-                                      deepbgc_score = deep_data$deepbgc_score,
-                                      activity = deep_data$product_activity)
-    }
-    
-    if (vals$rre_data_input == TRUE){
-      if (vals$rre_more == T){
-      seg_ref_r <- data.frame(x=vals$rre_data$Start,
-                              y=rep("Z", length(vals$rre_data$Locus_tag)),
-                              xend=Stop_vals_RRE,
-                              yend=rep("Z", length(vals$rre_data$Locus_tag)),
-                              Type = rep("ripp", length(vals$rre_data$Locus_tag)),
-                              Score = vals$rre_data$Score,
-                              Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
-                              ID = vals$rre_data$Locus_tag,
-                              Start = vals$rre_data$Start,
-                              Stop = vals$rre_data$Stop,
-                              E_value = vals$rre_data$E.value,
-                              P_value = vals$rre_data$P.value,
-                              RRE_start = vals$rre_data$RRE.start,
-                              RRE_stop = vals$rre_data$RRE.end,
-                              Probability = vals$rre_data$Probability)
-      } else {
-        seg_ref_r <- data.frame(x=vals$rre_data$Start,
-                                y=rep("Z", length(vals$rre_data$Locus_tag)),
-                                xend=Stop_vals_RRE,
-                                yend=rep("Z", length(vals$rre_data$Locus_tag)),
-                                Type = rep("ripp", length(vals$rre_data$Locus_tag)),
-                                Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
-                                ID = vals$rre_data$Locus_tag,
-                                Start = vals$rre_data$Start,
-                                Stop = vals$rre_data$Stop,
-                                E_value = vals$rre_data$E.value)
-      }
-      seg_ref <- seg_ref_r
-      if (input$ref == "RRE-Finder") {
-        plot <- ggplot(rre_data, aes(x = vals$chr_len, y = Chr)) + geom_rre(seg_ref)
-        soft_major <- "rre"
-        soft_let <- "RRE"
-        lettrs <- lett[2:length(lett)]
-        labels_1 <- list()
-        index = 1
-        for (i in data_uploads){
-          if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
-            df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-            seg_df <- simple_seg(df, lettrs[index], soft[index], soft_names[index],soft_major)
-            seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
-            labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
-            plot <- add_more_annot(seg_df, plot, soft_names, index)
-          }
-          index = index +1
-          
-        }
-        
-        plot <- plot +
-          scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
-          theme(axis.text.y = element_text(size = 10)) +
-          ylab("")+
-          xlab("Chromosome length")+ 
-          theme(legend.title = element_blank()) +
-          ggtitle("Annotations' comparison to the reference")
-        to_plot <- ggplotly(plot, tooltip = tooltip)
-        to_plot <- to_plot %>% 
-          layout(legend=list(font = list(
-            family = "sans-serif",
-            size = 12,
-            color = "#000"),
-            bordercolor = "#FFFFFF",
-            borderwidth = 2,
-            title=list(text='<b> Cluster Types </b>')))
-      }
-      
-      if (vals$rre_more == T){
-      vals$seg_df_ref_r <- data.frame(x=vals$rre_data$Start,
-                                      y=rep("Y", length(vals$rre_data$Locus_tag)),
-                                      xend=Stop_vals_RRE,
-                                      yend=rep("Y", length(vals$rre_data$Locus_tag)),
-                                      Type = rep("ripp", length(vals$rre_data$Locus_tag)),
-                                      Score = vals$rre_data$Score,
-                                      Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
-                                      ID = vals$rre_data$Locus_tag,
-                                      Start = vals$rre_data$Start,
-                                      Stop = vals$rre_data$Stop,
-                                      E_value = vals$rre_data$E.value,
-                                      P_value = vals$rre_data$P.value,
-                                      RRE_start = vals$rre_data$RRE.start,
-                                      RRE_stop = vals$rre_data$RRE.end,
-                                      Probability = vals$rre_data$Probability)
-      } else {
-        vals$seg_df_ref_r <- data.frame(x=vals$rre_data$Start,
-                                        y=rep("Y", length(vals$rre_data$Locus_tag)),
-                                        xend=Stop_vals_RRE,
-                                        yend=rep("Y", length(vals$rre_data$Locus_tag)),
-                                        Type = rep("ripp", length(vals$rre_data$Locus_tag)),
-                                        Software = rep("RREFinder", length(vals$rre_data$Locus_tag)),
-                                        ID = vals$rre_data$Locus_tag,
-                                        Start = vals$rre_data$Start,
-                                        Stop = vals$rre_data$Stop,
-                                        E_value = vals$rre_data$E.value)
-      }
-    }
-    if (vals$prism_data_input == TRUE){
-      # Create a dataframe with PRISM data with all the additional info to visualize on hover
-      seg_ref_p <- data.frame(x=as.numeric(prism_data$Start),
-                                y=rep("Z", length(prism_data$Cluster)),
-                                xend=as.numeric(prism_data$Stop),
-                                yend=rep("Z", length(prism_data$Cluster)),
-                                Type = as.factor(prism_data$Type),
-                                Type2 = as.factor(prism_data$Type2),
-                                Software = rep("PRISM", length(prism_data$Cluster)),
-                                ID = prism_data$Cluster,
-                                Start = prism_data$Start,
-                                Stop = prism_data$Stop)
-      seg_ref <- seg_ref_p 
-      
-      if (input$ref == "PRISM") {
-      plot <- ggplot(prism_data, aes(x = vals$chr_len, y = Chr)) + geom_prism(seg_ref)
-      soft_major <- "prism"
-      soft_let <- "P"
-      lettrs <- lett[2:length(lett)]
-      labels_1 <- list()
-      index = 1
-      for (i in data_uploads){
-        if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
-          df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-          seg_df <- simple_seg(df, lettrs[index], soft[index], soft_names[index],soft_major)
-          seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
-          labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
-          plot <- add_more_annot(seg_df, plot, soft_names, index)
-        }
-        index = index +1
-        
-      }
-      
-      plot <- plot +
-        scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
-        theme(axis.text.y = element_text(size = 10)) +
-        ylab("")+
-        xlab("Chromosome length")+ 
-        theme(legend.title = element_blank()) +
-        ggtitle("Annotations' comparison to the reference")
-      to_plot <- ggplotly(plot, tooltip = tooltip)
-      to_plot <- to_plot %>% 
-        layout(legend=list(font = list(
-          family = "sans-serif",
-          size = 12,
-          color = "#000"),
-          bordercolor = "#FFFFFF",
-          borderwidth = 2,
-          title=list(text='<b> Cluster Types </b>')))
-      }
-      vals$seg_df_ref_p <- data.frame(x=as.numeric(prism_data$Start),
-                                      y=rep("W", length(prism_data$Cluster)),
-                                      xend=as.numeric(prism_data$Stop),
-                                      yend=rep("W", length(prism_data$Cluster)),
-                                      Type = as.factor(prism_data$Type),
-                                      Type2 = as.factor(prism_data$Type2),
-                                      Software = rep("PRISM", length(prism_data$Cluster)),
-                                      ID = prism_data$Cluster,
-                                      Start = prism_data$Start,
-                                      Stop = prism_data$Stop)
-    }
-    if (vals$sempi_data_input == TRUE){
-      # Create a dataframe with sempi data with all the additional info to visualize on hover
-      seg_ref_s <- data.frame(x=as.numeric(sempi_data$Start),
-                              y=rep("Z", length(sempi_data$Cluster)),
-                              xend=as.numeric(sempi_data$Stop),
-                              yend=rep("Z", length(sempi_data$Cluster)),
-                              Type = as.factor(sempi_data$Type),
-                              Type2 = as.factor(sempi_data$Type2),
-                              Software = rep("SEMPI", length(sempi_data$Cluster)),
-                              ID = sempi_data$Cluster,
-                              Start = sempi_data$Start,
-                              Stop = sempi_data$Stop)
-      seg_ref <- seg_ref_s
-      
-      if (input$ref == "SEMPI") {
-        plot <- ggplot(sempi_data, aes(x = vals$chr_len, y = Chr)) + geom_sempi(seg_ref)
-        soft_major <- "sempi"
-        soft_let <- "S"
-        lettrs <- lett[2:length(lett)]
-        labels_1 <- list()
-        index = 1
-        for (i in data_uploads){
-          if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
-            df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-            seg_df <- simple_seg(df, lettrs[index], soft[index], soft_names[index],soft_major)
-            seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
-            labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
-            plot <- add_more_annot(seg_df, plot, soft_names, index)
-          }
-          index = index +1
-          
-        }
-        
-        plot <- plot +
-          scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
-          theme(axis.text.y = element_text(size = 10)) +
-          ylab("")+
-          xlab("Chromosome length")+ 
-          theme(legend.title = element_blank()) +
-          ggtitle("Annotations' comparison to the reference")
-        to_plot <- ggplotly(plot, tooltip = tooltip)
-        to_plot <- to_plot %>% 
-          layout(legend=list(font = list(
-            family = "sans-serif",
-            size = 12,
-            color = "#000"),
-            bordercolor = "#FFFFFF",
-            borderwidth = 2,
-            title=list(text='<b> Cluster Types </b>')))
-      }
-      vals$seg_df_ref_s <- data.frame(x=as.numeric(sempi_data$Start),
-                                      y=rep("V", length(sempi_data$Cluster)),
-                                      xend=as.numeric(sempi_data$Stop),
-                                      yend=rep("V", length(sempi_data$Cluster)),
-                                      Type = as.factor(sempi_data$Type),
-                                      Type2 = as.factor(sempi_data$Type2),
-                                      Software = rep("SEMPI", length(sempi_data$Cluster)),
-                                      ID = sempi_data$Cluster,
-                                      Start = sempi_data$Start,
-                                      Stop = sempi_data$Stop)
-    }
-    if (vals$prism_supp_data_input == TRUE){
-      # Create a dataframe with sempi data with all the additional info to visualize on hover
-      seg_ref_s <- data.frame(x=prism_supp$Start,
-                              y=rep("Z", length(prism_supp$Cluster)),
-                              xend=Stop_vals_prism_supp,
-                              yend=rep("Z", length(prism_supp$Cluster)),
-                              Type = as.factor(prism_supp$Type),
-                              Type2 = as.factor(prism_supp$Type2),
-                              Score = prism_supp$Score,
-                              Software = rep("PRISM", length(prism_supp$Cluster)),
-                              ID = prism_supp$Cluster,
-                              Start = prism_supp$Start,
-                              Stop = prism_supp$Stop,
-                              Name = prism_supp$Name,
-                              Full_name = prism_supp$Full_name
-      )
-      seg_ref <- seg_ref_s
-      
-      if (input$ref == "PRISM-supp") {
-        plot <- ggplot(prism_supp, aes(x = vals$chr_len, y = Chr)) + geom_prism_supp(seg_ref)
-        soft_major <- "prism_supp"
-        soft_let <- "PS"
-        lettrs <- lett[2:length(lett)]
-        labels_1 <- list()
-        index = 1
-        for (i in data_uploads){
-          if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
-            df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-            seg_df <- simple_seg(df, lettrs[index], soft[index], soft_names[index],soft_major)
-            seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
-            labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
-            plot <- add_more_annot(seg_df, plot, soft_names, index)
-          }
-          index = index +1
-          
-        }
-        
-        plot <- plot +
-          scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
-          theme(axis.text.y = element_text(size = 10)) +
-          ylab("")+
-          xlab("Chromosome length")+ 
-          theme(legend.title = element_blank()) +
-          ggtitle("Annotations' comparison to the reference")
-        to_plot <- ggplotly(plot, tooltip = tooltip)
-        to_plot <- to_plot %>% 
-          layout(legend=list(font = list(
-            family = "sans-serif",
-            size = 12,
-            color = "#000"),
-            bordercolor = "#FFFFFF",
-            borderwidth = 2,
-            title=list(text='<b> Cluster Types </b>')))
-      }
-      vals$seg_df_ref_p_s <- data.frame(x=prism_supp$Start,
-                                      y=rep("U", length(prism_supp$Cluster)),
-                                      xend=Stop_vals_prism_supp,
-                                      yend=rep("U", length(prism_supp$Cluster)),
-                                      Type = as.factor(prism_supp$Type),
-                                      Type2 = as.factor(prism_supp$Type2),
-                                      Score = prism_supp$Score,
-                                      Software = rep("PRISM", length(prism_supp$Cluster)),
-                                      ID = prism_supp$Cluster,
-                                      Start = prism_supp$Start,
-                                      Stop = prism_supp$Stop,
-                                      Name = prism_supp$Name,
-                                      Full_name = prism_supp$Full_name
-      )
-    }
-    if (vals$arts_data_input == TRUE){
-      # Create a dataframe with sempi data with all the additional info to visualize on hover
-      seg_ref_s <- data.frame(x=arts_data$Start,
-                              y=rep("Z", length(arts_data$Cluster)),
-                              xend=Stop_vals_arts,
-                              yend=rep("Z", length(arts_data$Cluster)),
-                              Type = as.factor(arts_data$Type),
-                              Type2 = as.factor(arts_data$Type2),
-                              Hit = arts_data$Hit,
-                              Software = rep("ARTS", length(arts_data$Cluster)),
-                              ID = arts_data$Cluster,
-                              Start = arts_data$Start,
-                              Stop = arts_data$Stop,
-                              Core = arts_data$Core,
-                              Count = arts_data$Count,
-                              E_value = arts_data$Evalue,
-                              Bitscore = arts_data$Bitscore,
-                              Model = arts_data$Model
-      )
-      seg_ref <- seg_ref_s
-      
-      if (input$ref == "ARTS") {
-        plot <- ggplot(arts_data, aes(x = vals$chr_len, y = Chr)) + geom_arts(seg_ref)
-        soft_major <- "arts"
-        soft_let <- "AR"
-        lettrs <- lett[2:length(lett)]
-        labels_1 <- list()
-        index = 1
-        for (i in data_uploads){
-          if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
-            df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-            seg_df <- simple_seg(df, lettrs[index], soft[index], soft_names[index],soft_major)
-            seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
-            labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
-            plot <- add_more_annot(seg_df, plot, soft_names, index)
-          }
-          index = index +1
-          
-        }
-        
-        plot <- plot +
-          scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
-          theme(axis.text.y = element_text(size = 10)) +
-          ylab("")+
-          xlab("Chromosome length")+ 
-          theme(legend.title = element_blank()) +
-          ggtitle("Annotations' comparison to the reference")
-        to_plot <- ggplotly(plot, tooltip = tooltip)
-        to_plot <- to_plot %>% 
-          layout(legend=list(font = list(
-          family = "sans-serif",
-          size = 12,
-          color = "#000"),
-          bordercolor = "#FFFFFF",
-          borderwidth = 2,
-          title=list(text='<b> Cluster Types </b>')))
-      }
-      vals$seg_df_ref_ar <- data.frame(x=arts_data$Start,
-                                      y=rep("T", length(arts_data$Cluster)),
-                                      xend=Stop_vals_arts,
-                                      yend=rep("T", length(arts_data$Cluster)),
-                                      Type = as.factor(arts_data$Type),
-                                      Type2 = as.factor(arts_data$Type2),
-                                      Hit = arts_data$Hit,
-                                      Software = rep("ARTS", length(arts_data$Cluster)),
-                                      ID = arts_data$Cluster,
-                                      Start = arts_data$Start,
-                                      Stop = arts_data$Stop,
-                                      Core = arts_data$Core,
-                                      Count = arts_data$Count,
-                                      E_value = arts_data$Evalue,
-                                      Bitscore = arts_data$Bitscore,
-                                      Model = arts_data$Model
-      )
-    }
+      vals$rename_y_axis <- rename_y_axis
 
     to_plot
   })
   
   output$deep_reference_2 <- renderPlotly({
+    req(vals$data_upload_count >=1)
+    rename_y_axis <- vals$rename_y_axis
     whereami::cat_where(whereami::whereami())
     if (vals$rre_data_input == TRUE){
-      data <- data.frame(vals$rre_data)
+      if (dim(vals$rre_data)[1]!= 0){
+        data <- data.frame(vals$rre_data)
+      }
     } else if (vals$arts_data_input == TRUE){
+      if (dim(vals$arts_data_filtered)[1]!= 0){
       data <- vals$arts_data_filtered
+      }
     } else if (vals$anti_data_input == TRUE){
+      if (dim(vals$anti_data)[1]!= 0){
       data <-  vals$anti_data %>%
         mutate(ID = Cluster, Chr = chromosome) %>%
         dplyr::select(ID,Chr ,Start, Stop, Type, Type2)
+      }
     }else if (vals$deep_data_input == TRUE){
+      if (dim(vals$deep_data_filtered)[1]!= 0){
       data <- vals$deep_data_filtered
+      }
     }else if (vals$prism_data_input == TRUE){
+      if (dim(vals$prism_data)[1]!= 0){
       data <- vals$prism_data
+      }
     }else if (vals$sempi_data_input == TRUE){
+      if (dim(vals$sempi_data)[1]!= 0){
       data <- vals$sempi_data
+      }
     }else if (vals$gecco_data_input == TRUE){
+      if (dim(vals$gecco_data_filtered)[1]!= 0){
       data <- vals$gecco_data_filtered
+      }
     }
     
     tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
@@ -4078,19 +3058,21 @@ server <- function(input, output, session) {
                                                  ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
     if (vals$deep_data_input == TRUE){
+      if (dim(vals$seg_df_ref_d)[1] >0) {
       plot <- plot +
-        geom_segment(data=vals$seg_df_ref_d,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+        geom_segment(data=vals$seg_df_ref_d,aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
                                       ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
                                       deepbgc_score = deepbgc_score,activity = activity ),size =3)
+      }
     }
     if (vals$rre_data_input == TRUE){
       if (vals$rre_more == T){
-      plot <- plot + geom_segment(data=vals$seg_df_ref_r, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
+      plot <- plot + geom_segment(data=vals$seg_df_ref_r, aes(x, y, xend=xend, yend=yend, color = Type2, Score = Score, Software = Software,
                                                     ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
                                                     P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
                                                     Probability = Probability),size = 3)
       } else {
-        plot <- plot + geom_segment(data=vals$seg_df_ref_r, aes(x, y, xend=xend, yend=yend, color = Type,  Software = Software,
+        plot <- plot + geom_segment(data=vals$seg_df_ref_r, aes(x, y, xend=xend, yend=yend, color = Type2,  Software = Software,
                                                                 ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value),size = 3)
       }
     }
@@ -4106,7 +3088,7 @@ server <- function(input, output, session) {
       
       
     }
-    if (vals$prism_supp_data_input == TRUE){
+    if (input$prism_supp == TRUE){
       plot <- plot + geom_segment(data=vals$seg_df_ref_p_s, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, ID = ID,
                                                             Start = Start, Stop = Stop, Type = Type, Name = Name, Full_name = Full_name,
                                                             Score = Score), size = 3)
@@ -4118,13 +3100,14 @@ server <- function(input, output, session) {
                                                                 Model = Model), size = 3)
     }
     if (vals$gecco_data_input == TRUE){
+      if (dim(vals$seg_df_ref_g)[1] >0) {
       plot <- plot + geom_segment(data =  vals$seg_df_ref_g, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
                                                                  ID = ID, Start = Start, Stop = Stop, Type = Type, Num_proteins= Num_proteins,
                                                                  Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3) 
     }
+    }
     to_plot <- ggplotly(plot +
-                          scale_y_discrete(labels = c("Z" = "Antismash","X" = "DeepBGC", "Y" = "RRE", "W" = "PRISM", 
-                                                      "V" = "SEMPI", "U" = "P-supp", "T" = "ARTS", "S" = "GECCO")) +
+                          scale_y_discrete(labels = rename_y_axis) +
                           theme(axis.text.y = element_text(size = 10)) +
                           ylab("")+
                           xlab("Chromosome length")+
@@ -4144,6 +3127,7 @@ server <- function(input, output, session) {
   
   # Render Biocircos Plot for all-vs-all comparison
   output$biocircos <- renderBioCircos({
+    req(vals$data_upload_count >1)
     whereami::cat_where(whereami::whereami())
     # Plot BioCircos
     BioCircos(vals$tracklist, genome = vals$Biocircos_chromosomes, genomeTicksScale = 1e+6)
@@ -4151,6 +3135,7 @@ server <- function(input, output, session) {
   
   
   output$biocircos_legend <- renderDataTable({
+    req(vals$data_upload_count >=1)
     whereami::cat_where(whereami::whereami())
     plot_data <- vals$rename_data
     new_data <- drop_na(data.frame(cbind(as.character(plot_data$Group_color), as.character(plot_data$Color))) )
@@ -4166,6 +3151,7 @@ server <- function(input, output, session) {
   
   # Render barplot with number count of interception for BGC IDs
   output$barplot_rank <- renderPlotly({
+    req(vals$data_upload_count >1)
     whereami::cat_where(whereami::whereami())
     antismash_count <-  NULL
     prism_count <- NULL
@@ -4178,137 +3164,39 @@ server <- function(input, output, session) {
 
     inters <- vals$inters_filtered
     
-    if (vals$anti_data_input == TRUE){
-      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      antismash_count <-count(as.factor(unlist(sapply(inters$anti, function(x){x$to}))))
-      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
-      anti_anot <- vals$anti_data[vals$anti_data$Cluster %in% as.numeric(levels(antismash_count$x)),]
-      # Add prefices to the ID to plot for a barplot.  
-      antismash_count$x <- sapply(antismash_count$x, function(x) paste("A: ", x))
-      # Add label column to the dataframe, from which we will plot  
-      antismash_count$label <- rep("Antismash", length(antismash_count$x))
-      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-      antismash_count$Type <- anti_anot$Type
-      # Add Start positions (to visualize on hover)
-      antismash_count$Start <- anti_anot$Start
-      # Add Stop positions (to visualize on hover)
-      antismash_count$Stop <- anti_anot$Stop
+    data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
+                      "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
+    soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
+    soft <- c("Antismash","SEMPI","PRISM","PRISM-Supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
+    data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data","deep_data_filtered" ,"gecco_data_filtered", "rre_data")
+    abbr <- c("A", "S", "P", "P-supp", "AR", "D", "G", "RRE")
+    index <- 1
+    ranking_data <- NULL
+    for (upload in data_uploads){
+      if (vals[[upload]] == T){
+         counts_var <-count(as.factor(unlist(sapply(inters[[soft_names[index]]], function(x){x$to}))))
+        # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
+        anot_var <- vals[[data_to_use[index]]][vals[[data_to_use[index]]]$Cluster %in% as.numeric(levels(counts_var$x)),]
+        # Add prefices to the ID to plot for a barplot.  
+        counts_var$x <- sapply(counts_var$x, function(x) paste0(abbr[index],": ", x))
+        # Add label column to the dataframe, from which we will plot  
+        counts_var$label <- rep(soft[index], length(counts_var$x))
+        # Add type to the dataframe, from which we would plot (from annotation dataframe)  
+        counts_var$Type <- anot_var$Type
+        # Add Start positions (to visualize on hover)
+        counts_var$Start <- anot_var$Start
+        # Add Stop positions (to visualize on hover)
+        counts_var$Stop <- anot_var$Stop
+        if (is.null(ranking_data)){
+          ranking_data <- counts_var
+        } else{
+          ranking_data <- rbind(ranking_data, counts_var)
+        }
+      }
+      index <- index +1
     }
-    if (vals$gecco_data_input == TRUE){
-      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      gecco_count <- count(as.factor(unlist(sapply(inters$gecco, function(x){x$to}))))
-      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
-      gecco_anot <- vals$gecco_data_filtered[vals$gecco_data_filtered$Cluster %in% as.numeric(levels(gecco_count$x)),]
-      # Add prefices to the ID to plot for a barplot.  
-      gecco_count$x <- sapply(gecco_count$x, function(x) paste("G: ", x))
-      # Add label column to the dataframe, from which we will plot  
-      gecco_count$label <- rep("GECCO", length(gecco_count$x))
-      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-      gecco_count$Type <- gecco_anot$Type
-      # Add Start positions (to visualize on hover)
-      gecco_count$Start <- gecco_anot$Start
-      # Add Stop positions (to visualize on hover)
-      gecco_count$Stop <- gecco_anot$Stop
-    }
-    if (vals$deep_data_input == TRUE){
-      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      deep_count <- count(as.factor(unlist(sapply(inters$deep, function(x){x$to}))))
-      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
-      deep_anot <- vals$deep_data_filtered[vals$deep_data_filtered$ID %in% as.numeric(levels(deep_count$x)),]
-      # Add prefices to the ID to plot for a barplot.  
-      deep_count$x <- sapply(deep_count$x, function(x) paste("D: ", x))
-      # Add label column to the dataframe, from which we will plot  
-      deep_count$label <- rep("DeepBGC", length(deep_count$x))
-      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-      deep_count$Type <- deep_anot$Type
-      deep_count$Start <- deep_anot$Start
-      # Add Stop positions (to visualize on hover)
-      deep_count$Stop <- deep_anot$Stop
-    }
-    if (vals$rre_data_input == TRUE){
-      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      rre_count <- count(as.factor(unlist(sapply(inters$rre, function(x){x$to}))))
-      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
-      rre_anot <- vals$rre_data[vals$rre_data$ID %in% as.numeric(levels(rre_count$x)),]
-      # Add prefices to the ID to plot for a barplot.  
-      rre_count$x <- sapply(rre_count$x, function(x) paste("RRE: ", x))
-      # Add label column to the dataframe, from which we will plot  
-      rre_count$label <- rep("RRE", length(rre_count$x))
-      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-      rre_count$Type <- rep("ripp", length(rre_anot$Sequence))
-      # Add Start positions (to visualize on hover)
-      rre_count$Start <- rre_anot$Start
-      # Add Stop positions (to visualize on hover)
-      rre_count$Stop <- rre_anot$Stop
-    }
-    if (vals$prism_data_input == TRUE){
-      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      prism_count <- count(as.factor(unlist(sapply(inters$prism, function(x){x$to}))))
-      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
-      prism_anot <- vals$prism_data[vals$prism_data$Cluster %in% as.numeric(levels(prism_count$x)),]
-      # Add prefices to the ID to plot for a barplot.  
-      prism_count$x <- sapply(prism_count$x, function(x) paste("P: ", x))
-      # Add label column to the dataframe, from which we will plot  
-      prism_count$label <- rep("PRISM", length(prism_count$x))
-      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-      prism_count$Type <- prism_anot$Type
-      # Add Start positions (to visualize on hover)
-      prism_count$Start <- prism_anot$Start
-      # Add Stop positions (to visualize on hover)
-      prism_count$Stop <- prism_anot$Stop
-    }
-    if (vals$sempi_data_input == TRUE){
-      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      sempi_count <- count(as.factor(unlist(sapply(inters$sempi, function(x){x$to}))))
-      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
-      sempi_anot <- vals$sempi_data[vals$sempi_data$Cluster %in% as.numeric(levels(sempi_count$x)),]
-      # Add prefices to the ID to plot for a barplot.  
-      sempi_count$x <- sapply(sempi_count$x, function(x) paste("S: ", x))
-      # Add label column to the dataframe, from which we will plot  
-      sempi_count$label <- rep("SEMPI", length(sempi_count$x))
-      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-      sempi_count$Type <- sempi_anot$Type
-      # Add Start positions (to visualize on hover)
-      sempi_count$Start <- sempi_anot$Start
-      # Add Stop positions (to visualize on hover)
-      sempi_count$Stop <- sempi_anot$Stop
-    }
-    if (vals$prism_supp_data_input == TRUE){
-      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      prism_supp_count <- count(as.factor(unlist(sapply(inters$prism_supp, function(x){x$to}))))
-      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
-      prism_supp_anot <- vals$prism_supp[vals$prism_supp$Cluster %in% as.numeric(levels(prism_supp_count$x)),]
-      # Add prefices to the ID to plot for a barplot.  
-      prism_supp_count$x <- sapply(prism_supp_count$x, function(x) paste("PS: ", x))
-      # Add label column to the dataframe, from which we will plot  
-      prism_supp_count$label <- rep("PRISM-supp", length(prism_supp_count$x))
-      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-      prism_supp_count$Type <- prism_supp_anot$Type
-      # Add Start positions (to visualize on hover)
-      prism_supp_count$Start <- prism_supp_anot$Start
-      # Add Stop positions (to visualize on hover)
-      prism_supp_count$Stop <- prism_supp_anot$Stop
-    }
-    if (vals$arts_data_input == TRUE){
-      # Count every interception for every tool. If count is >=1, this means, that given cluster at least intercepted with 1 other from another tool annotation
-      arts_count <- count(as.factor(unlist(sapply(inters$arts, function(x){x$to}))))
-      # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
-      arts_anot <- vals$arts_data_filtered[vals$arts_data_filtered$Cluster %in% as.numeric(levels(arts_count$x)),]
-      # Add prefices to the ID to plot for a barplot.  
-      arts_count$x <- sapply(arts_count$x, function(x) paste("AR: ", x))
-      # Add label column to the dataframe, from which we will plot  
-      arts_count$label <- rep("ARTS", length(arts_count$x))
-      # Add type to the dataframe, from which we would plot (from annotation dataframe)  
-      arts_count$Type <- arts_anot$Type
-      # Add Start positions (to visualize on hover)
-      arts_count$Start <- arts_anot$Start
-      # Add Stop positions (to visualize on hover)
-      arts_count$Stop <- arts_anot$Stop
-    }
-
-      
-    # Integrate all those dataframe to the master one 
-    ranking_data <- rbind(gecco_count, antismash_count,prism_count, deep_count,rre_count, sempi_count, prism_supp_count, arts_count)
+    
+ 
     # Fix column names in the master dataframe
     colnames(ranking_data) <- c("Cluster", "Count", "Label", "Type", "Start", "Stop")
     # Plot
@@ -4325,6 +3213,7 @@ server <- function(input, output, session) {
   
   # Render table with data
   output$group_table <- renderTable({
+    req(vals$data_upload_count >1)
     whereami::cat_where(whereami::whereami())
     refine_unique <- function(data){
       n <- tail(data, n=1)
@@ -4362,6 +3251,7 @@ server <- function(input, output, session) {
       df_test <- data.frame(matrix(ncol = length(soft_let), nrow = length(vals[[selected_dataframe]]$Cluster)))
       colnames(df_test) <- soft_let
       df_test[[input$group_by]]<- vals[[selected_dataframe]]$Cluster
+      df_test[nrow(df_test)+1,] <- NA
     }
     for (i in seq(1:length(data_uploads))){
       if (input$group_by==soft_let[[i]]){
