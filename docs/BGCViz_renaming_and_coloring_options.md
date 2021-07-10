@@ -26,6 +26,10 @@ aminocoumarin|other||||
 The data used for renaming is stored under "Code" and "Group" columns. The default file is available is the BGCViz directory or in the [Glossary](Glossary.md). The one is free to use any renaming scheme, but the whole csv file should be uploaded in the file input in BGCViz:
 
 ![rename](/images/rename.png)
+ 
+**After the renaming, "Rename" button will dissapear, and  only "Reset" will be available. After reseting, "Rename" button will exange it. This is made to indicate if the used is already renamed, or not. **
+
+**Please note: After "Rename" button is triggered, SEMPI, Antismash and PRISM data will be renamed prior to plotting automatically**
 
 # Coloring renamed data
 
