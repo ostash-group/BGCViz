@@ -2038,7 +2038,7 @@ server <- function(input, output, session) {
   # Filter while ploting then.
   # TODO make looop for data reading
   observeEvent(inputData(), {
-    
+    req(vals$data_upload_count>=1)
     # GENERATE DATA
     if (vals$anti_data_input == TRUE){
       anti_data <-  vals$anti_data
@@ -2160,8 +2160,7 @@ server <- function(input, output, session) {
   # and general dataframes to plot, if data filtering 
   # options are triggered
   observeEvent(dynamicInput(), {
-    req(vals$data_upload_count>1)
-    
+    req(vals$data_upload_count>=1)
     inters <- vals$inters
     if (vals$deep_data_input == TRUE){
       if (vals$need_filter == F) {
@@ -2170,20 +2169,22 @@ server <- function(input, output, session) {
       } else {
         biocircos_deep <-  vals$deep_data_filtered
       }
-      new_deep <- lapply(inters$deep, function(x){
-        new_to <- x$to[x$to %in% biocircos_deep$Cluster]
-        new_from <- x$from[x$to %in% biocircos_deep$Cluster]
-        list(from=new_from, to=new_to)
-      })
-      new_inters <- inters
-      update_list <- names(inters$deep)
-      for (b in seq(1:length(update_list))){
-        new_inters[[update_list[b]]]$deep$to <- new_deep[[update_list[b]]]$from
-        new_inters[[update_list[b]]]$deep$from <- new_deep[[update_list[b]]]$to
+      if (vals$data_upload_count!=1){
+        new_deep <- lapply(inters$deep, function(x){
+          new_to <- x$to[x$to %in% biocircos_deep$Cluster]
+          new_from <- x$from[x$to %in% biocircos_deep$Cluster]
+          list(from=new_from, to=new_to)
+        })
+        new_inters <- inters
+        update_list <- names(inters$deep)
+        for (b in seq(1:length(update_list))){
+          new_inters[[update_list[b]]]$deep$to <- new_deep[[update_list[b]]]$from
+          new_inters[[update_list[b]]]$deep$from <- new_deep[[update_list[b]]]$to
+        }
+        new_inters$deep <- new_deep
+        vals$inters_filtered <- new_inters
+        inters <- new_inters
       }
-      new_inters$deep <- new_deep
-      vals$inters_filtered <- new_inters
-      inters <- new_inters
     }
     if (vals$gecco_data_input == TRUE){
       if (vals$need_filter == F) {
@@ -2192,39 +2193,43 @@ server <- function(input, output, session) {
       } else {
         gecco_data <- vals$gecco_data_filtered
       }
-      new_gecco <- lapply(inters$gecco, function(x){
-        new_to <- x$to[x$to %in% gecco_data$Cluster]
-        new_from <- x$from[x$to %in% gecco_data$Cluster]
-        list(from=new_from, to=new_to)
-      })
-      new_inters <- inters
-      update_list <- names(inters$gecco)
-      for (b in seq(1:length(update_list))){
-        new_inters[[update_list[b]]]$gecco$to <- new_gecco[[update_list[b]]]$from
-        new_inters[[update_list[b]]]$gecco$from <- new_gecco[[update_list[b]]]$to
+      if (vals$data_upload_count!=1){
+        new_gecco <- lapply(inters$gecco, function(x){
+          new_to <- x$to[x$to %in% gecco_data$Cluster]
+          new_from <- x$from[x$to %in% gecco_data$Cluster]
+          list(from=new_from, to=new_to)
+        })
+        new_inters <- inters
+        update_list <- names(inters$gecco)
+        for (b in seq(1:length(update_list))){
+          new_inters[[update_list[b]]]$gecco$to <- new_gecco[[update_list[b]]]$from
+          new_inters[[update_list[b]]]$gecco$from <- new_gecco[[update_list[b]]]$to
+        }
+        new_inters$gecco <- new_gecco
+        vals$inters_filtered <- new_inters
+        inters <- new_inters
       }
-      new_inters$gecco <- new_gecco
-      vals$inters_filtered <- new_inters
-      inters <- new_inters
     }
     if (vals$arts_data_input == TRUE){
       if (input$dup_choice != "All"){
         vals$arts_data_filtered <- data.frame(vals$arts_data) %>%
           filter(Core == str_split(str_split(input$dup_choice, " ,")[[1]][[2]], "Core:")[[1]][[2]] | Core == "Not_core")
-        new_arts <- lapply(inters$arts, function(x){
-          new_to <- x$to[x$to %in% vals$arts_data_filtered$Cluster]
-          new_from <- x$from[x$to %in% vals$arts_data_filtered$Cluster]
-          list(from=new_from, to=new_to)
-        })
-        new_inters <- inters
-        update_list <- names(inters$arts)
-        for (b in seq(1:length(update_list))){
-          new_inters[[update_list[b]]]$arts$to <- new_arts[[update_list[b]]]$from
-          new_inters[[update_list[b]]]$arts$from <- new_arts[[update_list[b]]]$to
+        if (vals$data_upload_count!=1){
+          new_arts <- lapply(inters$arts, function(x){
+            new_to <- x$to[x$to %in% vals$arts_data_filtered$Cluster]
+            new_from <- x$from[x$to %in% vals$arts_data_filtered$Cluster]
+            list(from=new_from, to=new_to)
+          })
+          new_inters <- inters
+          update_list <- names(inters$arts)
+          for (b in seq(1:length(update_list))){
+            new_inters[[update_list[b]]]$arts$to <- new_arts[[update_list[b]]]$from
+            new_inters[[update_list[b]]]$arts$from <- new_arts[[update_list[b]]]$to
+          }
+          new_inters$arts <- new_arts
+          vals$inters_filtered <- new_inters
+          inters <- new_inters
         }
-        new_inters$arts <- new_arts
-        vals$inters_filtered <- new_inters
-        inters <- new_inters
       } else {
         vals$arts_data_filtered <- vals$arts_data
         vals$inters_filtered <- inters
