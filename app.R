@@ -4,8 +4,9 @@
 # Author: Pavlo Hrab
 # Made as part of Cambridge bioinformatics hackaton
 # 
-# This app is using bgc coordinates from DeepBGC, PRISM, ANTISMASH and RREFinder
-# to visualized interception of those different annotations in one genome
+# This app is using bgc coordinates from DeepBGC, PRISM, ANTISMASH, RRE-Finder,
+# GECCO, ARTS, SEMPI to visualized interception of those different annotations 
+# in one genome
 #
 
 # Upload required libraries
@@ -20,8 +21,6 @@ library(rjson)
 library(stringr)
 library(DT)
 library(GenomicRanges)
-
-## TESTING
 # Define UI 
 ui <- fluidPage(
 
@@ -32,6 +31,7 @@ ui <- fluidPage(
   useShinyjs(),
   sidebarLayout(
     sidebarPanel(
+      # Define sidebar logic. Make it fixed and not overflow
       id = "tPanel",style = "overflow-y:scroll; max-height: 90vh; position:fixed; width:inherit;",
       # Data upload
       h3("Data upload and necesary input:"),
@@ -92,7 +92,6 @@ ui <- fluidPage(
       checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
       h3("Improve visualization:"),
       checkboxInput("hide_viz", "Hide improve visualization options"),
-      #Improve RREFinder annotated BCG visibility
       fileInput("rename_data",
                "Upload renaming and coloring scheme"),
       actionButton("rename", "Rename"),
@@ -115,7 +114,6 @@ ui <- fluidPage(
       selectInput("score_type_gecco", "Choose score type to set threshold", choices = c("Average p-value" = "avg_p",
                                                                                   "Cluster_type score" = "Cluster_Type"),
                   selected = "avg_p"),
-      # Chose step for barplot (as a threshold to draw a bar)
       sliderInput("plot_step_gecco", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
       sliderInput("plot_start_gecco", "Chose plot start point(barplot)", min = 0, max = 99, value = 0),
       h3(id="data_filter_header_gecco","Gecco data filtering:"),
@@ -156,6 +154,7 @@ ui <- fluidPage(
     
     # Show plots
     mainPanel(
+      # Define tabs and their correcponding plots
       tabsetPanel(
         tabPanel(title = "Compare data with DeepBGC", value = 1 ,plotOutput("deep_barplot",height = "500px"), plotlyOutput("deep_rate")),
         tabPanel(title = "Compare data with Gecco", value = 5 ,plotOutput("gecco_barplot",height = "500px"), plotlyOutput("gecco_rate")),
@@ -171,21 +170,9 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output, session) {
-  #CLEAN THE DIRECTORY
-  files_in_dir <- list.files()
-  # Iterate over those files and if found "_biocircos.csv" add remove them
-  for (file_names in files_in_dir) {
-    if (grepl('_biocircos.csv', file_names, fixed = TRUE)) {
-      file.remove(file_names)
-    } 
-  }
-  options(shiny.maxRequestSize=100*1024^2)
-  # Small function to make integers zeros
-  is.integer0 <- function(x)
-  {
-    is.integer(x) && length(x) == 0L
-  }
-  
+  ##---------------------------------------------------------------
+  ##        Some lists of reactive values to listen later         -
+  ##---------------------------------------------------------------
   check_to_rename <- reactive({list(input$sempi_data, input$anti_data, input$prism_data,
                                     input$sempi_sco,input$anti_sco, input$prism_sco)})
   biocircos_listen <- reactive({
@@ -210,7 +197,6 @@ server <- function(input, output, session) {
   
 
 
-  # Rective vals the app is using
   # Some dataframes that are used through the app + some vectors of untercepted values
   vals <- reactiveValues(deep_data = NULL, anti_data = NULL, rre_data=NULL, prism_data=NULL, chr_len = NULL, fullness_deep = NULL,
                          biocircos_deep = NULL, deep_data_input = FALSE,tracklist = NULL, chromosomes = NULL, fullness_gecco = NULL,
@@ -225,13 +211,33 @@ server <- function(input, output, session) {
                          df_ps = NULL, arts_interact = NULL, rre_more = FALSE, gecco_data = NULL, gecco_data_input = FALSE,
                          gecco_data_filtered = NULL, seg_df_ref_g = NULL, prism_supp_data_input = F, computed  = NULL,
                          need_filter = F, filter_data = F, choices = list(ref=NULL, group_by=NULL, ref_col_biocircos=NULL, ref_comparison_gecco=NULL, ref_comparison = NULL),
-                         renamed = NULL, renaming_notification = list(), rename_y_axis = list()
+                         renamed = NULL, renaming_notification = list(), rename_y_axis = list(), can_plot_deep_ref_2 = F, can_plot_deep_ref = F,
+                         can_plot_biocircos = F, can_plot_barplot_rank = F, can_plot_group_table = F
                          )
   
   vals$computed <- list(
     anti=F,deep=F, gecco=F, arts=F, prism=F, sempi=F, prism_supp=F, rre=F
   )
   vals$rename_data <- read.csv("rename.csv")
+  ##----------------------------------------------------------------
+  ##                        Helper functions                       -
+  ##----------------------------------------------------------------
+  # Need to get them to a separate file later
+  # TODO
+  files_in_dir <- list.files()
+  # Iterate over those files and if found "_biocircos.csv" add remove them
+  for (file_names in files_in_dir) {
+    if (grepl('_biocircos.csv', file_names, fixed = TRUE)) {
+      file.remove(file_names)
+    } 
+  }
+  options(shiny.maxRequestSize=100*1024^2)
+  # Small function to make integers zeros
+  is.integer0 <- function(x)
+  {
+    is.integer(x) && length(x) == 0L
+  }
+  # Fix the duplicates in PRISM-Supp data. Therefore 1 row for 1 orf
   fix_duplicates <-  function(test_score, order_vec, regul_genes_orfs){
     dupl_names <- regul_genes_orfs[duplicated(regul_genes_orfs)]
     duplicated_values <- which(duplicated(regul_genes_orfs[order_vec]))
@@ -241,6 +247,7 @@ server <- function(input, output, session) {
     test_score[duplicated_values-1] <- paste(test_score[duplicated_values-1] , to_add, sep="/")
     return(test_score)
   }
+  # PRISM data processing
   process_prism_json_suppl <- function(data){
     types <- sapply(data$prism_results$clusters, function(x){
       tolower(x$type)
@@ -337,6 +344,7 @@ server <- function(input, output, session) {
     rownames(final_reg) <- as.numeric(seq(1:dim(final_reg)[1]))
     return(list(prism_data, final_reg))
   }
+  # Filtering the DeepBGC
   filter_deepbgc <- function(){
     score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
     score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
@@ -362,6 +370,7 @@ server <- function(input, output, session) {
     biocircos_deep['Cluster'] <- biocircos_deep$ID
     return(biocircos_deep)
   }
+  # Filtering GECCO
   filter_gecco <- function(){
     score_a_gecco <- apply(vals$gecco_data %>% select(c("average_p")),1, function(x) max(x))
     score_c_gecco <- apply(vals$gecco_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
@@ -375,6 +384,7 @@ server <- function(input, output, session) {
              num_domains >= input$domains_filter_gecco, num_prot>=input$prot_filter_gecco)
     return(gecco_data)
   }
+  # Renaming the vector for inout$rename event
   rename_vector <- function(data, renamed_dataframe){
     type <- str_split(data$Type2, "__")
     type_2 <- sapply(type, function(x){
@@ -408,6 +418,8 @@ server <- function(input, output, session) {
     })
     return(as.character(type_4))
   }
+  # Adding the thickness to the visualization for SEMPI, 
+  # ARTS, RRE, PRISN-Supp data
   correct_width <- function(data, label){
     if ((label == 'SEMPI')&(input$sempi_width == T)){
       data$Stop <- data$Stop + 30000
@@ -420,10 +432,33 @@ server <- function(input, output, session) {
     }
     return(data)
   }
+  disable_event_logic <- function(){
+    vals$can_plot_deep_ref = F
+    vals$can_plot_biocircos = F
+    vals$can_plot_barplot_rank = F
+    vals$can_plot_group_table = F
+  }
+  enable_event_logic <- function(){
+    vals$can_plot_deep_ref = T
+    vals$can_plot_biocircos = T
+    vals$can_plot_barplot_rank = T
+    vals$can_plot_group_table = T
+  }
   
-  # Upload example data
+  ###########################################################################
+  ###########################################################################
+  ###                                                                     ###
+  ###                        DATA INPUT PROCESSING                        ###
+  ###                                                                     ###
+  ###########################################################################
+  ###########################################################################
+  # TODO Make separate functions for different data types. 
+  # For now you just have duplicated the code. Specifically for ARTS!
+  #----------------------------------------------------------------
+  ##            Loading and processing of example data             -
+  ##----------------------------------------------------------------
   observeEvent(input$anti_sco,{
-    whereami::cat_where(whereami::whereami())
+    
     anti_data <- read.csv("example_data/sco_antismash.csv")
     # Add chromosome column
     anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
@@ -451,6 +486,7 @@ server <- function(input, output, session) {
                       choices = vals$choices$ref_comparison_gecco )
     updateSelectInput(session, "ref_comparison",
                       choices = vals$choices$ref_comparison )
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "Antismash" )
@@ -468,7 +504,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$gecco_sco,{
-    whereami::cat_where(whereami::whereami())
+    
     gecco_data <- read.delim("example_data/sco_gecco.tsv")
     # Add chromosome column
     gecco_data$chromosome <-  rep("G", length(gecco_data$type))
@@ -506,6 +542,7 @@ server <- function(input, output, session) {
                       choices = vals$choices$group_by )
     updateSelectInput(session, "ref_col_biocircos",
                       choices = vals$choices$ref_col_biocircos )
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "GECCO" )
@@ -532,7 +569,7 @@ server <- function(input, output, session) {
       
       vals$choices$ref <- c(vals$choices$ref, "PRISM-supp" = "PRISM-supp")
       vals$choices$group_by <- c(vals$choices$group_by, "PRISM-supp" = "PS")
-      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-supp" = "PRISM-supp")
+      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
       updateSelectInput(session, "ref",
                         choices = vals$choices$ref )
       updateSelectInput(session, "group_by",
@@ -567,6 +604,7 @@ server <- function(input, output, session) {
                       choices = vals$choices$ref_comparison_gecco )
     updateSelectInput(session, "ref_comparison",
                       choices = vals$choices$ref_comparison )
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "PRISM" )
@@ -582,7 +620,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$sempi_sco,{
-    whereami::cat_where(whereami::whereami())
+    
     sempi_data <- read.csv("example_data/sco_sempi.csv")
     sempi_data['Type2'] <- str_trim(tolower(sempi_data$Type))
     vals$sempi_type <- sempi_data$Type2
@@ -610,6 +648,7 @@ server <- function(input, output, session) {
                       choices = vals$choices$ref_comparison_gecco )
     updateSelectInput(session, "ref_comparison",
                       choices = vals$choices$ref_comparison )
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "SEMPI" )
@@ -628,7 +667,7 @@ server <- function(input, output, session) {
   observeEvent(input$arts_sco, {
     
     data <- read.delim("example_data/sco_duptable.tsv")
-    
+    disable_event_logic()
     get_location_duptable <- function(x, y){
       test <- str_split(x, ";")
       test2<- sub(".*loc\\|", "", test[[1]])
@@ -736,6 +775,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$deep_sco, {
+    
     drop_cols <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
     # Read data
     vals$deep_data <- read.delim("example_data/sco_deep.tsv") %>%
@@ -760,6 +800,7 @@ server <- function(input, output, session) {
                       choices = vals$choices$group_by )
     updateSelectInput(session, "ref_col_biocircos",
                       choices = vals$choices$ref_col_biocircos )
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "DeepBGC" )
@@ -773,7 +814,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$rre_sco, {
-    whereami::cat_where(whereami::whereami())
+    
     # Read data
     vals$rre_data <- read.delim("example_data/sco_rre.txt")
     # Clean RRE data. Extract coordinates and Locus tag with double underscore delimiter (__)
@@ -801,6 +842,7 @@ server <- function(input, output, session) {
                       choices = vals$choices$group_by )
     updateSelectInput(session, "ref_col_biocircos",
                       choices = vals$choices$ref_col_biocircos )
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "RRE-Finder" )
@@ -818,8 +860,12 @@ server <- function(input, output, session) {
     }
   })
   
-  # Read the data
+  ##----------------------------------------------------------------
+  ##                Loading and processing user data               -
+  ##----------------------------------------------------------------
   observeEvent(input$anti_data,{
+    
+    disable_event_logic()
     # Read data
     if (input$anti_input_options==T){
       anti_data <- read.csv(input$anti_data$datapath)
@@ -913,6 +959,7 @@ server <- function(input, output, session) {
   
   observeEvent(input$sempi_data,{
     
+    
     sempi_data <- read.csv(input$sempi_data$datapath)
     sempi_data['Type2'] <- str_trim(tolower(sempi_data$Type))
     vals$sempi_type <- sempi_data$Type2
@@ -940,6 +987,7 @@ server <- function(input, output, session) {
                       choices = vals$choices$ref_comparison_gecco )
     updateSelectInput(session, "ref_comparison",
                       choices = vals$choices$ref_comparison )
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "SEMPI" )
@@ -993,6 +1041,7 @@ server <- function(input, output, session) {
                       choices = vals$choices$group_by )
     updateSelectInput(session, "ref_col_biocircos",
                       choices = vals$choices$ref_col_biocircos )
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "GECCO" )
@@ -1004,7 +1053,11 @@ server <- function(input, output, session) {
     
   })
   
+  # These are for ARTS data processing
+  # input$known_data and inoput$dup_data
   observeEvent(input$known_data, {
+    disable_event_logic()
+    
     data <- read.delim(input$known_data$datapath)
     locations <- sapply(data$Sequence.description, function(x){
       tail(str_split(x , "\\|")[[1]], 1)
@@ -1073,6 +1126,8 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$dup_data, {
+    disable_event_logic()
+    
     data <- read.delim(input$dup_data$datapath)
     
     get_location_duptable <- function(x, y){
@@ -1153,6 +1208,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$prism_data,{
+    
     # Read data
     if (input$prism_input_options == T){
       prism_data <- read.csv(input$prism_data$datapath)
@@ -1167,7 +1223,7 @@ server <- function(input, output, session) {
       vals$prism_json = T
       vals$choices$ref <- c(vals$choices$ref, "PRISM-supp" = "PRISM-supp")
       vals$choices$group_by <- c(vals$choices$group_by, "PRISM-supp" = "PS")
-      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-supp" = "PRISM-supp")
+      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
       updateSelectInput(session, "ref",
                         choices = vals$choices$ref )
       updateSelectInput(session, "group_by",
@@ -1203,6 +1259,7 @@ server <- function(input, output, session) {
     write.csv(vals$prism_data, "prism_data.csv", row.names = F)
     vals$prism_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "PRISM" )
@@ -1218,6 +1275,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$deep_data, {
+    
     drop_cols <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
     # Read data
     vals$deep_data <- read.delim(input$deep_data$datapath) %>%
@@ -1242,6 +1300,7 @@ server <- function(input, output, session) {
                       choices = vals$choices$group_by )
     updateSelectInput(session, "ref_col_biocircos",
                       choices = vals$choices$ref_col_biocircos )
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "DeepBGC" )
@@ -1255,6 +1314,7 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$rre_data, {
+    
     # Read data
     vals$rre_data <- read.delim(input$rre_data$datapath)
     # Clean RRE data. Extract coordinates and Locus tag with double underscore delimiter (__)
@@ -1281,6 +1341,7 @@ server <- function(input, output, session) {
                       choices = vals$choices$group_by )
     updateSelectInput(session, "ref_col_biocircos",
                       choices = vals$choices$ref_col_biocircos )
+    disable_event_logic()
     if (vals$data_upload_count == 1){
       updateSelectInput(session, "ref",
                         selected = "RRE-Finder" )
@@ -1298,14 +1359,25 @@ server <- function(input, output, session) {
     }
   })
   
+  ############################################################################
+  ############################################################################
+  ###                                                                      ###
+  ###                INTERFACE LOGIC: WHAT TO SHOW AND WHEN                ###
+  ###                                                                      ###
+  ############################################################################
+  ############################################################################
   # Observe input of chromosome length
   observeEvent(input$chr_len,{
+    
     vals$chr_len <- input$chr_len
   })
-  
-  # Logic for showing/hiding UI when input 
+  ##----------------------------------------------------------------
+  ##    Simple options showing/hiding logic for every data input   -
+  ##----------------------------------------------------------------
+  # SHOW rre_width parameter if data is available
+  # and hide_viz == F
   observeEvent(vals$rre_data_input, {
-    whereami::cat_where(whereami::whereami())
+    
     if (vals$rre_data_input == T){
       if (input$hide_viz == F){
         showElement(selector = "#rre_width")
@@ -1314,9 +1386,10 @@ server <- function(input, output, session) {
       hideElement(selector = "#rre_width")
     }
   })
-
+  # Show anti_hybrid option if data is available
+  # And checkbox is unchecked
   observeEvent(vals$anti_data_input, {
-    whereami::cat_where(whereami::whereami())
+    
     if (vals$anti_data_input == T){
       if (input$hide_anti == F){
         showElement(selector = "#anti_header")
@@ -1327,8 +1400,13 @@ server <- function(input, output, session) {
       hideElement(selector = "#anti_hybrid")
     }
   })
-  
+  # Show prism options if data is available
+  # If hide anti is F (checkbox), then show them
+  # Only if prism_json file, then show Prism-Supp
+  # And if hide_viz == F, and prism_json, then 
+  # show width
   observeEvent(vals$prism_data_input, {
+    
     if (vals$prism_data_input == T){
       if (input$hide_anti == F){
         showElement(selector = "#prism_header")
@@ -1349,13 +1427,15 @@ server <- function(input, output, session) {
       hideElement(selector = "#prism_supp_data_input_width")
     }
   })
-  
+  # Show SEMPI elements on data upload
   observeEvent(vals$sempi_data_input, {
-    whereami::cat_where(whereami::whereami())
+    
     if (vals$sempi_data_input == T){
       if (input$hide_anti == F){
         showElement(selector = "#sempi_header")
         showElement(selector = "#sempi_hybrid")
+      }
+      if (input$hide_viz == F){
         showElement(selector = "#sempi_width")
       }
     } else{
@@ -1364,8 +1444,9 @@ server <- function(input, output, session) {
       hideElement(selector = "#sempi_width")
     }
   })
-
+  # Show DeepBGC options if data is available
   observeEvent(vals$deep_data_input,{
+    
     if (vals$deep_data_input == T){
       showElement(selector = "#ref_comparison")
       showElement(selector = "#hide_data_comparison")
@@ -1400,8 +1481,9 @@ server <- function(input, output, session) {
       hideElement(selector = "#data_filter_header")
     }
   })
-  
+  # Show GECCO data options, if data is uploaded
   observeEvent(vals$gecco_data_input,{
+    
     if (vals$gecco_data_input == T){
       showElement(selector = "#data_comparison_header_gecco")
       showElement(selector = "#hide_data_comparison_gecco")
@@ -1430,9 +1512,30 @@ server <- function(input, output, session) {
       hideElement(selector = "#prot_filter_gecco")
     }
   })
-  
+  # Ahow ARTS data options, if data is available
+  observeEvent(vals$arts_data_input,{
+    
+    if (vals$arts_data_input == T){
+      if (input$hide_anti == F){
+        showElement(selector = "#arts_header")
+        showElement(selector = "#dup_choice")
+      }
+      if (input$hide_viz == F){
+        showElement(selector = "#arts_width")
+      }
+    } else {
+      hideElement(selector = "#arts_header")
+      hideElement(selector = "#dup_choice")
+      hideElement(selector = "#arts_width")
+    }
+  })
+  ##---------------------------------------------------------------
+  ##              Data processing options show/hide               -
+  ##---------------------------------------------------------------
+  # Count data uploads, to show tabs and corresponding 
+  # options 
   observeEvent(vals$data_upload_count, {
-    whereami::cat_where(whereami::whereami())
+    
     if (vals$data_upload_count <2){
       hideTab("main", "2")
       hideTab("main", "3")
@@ -1484,16 +1587,21 @@ server <- function(input, output, session) {
       
     }
   })
-  
+  # Logic show/hide selectinput in Link coloring in
+  # Biocircos
   observeEvent(input$label_color_class, {
+    
     if (input$label_color_class == "R"){
       showElement(selector = "#ref_col_biocircos")
     } else {
       hideElement(selector = "#ref_col_biocircos")
     }
   })
-  
+  # Make hybrids from the data, if checkbox is checked   
+  # TODO Put the function to the root. 
+  # Tou have duplicated code
   observeEvent(input$anti_hybrid, {
+    
     hybrid_col <- function(data){
       data_split <- str_split(data$Type2, "__")
       types <- sapply(data_split, function(x){
@@ -1513,8 +1621,8 @@ server <- function(input, output, session) {
     }
     
     })
-
   observeEvent(input$prism_hybrid, {
+    
     hybrid_col <- function(data){
       data_split <- str_split(data$Type2, "__")
       types <- sapply(data_split, function(x){
@@ -1533,8 +1641,8 @@ server <- function(input, output, session) {
       vals$prism_data$Type2 <- vals$prism_type
     }
   })
-  
   observeEvent(input$sempi_hybrid, {
+    
     hybrid_col <- function(data){
       data_split <- str_split(data$Type2, "__")
       types <- sapply(data_split, function(x){
@@ -1555,25 +1663,9 @@ server <- function(input, output, session) {
       vals$sempi_data$Type2 <- vals$sempi_type
     }
   })
-  
-  observeEvent(vals$arts_data_input,{
-    if (vals$arts_data_input == T){
-      if (input$hide_anti == F){
-        showElement(selector = "#arts_header")
-        showElement(selector = "#dup_choice")
-      }
-      if (input$hide_viz == F){
-        showElement(selector = "#arts_width")
-      }
-    } else {
-      hideElement(selector = "#arts_header")
-      hideElement(selector = "#dup_choice")
-      hideElement(selector = "#arts_width")
-    }
-  })
-  
+  # Rename the data, if button is clicked
   observeEvent(input$rename, {
-    whereami::cat_where(whereami::whereami())
+    
     rename_data <- vals$rename_data
     if (vals$anti_data_input == T){
       anti_data <- read.csv("anti_data.csv")
@@ -1600,9 +1692,12 @@ server <- function(input, output, session) {
     vals$renamed <- T
     showNotification(paste("Please note: SEMPI, PRISM and Antismash input data will be renamed on upload"), type = "warning", duration=10)
       })
+  # When the new data is uploaded and renamed
+  # is T, then rename data on upload
   observeEvent(check_to_rename(), {
+    
     req(vals$renamed == T)
-    whereami::cat_where(whereami::whereami())
+    
     rename_data <- vals$rename_data
     if (vals$anti_data_input == T){
       anti_data <- read.csv("anti_data.csv")
@@ -1625,8 +1720,9 @@ server <- function(input, output, session) {
       vals$prism_data <- prism_data
     }
   })
-  
+  # Reset the renaming. Uncheck the hybrid checkboxes
   observeEvent(input$reset_name, {
+    
     vals$anti_data['Type2']  <- vals$anti_data['Type']
     vals$sempi_data['Type2'] <- vals$sempi_data['Type']
     vals$ prism_data['Type2'] <- vals$ prism_data['Type']
@@ -1637,13 +1733,15 @@ server <- function(input, output, session) {
       hideElement(selector = "#reset_name")
     vals$renamed <- F
   })
-  
+  # Read the uploaded renaming scheme csv
   observeEvent(input$rename_data,{
+    
     rename_data <- read.csv(input$rename_data$datapath)
     vals$rename_data <- rename_data
   })
-  
+  # What to do, if hide uploads scheme is triggered
   observeEvent(input$hide_uploads, {
+    
     if (input$hide_uploads == T){
       hideElement(selector = "#anti_input_options")
       hideElement(selector = "#anti_data")
@@ -1698,8 +1796,9 @@ server <- function(input, output, session) {
       showElement(selector = "#gecco_sco")
   }
     })
-  
+  # What to do, if hide data options scheme is triggered
   observeEvent(input$hide_anti, {
+    
     if (input$hide_anti== T){
       hideElement(selector = "#anti_header")
       hideElement(selector = "#anti_hybrid")
@@ -1745,8 +1844,9 @@ server <- function(input, output, session) {
       }
     }
   })
-  
+  # What to do, if hide annotation plot options scheme is triggered
   observeEvent(input$hide_genes_on_chr, {
+    
     if (input$hide_genes_on_chr == T){
       hideElement(selector = "#ref")
     } else {
@@ -1758,8 +1858,9 @@ server <- function(input, output, session) {
       }
     }
   })
-  
+  # What to do, if hide summarize tab options scheme is triggered
   observeEvent(input$hide_summarize, {
+    
     if (input$hide_summarize == T){
       hideElement(selector = "#group_by")
       hideElement(selector = "#count_all")
@@ -1775,8 +1876,9 @@ server <- function(input, output, session) {
       
     }
   })
-  
+  # What to do, if hide improve visualization scheme is triggered
   observeEvent(input$hide_viz, {
+    
     if (input$hide_viz == T){
       hideElement(selector = "#rename_data")
       hideElement(selector = "#rename")
@@ -1834,8 +1936,9 @@ server <- function(input, output, session) {
       
     }
   })
-  
+  # What to do, if hide DeepBGC comparison options scheme is triggered
   observeEvent(input$hide_data_comparison, {
+    
     if ((input$hide_data_comparison == T)){
       hideElement(selector = "#ref_comparison")
       hideElement(selector = "#score_type")
@@ -1853,8 +1956,9 @@ server <- function(input, output, session) {
       hideElement(selector = "#plot_start")
     }
   })
-  
+  # What to do, if hide DeepBGC filtering options scheme is triggered
   observeEvent(input$hide_data_filter, {
+    
     if ((input$hide_data_filter == T)){
       hideElement(selector = "#score_a")
       hideElement(selector = "#score_d")
@@ -1881,8 +1985,9 @@ server <- function(input, output, session) {
       hideElement(selector = "#cluster_type")
     }
   })
-  
+  # What to do, if hide GECCO comparison options scheme is triggered
   observeEvent(input$hide_data_comparison_gecco, {
+    
     if ((input$hide_data_comparison_gecco == T)){
       hideElement(selector = "#ref_comparison_gecco")
       hideElement(selector = "#score_type_gecco")
@@ -1900,8 +2005,9 @@ server <- function(input, output, session) {
       hideElement(selector = "#plot_start_gecco")
     }
   })
-  
+  # What to do, if hide GECCO filtering options scheme is triggered
   observeEvent(input$hide_data_filter_gecco, {
+    
     if ((input$hide_data_filter_gecco == T)){
       hideElement(selector = "#score_average_gecco")
       hideElement(selector = "#score_average_gecco")
@@ -1920,9 +2026,19 @@ server <- function(input, output, session) {
     }
   })
   
+  
+  ############################################################################
+  ############################################################################
+  ###                                                                      ###
+  ###                             COMPUTATIONS                             ###
+  ###                                                                      ###
+  ############################################################################
+  ############################################################################
+  # Compute all interceptions on data upload.
+  # Filter while ploting then.
+  # TODO make looop for data reading
   observeEvent(inputData(), {
-    req(vals$data_upload_count >1)
-    whereami::cat_where(whereami::whereami())
+    
     # GENERATE DATA
     if (vals$anti_data_input == TRUE){
       anti_data <-  vals$anti_data
@@ -2000,15 +2116,11 @@ server <- function(input, output, session) {
     }
     
     inters <- vals$inters
-    #inters_filtered <- vals$inters_filtered
     data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
                       "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
     soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
     
-   #TESTING
-#     computed <- list(
-#      anti=F,deep=F, gecco=F, arts=F, prism=F, sempi=F, prism_supp=F, rre=F
-#    )
+
     index = 1
     for (i in data_uploads){
       index_2 = 1
@@ -2023,9 +2135,6 @@ server <- function(input, output, session) {
             new_res$to <- eval(as.name(paste(j, '_data', sep = "")))[res$to,]$Cluster
             inters[[j]][[x]] <- new_res
             inters[[x]][[j]] <- list(from=new_res$to, to=new_res$from)
-            #inters_filtered[[j]][[x]] <- new_res
-            #inters_filtered[[x]][[j]] <- list(from=new_res$to, to=new_res$from)
-            
           }
           
         }
@@ -2040,48 +2149,19 @@ server <- function(input, output, session) {
    vals$inters <- inters
    if ((vals$deep_data_input == F) & (vals$gecco_data_input == F) &(vals$arts_data_input==F)){
      vals$inters_filtered <- inters 
+     enable_event_logic()
    } else{
      vals$need_filter <- T
      vals$filter_data <- T
    }
-   
-   
-#### TESTING
-#   score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
-#   score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
-#   score_c <- apply(vals$deep_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
-#   
-#   deep_data <- vals$deep_data%>%
-#     mutate(score_a = score_a, score_d = score_d, score_c = score_c) %>%
-#     filter(score_a >= 0.5, score_c >=0.5 , score_d >= 0.8,  num_domains >= 5,
-#            num_bio_domains>=3, num_proteins>=3)
-#   vals <- list(
-#     anti_data_input = T,
-#     sempi_data_input = T,
-#     prism_data_input = T,
-#     prism_supp = T,
-#     arts_data_input = T,
-#     deep_data_input = T,
-#     gecco_data_input = T,
-#     rre_data_input = T,
-#     anti_data = anti_data,
-#     deep_data = deep_data,
-#     prism_data = prism_data,
-#     rre_data = rre_data,
-#     arts_data = arts_data,
-#     sempi_data = sempi_data,
-#     gecco_data = gecco_data,
-#     prism_supp_data = prism_supp,
-#     rre_more = F,
-#     biocircos_gecco = gecco_data,
-#   computed=computed
-#   )
-
-  })
   
+  })
+  # Filter ARTS, DeepBGC, GECCO interception data
+  # and general dataframes to plot, if data filtering 
+  # options are triggered
   observeEvent(dynamicInput(), {
     req(vals$data_upload_count>1)
-    whereami::cat_where(whereami::whereami())
+    
     inters <- vals$inters
     if (vals$deep_data_input == TRUE){
       if (vals$need_filter == F) {
@@ -2156,11 +2236,15 @@ server <- function(input, output, session) {
     }
     vals$need_filter <- F
     vals$filter_data <- F
+    vals$can_plot_deep_ref = T
+    enable_event_logic()
     
   })
-  
+  # Compute the Biociros plot. Store information to plot later
   observeEvent(biocircos_listen(), {
     req(vals$data_upload_count >=2)
+    req(vals$need_filter == F)
+    req(vals$can_plot_biocircos == T)
     initialize_biocircos <- function(biocircos_anti, name,Biocircos_chromosomes, arcs_chromosomes, arcs_begin , arcs_end, arc_labels, arc_col, rename_data ){
       #Make chromosome list for Biocircos plot. Use chr_len as an input
       Biocircos_chromosomes[[name]] <- vals$chr_len  
@@ -2187,7 +2271,7 @@ server <- function(input, output, session) {
       arc_col <- c(arc_col,as.character(arc_colors) )
       return(list(Biocircos_chromosomes,arcs_chromosomes, arcs_begin , arcs_end, arc_labels, arc_col))
     }
-    whereami::cat_where(whereami::whereami())
+    
     #BioCircos!
     Biocircos_chromosomes <- list()
     arcs_chromosomes <- c()
@@ -2208,7 +2292,7 @@ server <- function(input, output, session) {
                       "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
     soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
     soft <- c("Antismash","SEMPI","PRISM","PRISM-Supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
-   data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data","deep_data_filtered" ,"gecco_data_filtered", "rre_data")
+   data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data_filtered","deep_data_filtered" ,"gecco_data_filtered", "rre_data")
     index <- 1
    # browser()
     for (upload in data_uploads){
@@ -2403,12 +2487,23 @@ server <- function(input, output, session) {
     vals$tracklist <- tracklist
     vals$Biocircos_chromosomes <- Biocircos_chromosomes
   })
-  #Render output plots
+  
+  
+  ############################################################################
+  ############################################################################
+  ###                                                                      ###
+  ###                             OUTPUT PLOTS                             ###
+  ###                                                                      ###
+  ############################################################################
+  ############################################################################
 
+  ##----------------------------------------------------------------
+  ##                    DeepBGC Comparison tab                     -
+  ##----------------------------------------------------------------
   # Render barplot
   output$deep_barplot <- renderPlot({
     req((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) ))
-    whereami::cat_where(whereami::whereami())
+    
     
     # Create empty dataframe to populate later
     fullnes_of_annotation <- data.frame(NA, NA, NA)
@@ -2511,7 +2606,7 @@ server <- function(input, output, session) {
   # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data
   output$deep_rate <- renderPlotly({
     req(!is.null(vals$fullness_deep))
-    whereami::cat_where(whereami::whereami())
+    
     
     # Reuse stored dataframe from previous plot
     # This dataframe stores data for number of intercepted/non intercepted clusters for DeepBGC and antismash data 
@@ -2562,11 +2657,13 @@ server <- function(input, output, session) {
                xlab(paste(input$score_type,"Score threshold")),
              tooltip = c("Rate"))
   })
-  
+  ##----------------------------------------------------------------
+  ##                      GECCO Comparison tab                     -
+  ##----------------------------------------------------------------
   # Render barplot
   output$gecco_barplot <- renderPlot({
     req((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) ))
-    whereami::cat_where(whereami::whereami())
+    
     # Create empty dataframe to populate later
     fullnes_of_annotation <- data.frame(NA, NA, NA)
     colnames(fullnes_of_annotation) <- c("Score", "Source", "Quantity")
@@ -2667,7 +2764,7 @@ server <- function(input, output, session) {
   # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data
   output$gecco_rate <- renderPlotly({
     req(!is.null(vals$fullness_gecco))
-    whereami::cat_where(whereami::whereami())
+    
     # Reuse stored dataframe from previous plot
     # This dataframe stores data for number of intercepted/non intercepted clusters for DeepBGC and antismash data 
     # For more information please see previous renderPlot
@@ -2717,12 +2814,17 @@ server <- function(input, output, session) {
                xlab(paste(input$score_type,"Score threshold")),
              tooltip = c("Rate"))
   })
+  ##---------------------------------------------------------------
+  ##              Annotation on chromosome plots' tab             -
+  ##---------------------------------------------------------------
   
   # Render interactive plot, which shows bgcs of antismash, intercepted with chosen app. Also all app bgs. On hover shows all available information
   # For antismash and PRISM data showed only ID, Start, Stop, Type
   output$deep_reference <- renderPlotly({
     req(vals$data_upload_count >=1)
-    whereami::cat_where(whereami::whereami())
+    req(vals$need_filter == F)
+    req(vals$can_plot_deep_ref == T)
+    
     req(vals$data_upload_count >=1)
     data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
                       "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
@@ -2731,7 +2833,7 @@ server <- function(input, output, session) {
     abbr <- c("A", "S", "P", "P-supp", "AR", "D", "G", "RRE")
     soft_ref <- c("Antismash","SEMPI","PRISM","PRISM-supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
     soft_width <-  c("Antismash","SEMPI","PRISM","PRISM-Supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
-    data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data","deep_data_filtered" ,
+    data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data_filtered","deep_data_filtered" ,
                       "gecco_data_filtered", "rre_data")
     soft_datafr <- c("seg_df_ref_a", "seg_df_ref_s" , "seg_df_ref_p", "seg_df_ref_p_s", "seg_df_ref_ar", "seg_df_ref_d", 
                      "seg_df_ref_g", "seg_df_ref_r")
@@ -3007,45 +3109,33 @@ server <- function(input, output, session) {
         sup_index <- sup_index +1
       }
       vals$rename_y_axis <- rename_y_axis
-
+      vals$can_plot_deep_ref_2 =T
     to_plot
   })
   
   output$deep_reference_2 <- renderPlotly({
+    req(vals$can_plot_deep_ref_2 == T)
+    vals$can_plot_deep_ref_2 == F
     req(vals$data_upload_count >=1)
     rename_y_axis <- vals$rename_y_axis
-    whereami::cat_where(whereami::whereami())
-    if (vals$rre_data_input == TRUE){
-      if (dim(vals$rre_data)[1]!= 0){
-        data <- data.frame(vals$rre_data)
+    data <- NULL
+    data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
+                      "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
+    data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data_filtered","deep_data_filtered" ,
+                      "gecco_data_filtered", "rre_data")
+
+    index <- 1
+    for (upload in data_uploads){
+      if (is.null(data)){
+        if (vals[[upload]] == T){
+          if (dim(vals[[data_to_use[index]]])[1] != 0){
+            data <- vals[[data_to_use[index]]]
+          }
+        }
       }
-    } else if (vals$arts_data_input == TRUE){
-      if (dim(vals$arts_data_filtered)[1]!= 0){
-      data <- vals$arts_data_filtered
-      }
-    } else if (vals$anti_data_input == TRUE){
-      if (dim(vals$anti_data)[1]!= 0){
-      data <-  vals$anti_data %>%
-        mutate(ID = Cluster, Chr = chromosome) %>%
-        dplyr::select(ID,Chr ,Start, Stop, Type, Type2)
-      }
-    }else if (vals$deep_data_input == TRUE){
-      if (dim(vals$deep_data_filtered)[1]!= 0){
-      data <- vals$deep_data_filtered
-      }
-    }else if (vals$prism_data_input == TRUE){
-      if (dim(vals$prism_data)[1]!= 0){
-      data <- vals$prism_data
-      }
-    }else if (vals$sempi_data_input == TRUE){
-      if (dim(vals$sempi_data)[1]!= 0){
-      data <- vals$sempi_data
-      }
-    }else if (vals$gecco_data_input == TRUE){
-      if (dim(vals$gecco_data_filtered)[1]!= 0){
-      data <- vals$gecco_data_filtered
-      }
+      index <- index+1
     }
+    
     
     tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
                 "P_value", "RRE_start","RRE_stop", "Probability", "Name", "Full_name",  "Hit", "Core", "Count", "Bitscore", "Model",
@@ -3125,10 +3215,13 @@ server <- function(input, output, session) {
       title=list(text='<b> Cluster Types </b>')))
   })
   
+  ##----------------------------------------------------------------
+  ##                      Biocircos plot tab                       -
+  ##---------------------------------------------------------------
   # Render Biocircos Plot for all-vs-all comparison
   output$biocircos <- renderBioCircos({
     req(vals$data_upload_count >1)
-    whereami::cat_where(whereami::whereami())
+    
     # Plot BioCircos
     BioCircos(vals$tracklist, genome = vals$Biocircos_chromosomes, genomeTicksScale = 1e+6)
   })
@@ -3136,7 +3229,7 @@ server <- function(input, output, session) {
   
   output$biocircos_legend <- renderDataTable({
     req(vals$data_upload_count >=1)
-    whereami::cat_where(whereami::whereami())
+    
     plot_data <- vals$rename_data
     new_data <- drop_na(data.frame(cbind(as.character(plot_data$Group_color), as.character(plot_data$Color))) )
     new_data <- new_data[!apply(new_data == "", 1, all),]
@@ -3148,11 +3241,15 @@ server <- function(input, output, session) {
     
     
   })
-  
+  ##---------------------------------------------------------------
+  ##                        Summarize tab                         -
+  ##---------------------------------------------------------------
   # Render barplot with number count of interception for BGC IDs
   output$barplot_rank <- renderPlotly({
     req(vals$data_upload_count >1)
-    whereami::cat_where(whereami::whereami())
+    req(vals$need_filter == F)
+    req(vals$can_plot_barplot_rank == T)
+    
     antismash_count <-  NULL
     prism_count <- NULL
     deep_count <- NULL
@@ -3214,7 +3311,9 @@ server <- function(input, output, session) {
   # Render table with data
   output$group_table <- renderTable({
     req(vals$data_upload_count >1)
-    whereami::cat_where(whereami::whereami())
+    req(vals$need_filter == F)
+    req(vals$can_plot_group_table == T)
+    
     refine_unique <- function(data){
       n <- tail(data, n=1)
       data <- head(data, -1)
