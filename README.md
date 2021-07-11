@@ -1,6 +1,15 @@
 # BGCViz
 
-BGCViz is a shiny application (can be run locally, or via [website](https://biopavlohrab.shinyapps.io/BGCViz/)), which uses genomic coordinates of BGC annotations from different sources to visualize interception between them in one sequence (genome). This integrative approach could point to both:
+![Visitor count](https://shields-io-visitor-counter.herokuapp.com/badge?page=ostash-group.BGCViz&style=for-the-badge)
+![GitHub](https://img.shields.io/github/license/ostash-group/BGCViz?style=for-the-badge)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/ostash-group/BGCViz?include_prereleases&style=for-the-badge)
+![GitHub issues](https://img.shields.io/github/issues/ostash-group/BGCViz?style=for-the-badge)
+![GitHub Repo stars](https://img.shields.io/github/stars/ostash-group/BGCViz?style=for-the-badge)
+![GitHub contributors](https://img.shields.io/github/contributors/ostash-group/BGCViz?style=for-the-badge)
+
+![DOI](http://img.shields.io/badge/DOI-10.13140%20%2F%20RG.2.2.23431.01444-blue.svg?style=for-the-badge)
+
+BGCViz is a shiny application (can be run locally, or via [website](https://ostash-group.shinyapps.io/BGCViz/)), which uses genomic coordinates of BGC annotations from different sources to visualize interception between them in one sequence (genome). This integrative approach could point to both:
 
  - "regions of interest", annotated with more than one tool.
 
@@ -11,7 +20,7 @@ BGCViz is a shiny application (can be run locally, or via [website](https://biop
 This app is written as a part of **Cambridge Bioinformatics Hackathon 2020** ([link](https://cambiohack.uk)). 
 
  
-**All the documentation is available on out [site](https://ostash-group.github.io/BGCViz/#/)**
+**All the documentation is available on our [site](https://ostash-group.github.io/BGCViz)**
 
 
 ![Biocircos](images/biocircos.png)
@@ -36,7 +45,7 @@ Currently, the app supports annotations from such sources:
 
 # Contributing
 
-There are no contributing guidelines yet. But feel free to resolve any posted issue on [repository](https://github.com/ostash-group/BGCViz/issues) or implement smth from out TO-DO list. 
+There are no contributing guidelines yet. But feel free to resolve any posted issue on [repository](https://github.com/ostash-group/BGCViz/issues) or implement anything from our TO-DO list. 
 
 If you have any questions, suggestions, or bugs with the BGCViz please let us know via Issues section of the repo on [GitHub](https://github.com/ostash-group/BGCViz/issues)
 
