@@ -8,7 +8,6 @@
 # GECCO, ARTS, SEMPI to visualized interception of those different annotations 
 # in one genome
 #
-library(GenomicRanges)
 library(magrittr)
 # Define UI 
 ui <- shiny::fluidPage(
@@ -2096,9 +2095,9 @@ server <- function(input, output, session) {
     }
     
     get_inter <- function(inter1, inter2){
-      query <- makeGRangesFromDataFrame(inter2)
-      subject <- makeGRangesFromDataFrame(inter1)
-      interseption <- findOverlaps(query,subject)
+      query <- GenomicRanges::makeGRangesFromDataFrame(inter2)
+      subject <- GenomicRanges::makeGRangesFromDataFrame(inter1)
+      interseption <- GenomicRanges::findOverlaps(query,subject)
       inter_from <- interseption@from
       inter_to <- interseption@to
       return(list(from = inter_from, to = inter_to))
@@ -2545,9 +2544,9 @@ server <- function(input, output, session) {
       
       # Get the interception of two matrices
       if (length(deep_inter$Start) > 0) {
-        query <- makeGRangesFromDataFrame(deep_inter)
-        subject <- makeGRangesFromDataFrame(anti_inter)
-        interseption <- findOverlaps(query,subject)
+        query <- GenomicRanges::makeGRangesFromDataFrame(deep_inter)
+        subject <- GenomicRanges::makeGRangesFromDataFrame(anti_inter)
+        interseption <- GenomicRanges::findOverlaps(query,subject)
         inter_bgc <- length(interseption@from)
         len_new <- length(deep_inter$seqnames) - inter_bgc
       } else {
@@ -2704,9 +2703,9 @@ server <- function(input, output, session) {
       
       # Get the interception of two matrices
       if (length(gecco_inter$Start) > 0) {
-        query <- makeGRangesFromDataFrame(gecco_inter)
-        subject <- makeGRangesFromDataFrame(anti_inter)
-        interseption <- findOverlaps(query,subject)
+        query <- GenomicRanges::makeGRangesFromDataFrame(gecco_inter)
+        subject <- GenomicRanges::makeGRangesFromDataFrame(anti_inter)
+        interseption <- GenomicRanges::findOverlaps(query,subject)
         inter_bgc <- length(interseption@from)
         len_new <- length(gecco_inter$seqnames) - inter_bgc
       } else {
