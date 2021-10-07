@@ -13,7 +13,6 @@ library(ggplot2)
 library(shinyjs)
 library(rjson)
 library(stringr)
-library(DT)
 library(GenomicRanges)
 # Define UI 
 ui <- shiny::fluidPage(
@@ -154,7 +153,7 @@ ui <- shiny::fluidPage(
         shiny::tabPanel(title = "Compare data with Gecco", value = 5 ,shiny::plotOutput("gecco_barplot",height = "500px"), plotlyOutput("gecco_rate")),
         shiny::tabPanel(title = "Annotation visualization and comparison", value = 4,plotlyOutput("deep_reference_2", height = "500px"), 
                  plotlyOutput("deep_reference", height = "500px")),
-        shiny::tabPanel(title = "Biocircos plot", value = 2, BioCircos::BioCircosOutput("biocircos", height = "1000px"), shiny::dataTableOutput("biocircos_legend")),
+        shiny::tabPanel(title = "Biocircos plot", value = 2, BioCircos::BioCircosOutput("biocircos", height = "1000px"), DT::dataTableOutput("biocircos_legend")),
         shiny::tabPanel(title = "Summarize interception", value = 3,plotlyOutput("barplot_rank", height = "600px"),shiny::tableOutput("group_table")),
         type = "tabs", id = "main"
       )
@@ -3226,7 +3225,7 @@ server <- function(input, output, session) {
   })
   
   
-  output$biocircos_legend <- renderDataTable({
+  output$biocircos_legend <- DT::renderDataTable({
     shiny::req(vals$data_upload_count >=1)
     
     plot_data <- vals$rename_data
@@ -3235,8 +3234,8 @@ server <- function(input, output, session) {
     colnames(new_data) <- c("Name", "Color")
     color_vec <- new_data$Color
     options(DT.options = list(pageLength = 50))
-    datatable(new_data, rownames = F) %>% formatStyle('Color',
-                                                      backgroundColor=styleEqual(color_vec, color_vec))
+    DT::datatable(new_data, rownames = F) %>% DT::formatStyle('Color',
+                                                      backgroundColor=DT::styleEqual(color_vec, color_vec))
     
     
   })
