@@ -8,7 +8,6 @@
 # GECCO, ARTS, SEMPI to visualized interception of those different annotations 
 # in one genome
 #
-library(rjson)
 library(stringr)
 library(GenomicRanges)
 # Define UI 
@@ -548,7 +547,7 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$prism_sco,{
     # Read data
     
-      data <- fromJSON(file = "example_data/sco_prism.json")
+      data <- rjson::fromJSON(file = "example_data/sco_prism.json")
       processed_data <- process_prism_json_suppl(data)
       shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
       prism_data <- processed_data[[1]]
@@ -860,7 +859,7 @@ server <- function(input, output, session) {
     if (input$anti_input_options==T){
       anti_data <- read.csv(input$anti_data$datapath)
     }else{
-       data <- fromJSON(file = input$anti_data$datapath)
+       data <- rjson::fromJSON(file = input$anti_data$datapath)
         types <- sapply(data$records, function(y){
           lapply(y$features, function(x){
             if (unlist(x$type == 'region')){
@@ -1203,7 +1202,7 @@ server <- function(input, output, session) {
     if (input$prism_input_options == T){
       prism_data <- read.csv(input$prism_data$datapath)
     } else{
-      data <- fromJSON(file = input$prism_data$datapath)
+      data <- rjson::fromJSON(file = input$prism_data$datapath)
       processed_data <- process_prism_json_suppl(data)
       shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
       prism_data <- processed_data[[1]]
