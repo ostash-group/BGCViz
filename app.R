@@ -8,8 +8,8 @@
 # GECCO, ARTS, SEMPI to visualized interception of those different annotations 
 # in one genome
 #
-library(stringr)
 library(GenomicRanges)
+library(magrittr)
 # Define UI 
 ui <- shiny::fluidPage(
 
@@ -244,7 +244,7 @@ server <- function(input, output, session) {
     
     types <- sapply(types, function(x){
       if (length(unlist(x))>1){
-        tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
+        tmp <- stringr::str_trim(paste0(unlist(x), collapse = '', sep = " "))
         gsub(" ", "__", tmp)
       }else{
         x
@@ -375,7 +375,7 @@ server <- function(input, output, session) {
   }
   # Renaming the vector for inut$rename event
   rename_vector <- function(data, renamed_dataframe){
-    type <- str_split(data$Type2, "__")
+    type <- stringr::str_split(data$Type2, "__")
     type_2 <- sapply(type, function(x){
       sapply(x, function(y){
         if (y %in% renamed_dataframe$Code){
@@ -452,8 +452,8 @@ server <- function(input, output, session) {
     # Add chromosome column
     anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
     # Type magic
-    anti_data$Type <- str_trim(tolower(anti_data$Type))
-    anti_data['Type2'] <- str_trim(tolower(anti_data$Type))
+    anti_data$Type <- stringr::str_trim(tolower(anti_data$Type))
+    anti_data['Type2'] <- stringr::str_trim(tolower(anti_data$Type))
     vals$anti_type <- anti_data$Type2
     vals$anti_data <- anti_data
     # Save file
@@ -500,11 +500,11 @@ server <- function(input, output, session) {
     # Type magic
     gecco_data$Cluster <- seq(1:length(gecco_data$chromosome))
     gecco_data$ID <- gecco_data$Cluster
-    gecco_data$Type <- str_trim(tolower(gecco_data$type))
+    gecco_data$Type <- stringr::str_trim(tolower(gecco_data$type))
     gecco_data$Type <- gsub("polyketide", "pks", gecco_data$Type)
     gecco_data$Type <- gsub("nrp", "nrps", gecco_data$Type)
     gecco_data$Type <- gsub("unknown", "under_threshold", gecco_data$Type)
-    gecco_data['Type2'] <- str_trim(tolower(gecco_data$Type))
+    gecco_data['Type2'] <- stringr::str_trim(tolower(gecco_data$Type))
     drop_cols <- c("alkaloid_probability" ,  "polyketide_probability", "ripp_probability",  "saccharide_probability",
                    "terpene_probability",    "nrp_probability"  , "other_probability" )
     # Read data
@@ -512,8 +512,8 @@ server <- function(input, output, session) {
       dplyr::mutate(pks=polyketide_probability, other = other_probability, nrps = nrp_probability, alkaloid = alkaloid_probability, 
              terpene = terpene_probability, saccharide = saccharide_probability, ripp = ripp_probability) %>%
       dplyr::select(-dplyr::one_of(drop_cols))
-    gecco_data$num_prot <- sapply( str_split(as.character(gecco_data$proteins), ";"), length)
-    gecco_data$num_domains <- sapply( str_split(as.character(gecco_data$domains), ";"), length)
+    gecco_data$num_prot <- sapply( stringr::str_split(as.character(gecco_data$proteins), ";"), length)
+    gecco_data$num_domains <- sapply( stringr::str_split(as.character(gecco_data$domains), ";"), length)
     names(gecco_data)[names(gecco_data) == "start"] <- "Start"
     names(gecco_data)[names(gecco_data) == "end"] <-  "Stop"
     vals$gecco_data <- gecco_data
@@ -565,8 +565,8 @@ server <- function(input, output, session) {
                         choices = vals$choices$group_by )
       shiny::updateSelectInput(session, "ref_col_biocircos",
                         choices = vals$choices$ref_col_biocircos )
-    prism_data$Type <- str_trim(tolower(prism_data$Type))
-    prism_data['Type2'] <- str_trim(tolower(prism_data$Type))
+    prism_data$Type <- stringr::str_trim(tolower(prism_data$Type))
+    prism_data['Type2'] <- stringr::str_trim(tolower(prism_data$Type))
     vals$prism_data <- prism_data
     vals$prism_type <- prism_data$Type2
     
@@ -611,7 +611,7 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$sempi_sco,{
     
     sempi_data <- read.csv("example_data/sco_sempi.csv")
-    sempi_data['Type2'] <- str_trim(tolower(sempi_data$Type))
+    sempi_data['Type2'] <- stringr::str_trim(tolower(sempi_data$Type))
     vals$sempi_type <- sempi_data$Type2
     vals$sempi_data <- sempi_data
     # Add chromosome info column
@@ -658,9 +658,9 @@ server <- function(input, output, session) {
     data <- read.delim("example_data/sco_duptable.tsv")
     disable_event_logic()
     get_location_duptable <- function(x, y){
-      test <- str_split(x, ";")
+      test <- stringr::str_split(x, ";")
       test2<- sub(".*loc\\|", "", test[[1]])
-      test3 <- str_split(test2, " ")
+      test3 <- stringr::str_split(test2, " ")
       res <- list()
       for (i in seq(1:length(test3))){
         id <- paste('hit',as.character(i), sep = "_")
@@ -700,14 +700,14 @@ server <- function(input, output, session) {
     
     data <- read.delim("example_data/sco_knownhits.tsv")
     locations <- sapply(data$Sequence.description, function(x){
-      tail(str_split(x , "\\|")[[1]], 1)
+      tail(stringr::str_split(x , "\\|")[[1]], 1)
     })
     
     start <- sapply(locations, function(x){
-      str_split(x, "_")[[1]][1]
+      stringr::str_split(x, "_")[[1]][1]
     })
     stop <- sapply(locations, function(x){
-      str_split(x, "_")[[1]][2]
+      stringr::str_split(x, "_")[[1]][2]
     })
     
     known_table <- data.frame(cbind(start, stop))
@@ -872,7 +872,7 @@ server <- function(input, output, session) {
 
         types <- sapply(types, function(x){
           if (length(unlist(x))>1){
-            tmp <- str_trim(paste0(unlist(x), collapse = '', sep = " "))
+            tmp <- stringr::str_trim(paste0(unlist(x), collapse = '', sep = " "))
             gsub(" ", "__", tmp)
           }else{
             x
@@ -908,8 +908,8 @@ server <- function(input, output, session) {
     # Add chromosome column
     anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
     # Type magic
-    anti_data$Type <- str_trim(tolower(anti_data$Type))
-    anti_data['Type2'] <- str_trim(tolower(anti_data$Type))
+    anti_data$Type <- stringr::str_trim(tolower(anti_data$Type))
+    anti_data['Type2'] <- stringr::str_trim(tolower(anti_data$Type))
     vals$anti_type <- anti_data$Type2
     vals$anti_data <- anti_data
     # Save file
@@ -950,7 +950,7 @@ server <- function(input, output, session) {
     
     
     sempi_data <- read.csv(input$sempi_data$datapath)
-    sempi_data['Type2'] <- str_trim(tolower(sempi_data$Type))
+    sempi_data['Type2'] <- stringr::str_trim(tolower(sempi_data$Type))
     vals$sempi_type <- sempi_data$Type2
     vals$sempi_data <- sempi_data
     # Add chromosome info column
@@ -999,11 +999,11 @@ server <- function(input, output, session) {
     # Type magic
     gecco_data$Cluster <- seq(1:length(gecco_data$chromosome))
     gecco_data$ID <- gecco_data$Cluster
-    gecco_data$Type <- str_trim(tolower(gecco_data$type))
+    gecco_data$Type <- stringr::str_trim(tolower(gecco_data$type))
     gecco_data$Type <- gsub("polyketide", "pks", gecco_data$Type)
     gecco_data$Type <- gsub("nrp", "nrps", gecco_data$Type)
     gecco_data$Type <- gsub("unknown", "under_threshold", gecco_data$Type)
-    gecco_data['Type2'] <- str_trim(tolower(gecco_data$Type))
+    gecco_data['Type2'] <- stringr::str_trim(tolower(gecco_data$Type))
     drop_cols <- c("alkaloid_probability" ,  "polyketide_probability", "ripp_probability",  "saccharide_probability",
                    "terpene_probability",    "nrp_probability"  , "other_probability" )
     # Read data
@@ -1011,8 +1011,8 @@ server <- function(input, output, session) {
       dplyr::mutate(pks=polyketide_probability, other = other_probability, nrps = nrp_probability, alkaloid = alkaloid_probability, 
              terpene = terpene_probability, saccharide = saccharide_probability, ripp = ripp_probability) %>%
       dplyr::select(-dplyr::one_of(drop_cols))
-    gecco_data$num_prot <- sapply( str_split(as.character(gecco_data$proteins), ";"), length)
-    gecco_data$num_domains <- sapply( str_split(as.character(gecco_data$domains), ";"), length)
+    gecco_data$num_prot <- sapply( stringr::str_split(as.character(gecco_data$proteins), ";"), length)
+    gecco_data$num_domains <- sapply( stringr::str_split(as.character(gecco_data$domains), ";"), length)
     names(gecco_data)[names(gecco_data) == "start"] <- "Start"
     names(gecco_data)[names(gecco_data) == "end"] <-  "Stop"
     vals$gecco_data <- gecco_data
@@ -1049,14 +1049,14 @@ server <- function(input, output, session) {
     
     data <- read.delim(input$known_data$datapath)
     locations <- sapply(data$Sequence.description, function(x){
-      tail(str_split(x , "\\|")[[1]], 1)
+      tail(stringr::str_split(x , "\\|")[[1]], 1)
     })
     
     start <- sapply(locations, function(x){
-      str_split(x, "_")[[1]][1]
+      stringr::str_split(x, "_")[[1]][1]
     })
     stop <- sapply(locations, function(x){
-      str_split(x, "_")[[1]][2]
+      stringr::str_split(x, "_")[[1]][2]
     })
     
     known_table <- data.frame(cbind(start, stop))
@@ -1120,9 +1120,9 @@ server <- function(input, output, session) {
     data <- read.delim(input$dup_data$datapath)
     
     get_location_duptable <- function(x, y){
-      test <- str_split(x, ";")
+      test <- stringr::str_split(x, ";")
       test2<- sub(".*loc\\|", "", test[[1]])
-      test3 <- str_split(test2, " ")
+      test3 <- stringr::str_split(test2, " ")
       res <- list()
       for (i in seq(1:length(test3))){
         id <- paste('hit',as.character(i), sep = "_")
@@ -1235,8 +1235,8 @@ server <- function(input, output, session) {
                       choices = vals$choices$ref_comparison_gecco )
     shiny::updateSelectInput(session, "ref_comparison",
                       choices = vals$choices$ref_comparison )
-    prism_data$Type <- str_trim(tolower(prism_data$Type))
-    prism_data['Type2'] <- str_trim(tolower(prism_data$Type))
+    prism_data$Type <- stringr::str_trim(tolower(prism_data$Type))
+    prism_data['Type2'] <- stringr::str_trim(tolower(prism_data$Type))
     vals$prism_data <- prism_data
     vals$prism_type <- prism_data$Type2
     
@@ -1592,7 +1592,7 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$anti_hybrid, {
     
     hybrid_col <- function(data){
-      data_split <- str_split(data$Type2, "__")
+      data_split <- stringr::str_split(data$Type2, "__")
       types <- sapply(data_split, function(x){
         if (length(unlist(x))>1){
           "hybrid"
@@ -1613,7 +1613,7 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$prism_hybrid, {
     
     hybrid_col <- function(data){
-      data_split <- str_split(data$Type2, "__")
+      data_split <- stringr::str_split(data$Type2, "__")
       types <- sapply(data_split, function(x){
         if (length(unlist(x))>1){
           "hybrid"
@@ -1633,7 +1633,7 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$sempi_hybrid, {
     
     hybrid_col <- function(data){
-      data_split <- str_split(data$Type2, "__")
+      data_split <- stringr::str_split(data$Type2, "__")
       types <- sapply(data_split, function(x){
         if (length(unlist(x))>1){
           "hybrid"
@@ -2202,7 +2202,7 @@ server <- function(input, output, session) {
     if (vals$arts_data_input == TRUE){
       if (input$dup_choice != "All"){
         vals$arts_data_filtered <- data.frame(vals$arts_data) %>%
-          dplyr::filter(Core == str_split(str_split(input$dup_choice, " ,")[[1]][[2]], "Core:")[[1]][[2]] | Core == "Not_core")
+          dplyr::filter(Core == stringr::str_split(stringr::str_split(input$dup_choice, " ,")[[1]][[2]], "Core:")[[1]][[2]] | Core == "Not_core")
         if (vals$data_upload_count!=1){
           new_arts <- lapply(inters$arts, function(x){
             new_to <- x$to[x$to %in% vals$arts_data_filtered$Cluster]
@@ -3311,8 +3311,8 @@ server <- function(input, output, session) {
     refine_unique <- function(data){
       n <- tail(data, n=1)
       data <- head(data, -1)
-      n_list <-  str_split(n, ",")
-      out <- sapply(n_list[[1]], function(x){x %in% unlist(str_split(data, ","))})
+      n_list <-  stringr::str_split(n, ",")
+      out <- sapply(n_list[[1]], function(x){x %in% unlist(stringr::str_split(data, ","))})
       res <- sapply(out, function(x){
         if (x==F){
           x
