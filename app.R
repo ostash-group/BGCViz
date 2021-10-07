@@ -8,7 +8,6 @@
 # GECCO, ARTS, SEMPI to visualized interception of those different annotations 
 # in one genome
 #
-library(shinyjs)
 library(rjson)
 library(stringr)
 library(GenomicRanges)
@@ -1371,10 +1370,10 @@ server <- function(input, output, session) {
     
     if (vals$rre_data_input == T){
       if (input$hide_viz == F){
-        showElement(selector = "#rre_width")
+        shinyjs::showElement(selector = "#rre_width")
       }
     } else{
-      hideElement(selector = "#rre_width")
+      shinyjs::hideElement(selector = "#rre_width")
     }
   })
   # Show anti_hybrid option if data is available
@@ -1383,12 +1382,12 @@ server <- function(input, output, session) {
     
     if (vals$anti_data_input == T){
       if (input$hide_anti == F){
-        showElement(selector = "#anti_header")
-        showElement(selector = "#anti_hybrid")
+        shinyjs::showElement(selector = "#anti_header")
+        shinyjs::showElement(selector = "#anti_hybrid")
       }
     } else{
-      hideElement(selector = "#anti_header")
-      hideElement(selector = "#anti_hybrid")
+      shinyjs::hideElement(selector = "#anti_header")
+      shinyjs::hideElement(selector = "#anti_hybrid")
     }
   })
   # Show prism options if data is available
@@ -1400,22 +1399,22 @@ server <- function(input, output, session) {
     
     if (vals$prism_data_input == T){
       if (input$hide_anti == F){
-        showElement(selector = "#prism_header")
-        showElement(selector = "#prism_hybrid")
+        shinyjs::showElement(selector = "#prism_header")
+        shinyjs::showElement(selector = "#prism_hybrid")
         if (vals$prism_json == T){
-          showElement(selector = "#prism_supp")
+          shinyjs::showElement(selector = "#prism_supp")
         }
       }
       if (input$hide_viz == F){
         if (vals$prism_json == T){
-          showElement(selector = "#prism_supp_data_input_width")
+          shinyjs::showElement(selector = "#prism_supp_data_input_width")
         }
       }
     } else{
-      hideElement(selector = "#prism_header")
-      hideElement(selector = "#prism_hybrid")
-      hideElement(selector = "#prism_supp")
-      hideElement(selector = "#prism_supp_data_input_width")
+      shinyjs::hideElement(selector = "#prism_header")
+      shinyjs::hideElement(selector = "#prism_hybrid")
+      shinyjs::hideElement(selector = "#prism_supp")
+      shinyjs::hideElement(selector = "#prism_supp_data_input_width")
     }
   })
   # Show SEMPI elements on data upload
@@ -1423,84 +1422,84 @@ server <- function(input, output, session) {
     
     if (vals$sempi_data_input == T){
       if (input$hide_anti == F){
-        showElement(selector = "#sempi_header")
-        showElement(selector = "#sempi_hybrid")
+        shinyjs::showElement(selector = "#sempi_header")
+        shinyjs::showElement(selector = "#sempi_hybrid")
       }
       if (input$hide_viz == F){
-        showElement(selector = "#sempi_width")
+        shinyjs::showElement(selector = "#sempi_width")
       }
     } else{
-      hideElement(selector = "#sempi_header")
-      hideElement(selector = "#sempi_hybrid")
-      hideElement(selector = "#sempi_width")
+      shinyjs::hideElement(selector = "#sempi_header")
+      shinyjs::hideElement(selector = "#sempi_hybrid")
+      shinyjs::hideElement(selector = "#sempi_width")
     }
   })
   # Show DeepBGC options if data is available
   shiny::observeEvent(vals$deep_data_input,{
     
     if (vals$deep_data_input == T){
-      showElement(selector = "#ref_comparison")
-      showElement(selector = "#hide_data_comparison")
-      showElement(selector = "#hide_data_filter")
-      showElement(selector = "#score_type")
-      showElement(selector = "#plot_step")
-      showElement(selector = "#plot_start")
-      showElement(selector = "#score_a")
-      showElement(selector = "#score_d")
-      showElement(selector = "#score_c")
-      showElement(selector = "#domains_filter")
-      showElement(selector = "#biodomain_filter")
-      showElement(selector = "#gene_filter")
-      showElement(selector = "#cluster_type")
-      showElement(selector = "#data_comparison_header")
-      showElement(selector = "#data_filter_header")
+      shinyjs::showElement(selector = "#ref_comparison")
+      shinyjs::showElement(selector = "#hide_data_comparison")
+      shinyjs::showElement(selector = "#hide_data_filter")
+      shinyjs::showElement(selector = "#score_type")
+      shinyjs::showElement(selector = "#plot_step")
+      shinyjs::showElement(selector = "#plot_start")
+      shinyjs::showElement(selector = "#score_a")
+      shinyjs::showElement(selector = "#score_d")
+      shinyjs::showElement(selector = "#score_c")
+      shinyjs::showElement(selector = "#domains_filter")
+      shinyjs::showElement(selector = "#biodomain_filter")
+      shinyjs::showElement(selector = "#gene_filter")
+      shinyjs::showElement(selector = "#cluster_type")
+      shinyjs::showElement(selector = "#data_comparison_header")
+      shinyjs::showElement(selector = "#data_filter_header")
     } else{
-      hideElement(selector = "#ref_comparison")
-      hideElement(selector = "#score_type")
-      hideElement(selector = "#hide_data_comparison")
-      hideElement(selector = "#hide_data_filter")
-      hideElement(selector = "#plot_step")
-      hideElement(selector = "#plot_start")
-      hideElement(selector = "#score_a")
-      hideElement(selector = "#score_d")
-      hideElement(selector = "#score_c")
-      hideElement(selector = "#domains_filter")
-      hideElement(selector = "#biodomain_filter")
-      hideElement(selector = "#gene_filter")
-      hideElement(selector = "#cluster_type")
-      hideElement(selector = "#data_comparison_header")
-      hideElement(selector = "#data_filter_header")
+      shinyjs::hideElement(selector = "#ref_comparison")
+      shinyjs::hideElement(selector = "#score_type")
+      shinyjs::hideElement(selector = "#hide_data_comparison")
+      shinyjs::hideElement(selector = "#hide_data_filter")
+      shinyjs::hideElement(selector = "#plot_step")
+      shinyjs::hideElement(selector = "#plot_start")
+      shinyjs::hideElement(selector = "#score_a")
+      shinyjs::hideElement(selector = "#score_d")
+      shinyjs::hideElement(selector = "#score_c")
+      shinyjs::hideElement(selector = "#domains_filter")
+      shinyjs::hideElement(selector = "#biodomain_filter")
+      shinyjs::hideElement(selector = "#gene_filter")
+      shinyjs::hideElement(selector = "#cluster_type")
+      shinyjs::hideElement(selector = "#data_comparison_header")
+      shinyjs::hideElement(selector = "#data_filter_header")
     }
   })
   # Show GECCO data options, if data is uploaded
   shiny::observeEvent(vals$gecco_data_input,{
     
     if (vals$gecco_data_input == T){
-      showElement(selector = "#data_comparison_header_gecco")
-      showElement(selector = "#hide_data_comparison_gecco")
-      showElement(selector = "#ref_comparison_gecco")
-      showElement(selector = "#score_type_gecco")
-      showElement(selector = "#plot_step_gecco")
-      showElement(selector = "#plot_start_gecco")
-      showElement(selector = "#data_filter_header_gecco")
-      showElement(selector = "#hide_data_filter_gecco")
-      showElement(selector = "#score_average_gecco")
-      showElement(selector = "#score_cluster_gecco")
-      showElement(selector = "#domains_filter_gecco")
-      showElement(selector = "#prot_filter_gecco")
+      shinyjs::showElement(selector = "#data_comparison_header_gecco")
+      shinyjs::showElement(selector = "#hide_data_comparison_gecco")
+      shinyjs::showElement(selector = "#ref_comparison_gecco")
+      shinyjs::showElement(selector = "#score_type_gecco")
+      shinyjs::showElement(selector = "#plot_step_gecco")
+      shinyjs::showElement(selector = "#plot_start_gecco")
+      shinyjs::showElement(selector = "#data_filter_header_gecco")
+      shinyjs::showElement(selector = "#hide_data_filter_gecco")
+      shinyjs::showElement(selector = "#score_average_gecco")
+      shinyjs::showElement(selector = "#score_cluster_gecco")
+      shinyjs::showElement(selector = "#domains_filter_gecco")
+      shinyjs::showElement(selector = "#prot_filter_gecco")
     } else{
-      hideElement(selector = "#data_comparison_header_gecco")
-      hideElement(selector = "#hide_data_comparison_gecco")
-      hideElement(selector = "#ref_comparison_gecco")
-      hideElement(selector = "#score_type_gecco")
-      hideElement(selector = "#plot_step_gecco")
-      hideElement(selector = "#plot_start_gecco")
-      hideElement(selector = "#data_filter_header_gecco")
-      hideElement(selector = "#hide_data_filter_gecco")
-      hideElement(selector = "#score_average_gecco")
-      hideElement(selector = "#score_cluster_gecco")
-      hideElement(selector = "#domains_filter_gecco")
-      hideElement(selector = "#prot_filter_gecco")
+      shinyjs::hideElement(selector = "#data_comparison_header_gecco")
+      shinyjs::hideElement(selector = "#hide_data_comparison_gecco")
+      shinyjs::hideElement(selector = "#ref_comparison_gecco")
+      shinyjs::hideElement(selector = "#score_type_gecco")
+      shinyjs::hideElement(selector = "#plot_step_gecco")
+      shinyjs::hideElement(selector = "#plot_start_gecco")
+      shinyjs::hideElement(selector = "#data_filter_header_gecco")
+      shinyjs::hideElement(selector = "#hide_data_filter_gecco")
+      shinyjs::hideElement(selector = "#score_average_gecco")
+      shinyjs::hideElement(selector = "#score_cluster_gecco")
+      shinyjs::hideElement(selector = "#domains_filter_gecco")
+      shinyjs::hideElement(selector = "#prot_filter_gecco")
     }
   })
   # Ahow ARTS data options, if data is available
@@ -1508,16 +1507,16 @@ server <- function(input, output, session) {
     
     if (vals$arts_data_input == T){
       if (input$hide_anti == F){
-        showElement(selector = "#arts_header")
-        showElement(selector = "#dup_choice")
+        shinyjs::showElement(selector = "#arts_header")
+        shinyjs::showElement(selector = "#dup_choice")
       }
       if (input$hide_viz == F){
-        showElement(selector = "#arts_width")
+        shinyjs::showElement(selector = "#arts_width")
       }
     } else {
-      hideElement(selector = "#arts_header")
-      hideElement(selector = "#dup_choice")
-      hideElement(selector = "#arts_width")
+      shinyjs::hideElement(selector = "#arts_header")
+      shinyjs::hideElement(selector = "#dup_choice")
+      shinyjs::hideElement(selector = "#arts_width")
     }
   })
   ##---------------------------------------------------------------
@@ -1533,14 +1532,14 @@ server <- function(input, output, session) {
       
     }else if (vals$data_upload_count >=2){
       if (input$hide_summarize == F) {
-        showElement(selector = "#summarize")
-        showElement(selector = "#group_by")
-        showElement(selector = "#count_all")
+        shinyjs::showElement(selector = "#summarize")
+        shinyjs::showElement(selector = "#group_by")
+        shinyjs::showElement(selector = "#count_all")
       }
       if (input$hide_viz == F){
-        showElement(selector = "#biocircos_color")
-        showElement(selector = "#label_color")
-        showElement(selector = "#label_color_class")
+        shinyjs::showElement(selector = "#biocircos_color")
+        shinyjs::showElement(selector = "#label_color")
+        shinyjs::showElement(selector = "#label_color_class")
       }
       shiny::showTab("main", "2")
       shiny::showTab("main", "3")
@@ -1565,15 +1564,15 @@ server <- function(input, output, session) {
       shiny::hideTab("main", "4")
       shiny::hideTab(inputId = "main", target = "5")
       shiny::hideTab(inputId = "main", target = "1")
-      hideElement(selector = "#genes_on_chr")
-      hideElement(selector = "#hide_genes_on_chr")
-      hideElement(selector = "#ref")
+      shinyjs::hideElement(selector = "#genes_on_chr")
+      shinyjs::hideElement(selector = "#hide_genes_on_chr")
+      shinyjs::hideElement(selector = "#ref")
     }else{
       shiny::showTab("main", "4")
       if (input$hide_genes_on_chr == F){
-        showElement(selector = "#genes_on_chr")
-        showElement(selector = "#hide_genes_on_chr")
-        showElement(selector = "#ref")
+        shinyjs::showElement(selector = "#genes_on_chr")
+        shinyjs::showElement(selector = "#hide_genes_on_chr")
+        shinyjs::showElement(selector = "#ref")
       }
       
     }
@@ -1583,9 +1582,9 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$label_color_class, {
     
     if (input$label_color_class == "R"){
-      showElement(selector = "#ref_col_biocircos")
+      shinyjs::showElement(selector = "#ref_col_biocircos")
     } else {
-      hideElement(selector = "#ref_col_biocircos")
+      shinyjs::hideElement(selector = "#ref_col_biocircos")
     }
   })
   # Make hybrids from the data, if checkbox is checked   
@@ -1678,8 +1677,8 @@ server <- function(input, output, session) {
       prism_data['Type2'] <-  vals$prism_type
        vals$prism_data <- prism_data
     }
-      showElement(selector = "#reset_name")
-      hideElement(selector = "#rename")
+      shinyjs::showElement(selector = "#reset_name")
+      shinyjs::hideElement(selector = "#rename")
     vals$renamed <- T
     shiny::showNotification(paste("Please note: SEMPI, PRISM and Antismash input data will be renamed on upload"), type = "warning", duration=10)
       })
@@ -1720,8 +1719,8 @@ server <- function(input, output, session) {
     shiny::updateCheckboxInput(inputId = "anti_hybrid", value = F)
     shiny::updateCheckboxInput(inputId = "sempi_hybrid", value =F)
     shiny::updateCheckboxInput(inputId = "prism_hybrid", value = F)
-      showElement(selector = "#rename")
-      hideElement(selector = "#reset_name")
+      shinyjs::showElement(selector = "#rename")
+      shinyjs::hideElement(selector = "#reset_name")
     vals$renamed <- F
   })
   # Read the uploaded renaming scheme csv
@@ -1734,104 +1733,104 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$hide_uploads, {
     
     if (input$hide_uploads == T){
-      hideElement(selector = "#anti_input_options")
-      hideElement(selector = "#anti_data")
-      hideElement(selector = "#prism_input_options")
-      hideElement(selector = "#anti_header_upload")
-      hideElement(selector = "#prism_header_upload")
-      hideElement(selector = "#prism_data")
-      hideElement(selector = "#sempi_header_upload")
-      hideElement(selector = "#sempi_data")
-      hideElement(selector = "#deep_header_upload")
-      hideElement(selector = "#deep_data")
-      hideElement(selector = "#gecco_header_upload")
-      hideElement(selector = "#gecco_data")
-      hideElement(selector = "#rre_header_upload")
-      hideElement(selector = "#rre_data")
-      hideElement(selector = "#chr_len")
-      hideElement(selector = "#arts_header_upload")
-      hideElement(selector = "#known_data")
-      hideElement(selector = "#dup_data")
-      hideElement(selector = "#anti_sco")
-      hideElement(selector = "#prism_sco")
-      hideElement(selector = "#arts_sco")
-      hideElement(selector = "#rre_sco")
-      hideElement(selector = "#sempi_sco")
-      hideElement(selector = "#deep_sco")
-      hideElement(selector = "#gecco_sco")
+      shinyjs::hideElement(selector = "#anti_input_options")
+      shinyjs::hideElement(selector = "#anti_data")
+      shinyjs::hideElement(selector = "#prism_input_options")
+      shinyjs::hideElement(selector = "#anti_header_upload")
+      shinyjs::hideElement(selector = "#prism_header_upload")
+      shinyjs::hideElement(selector = "#prism_data")
+      shinyjs::hideElement(selector = "#sempi_header_upload")
+      shinyjs::hideElement(selector = "#sempi_data")
+      shinyjs::hideElement(selector = "#deep_header_upload")
+      shinyjs::hideElement(selector = "#deep_data")
+      shinyjs::hideElement(selector = "#gecco_header_upload")
+      shinyjs::hideElement(selector = "#gecco_data")
+      shinyjs::hideElement(selector = "#rre_header_upload")
+      shinyjs::hideElement(selector = "#rre_data")
+      shinyjs::hideElement(selector = "#chr_len")
+      shinyjs::hideElement(selector = "#arts_header_upload")
+      shinyjs::hideElement(selector = "#known_data")
+      shinyjs::hideElement(selector = "#dup_data")
+      shinyjs::hideElement(selector = "#anti_sco")
+      shinyjs::hideElement(selector = "#prism_sco")
+      shinyjs::hideElement(selector = "#arts_sco")
+      shinyjs::hideElement(selector = "#rre_sco")
+      shinyjs::hideElement(selector = "#sempi_sco")
+      shinyjs::hideElement(selector = "#deep_sco")
+      shinyjs::hideElement(selector = "#gecco_sco")
     }else {
-      showElement(selector = "#anti_input_options")
-      showElement(selector = "#anti_data")
-      showElement(selector = "#prism_input_options")
-      showElement(selector = "#anti_header_upload")
-      showElement(selector = "#prism_header_upload")
-      showElement(selector = "#prism_data")
-      showElement(selector = "#sempi_header_upload")
-      showElement(selector = "#sempi_data")
-      showElement(selector = "#deep_header_upload")
-      showElement(selector = "#deep_data")
-      showElement(selector = "#gecco_header_upload")
-      showElement(selector = "#gecco_data")
-      showElement(selector = "#rre_header_upload")
-      showElement(selector = "#rre_data")
-      showElement(selector = "#chr_len")
-      showElement(selector = "#arts_header_upload")
-      showElement(selector = "#known_data")
-      showElement(selector = "#dup_data")
-      showElement(selector = "#anti_sco")
-      showElement(selector = "#prism_sco")
-      showElement(selector = "#arts_sco")
-      showElement(selector = "#rre_sco")
-      showElement(selector = "#sempi_sco")
-      showElement(selector = "#deep_sco")
-      showElement(selector = "#gecco_sco")
+      shinyjs::showElement(selector = "#anti_input_options")
+      shinyjs::showElement(selector = "#anti_data")
+      shinyjs::showElement(selector = "#prism_input_options")
+      shinyjs::showElement(selector = "#anti_header_upload")
+      shinyjs::showElement(selector = "#prism_header_upload")
+      shinyjs::showElement(selector = "#prism_data")
+      shinyjs::showElement(selector = "#sempi_header_upload")
+      shinyjs::showElement(selector = "#sempi_data")
+      shinyjs::showElement(selector = "#deep_header_upload")
+      shinyjs::showElement(selector = "#deep_data")
+      shinyjs::showElement(selector = "#gecco_header_upload")
+      shinyjs::showElement(selector = "#gecco_data")
+      shinyjs::showElement(selector = "#rre_header_upload")
+      shinyjs::showElement(selector = "#rre_data")
+      shinyjs::showElement(selector = "#chr_len")
+      shinyjs::showElement(selector = "#arts_header_upload")
+      shinyjs::showElement(selector = "#known_data")
+      shinyjs::showElement(selector = "#dup_data")
+      shinyjs::showElement(selector = "#anti_sco")
+      shinyjs::showElement(selector = "#prism_sco")
+      shinyjs::showElement(selector = "#arts_sco")
+      shinyjs::showElement(selector = "#rre_sco")
+      shinyjs::showElement(selector = "#sempi_sco")
+      shinyjs::showElement(selector = "#deep_sco")
+      shinyjs::showElement(selector = "#gecco_sco")
   }
     })
   # What to do, if hide data options scheme is triggered
   shiny::observeEvent(input$hide_anti, {
     
     if (input$hide_anti== T){
-      hideElement(selector = "#anti_header")
-      hideElement(selector = "#anti_hybrid")
-      hideElement(selector = "#sempi_header")
-      hideElement(selector = "#sempi_hybrid")
-      hideElement(selector = "#prism_header")
-      hideElement(selector = "#prism_hybrid")
-      hideElement(selector = "#prism_supp")
-      hideElement(selector = "#arts_header")
-      hideElement(selector = "#dup_choice")
+      shinyjs::hideElement(selector = "#anti_header")
+      shinyjs::hideElement(selector = "#anti_hybrid")
+      shinyjs::hideElement(selector = "#sempi_header")
+      shinyjs::hideElement(selector = "#sempi_hybrid")
+      shinyjs::hideElement(selector = "#prism_header")
+      shinyjs::hideElement(selector = "#prism_hybrid")
+      shinyjs::hideElement(selector = "#prism_supp")
+      shinyjs::hideElement(selector = "#arts_header")
+      shinyjs::hideElement(selector = "#dup_choice")
     }else{
       if (vals$anti_data_input == T){
-        showElement(selector = "#anti_header")
-        showElement(selector = "#anti_hybrid")
+        shinyjs::showElement(selector = "#anti_header")
+        shinyjs::showElement(selector = "#anti_hybrid")
       } else{
-        hideElement(selector = "#anti_header")
-        hideElement(selector = "#anti_hybrid")
+        shinyjs::hideElement(selector = "#anti_header")
+        shinyjs::hideElement(selector = "#anti_hybrid")
       }
       if (vals$prism_data_input == T){
-      showElement(selector = "#prism_header")
-      showElement(selector = "#prism_hybrid")
+      shinyjs::showElement(selector = "#prism_header")
+      shinyjs::showElement(selector = "#prism_hybrid")
       if (vals$prism_json == T){
-        showElement(selector = "#prism_supp")
+        shinyjs::showElement(selector = "#prism_supp")
       }
       } else {
-        hideElement(selector = "#prism_header")
-        hideElement(selector = "#prism_hybrid")
-        hideElement(selector = "#prism_supp")
+        shinyjs::hideElement(selector = "#prism_header")
+        shinyjs::hideElement(selector = "#prism_hybrid")
+        shinyjs::hideElement(selector = "#prism_supp")
       }
       if (vals$sempi_data_input == T){
-      showElement(selector = "#sempi_header")
-      showElement(selector = "#sempi_hybrid")
+      shinyjs::showElement(selector = "#sempi_header")
+      shinyjs::showElement(selector = "#sempi_hybrid")
       } else {
-        hideElement(selector = "#sempi_header")
-        hideElement(selector = "#sempi_hybrid")
+        shinyjs::hideElement(selector = "#sempi_header")
+        shinyjs::hideElement(selector = "#sempi_hybrid")
       }
       if (vals$arts_data_input == T){
-        showElement(selector = "#arts_header")
-        showElement(selector = "#dup_choice")
+        shinyjs::showElement(selector = "#arts_header")
+        shinyjs::showElement(selector = "#dup_choice")
       } else{
-        hideElement(selector = "#arts_header")
-        hideElement(selector = "#dup_choice")
+        shinyjs::hideElement(selector = "#arts_header")
+        shinyjs::hideElement(selector = "#dup_choice")
       }
     }
   })
@@ -1839,13 +1838,13 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$hide_genes_on_chr, {
     
     if (input$hide_genes_on_chr == T){
-      hideElement(selector = "#ref")
+      shinyjs::hideElement(selector = "#ref")
     } else {
       if (vals$data_upload_count > 0){
-        showElement(selector = "#ref")
+        shinyjs::showElement(selector = "#ref")
       } else {
-        hideElement(selector = "#genes_on_chr")
-        hideElement(selector = "#ref")
+        shinyjs::hideElement(selector = "#genes_on_chr")
+        shinyjs::hideElement(selector = "#ref")
       }
     }
   })
@@ -1853,16 +1852,16 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$hide_summarize, {
     
     if (input$hide_summarize == T){
-      hideElement(selector = "#group_by")
-      hideElement(selector = "#count_all")
+      shinyjs::hideElement(selector = "#group_by")
+      shinyjs::hideElement(selector = "#count_all")
     } else {
       if (vals$data_upload_count > 1){
-        showElement(selector = "#group_by")
-        showElement(selector = "#count_all")
+        shinyjs::showElement(selector = "#group_by")
+        shinyjs::showElement(selector = "#count_all")
       } else {
-        hideElement(selector = "#summarize")
-        hideElement(selector = "#group_by")
-        hideElement(selector = "#count_all")
+        shinyjs::hideElement(selector = "#summarize")
+        shinyjs::hideElement(selector = "#group_by")
+        shinyjs::hideElement(selector = "#count_all")
       }
       
     }
@@ -1871,58 +1870,58 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$hide_viz, {
     
     if (input$hide_viz == T){
-      hideElement(selector = "#rename_data")
-      hideElement(selector = "#rename")
-      hideElement(selector = "#reset_name")
-      hideElement(selector = "#rre_width")
-      hideElement(selector = "#biocircos_color")
-      hideElement(selector = "#label_color")
-      hideElement(selector = "#label_color_class")
-      hideElement(selector = "#ref_col_biocircos")
-      hideElement(selector = "#arts_header")
-      hideElement(selector = "#arts_width")
-      hideElement(selector = "#sempi_width")
-      hideElement(selector = "#prism_supp_data_input_width")
+      shinyjs::hideElement(selector = "#rename_data")
+      shinyjs::hideElement(selector = "#rename")
+      shinyjs::hideElement(selector = "#reset_name")
+      shinyjs::hideElement(selector = "#rre_width")
+      shinyjs::hideElement(selector = "#biocircos_color")
+      shinyjs::hideElement(selector = "#label_color")
+      shinyjs::hideElement(selector = "#label_color_class")
+      shinyjs::hideElement(selector = "#ref_col_biocircos")
+      shinyjs::hideElement(selector = "#arts_header")
+      shinyjs::hideElement(selector = "#arts_width")
+      shinyjs::hideElement(selector = "#sempi_width")
+      shinyjs::hideElement(selector = "#prism_supp_data_input_width")
     } else{
-      showElement(selector = "#rename_data")
-      showElement(selector = "#rename")
-      showElement(selector = "#reset_name")
+      shinyjs::showElement(selector = "#rename_data")
+      shinyjs::showElement(selector = "#rename")
+      shinyjs::showElement(selector = "#reset_name")
       if (vals$rre_data_input == T){
-        showElement(selector = "#rre_width")
+        shinyjs::showElement(selector = "#rre_width")
       } else {
-        hideElement(selector = "#rre_width")
+        shinyjs::hideElement(selector = "#rre_width")
       }
       if (vals$sempi_data_input == T){
-        showElement(selector = "#sempi_width")
+        shinyjs::showElement(selector = "#sempi_width")
       } else {
-        hideElement(selector = "#sempi_width")
+        shinyjs::hideElement(selector = "#sempi_width")
       }
       if (vals$prism_json == T){
-        showElement(selector = "#prism_supp_data_input_width")
+        shinyjs::showElement(selector = "#prism_supp_data_input_width")
       }
       else {
-        hideElement(selector = "#prism_supp_data_input_width")
+        shinyjs::hideElement(selector = "#prism_supp_data_input_width")
       }
       if (vals$data_upload_count > 1){
-        showElement(selector = "#biocircos_color")
-        showElement(selector = "#label_color")
-        showElement(selector = "#label_color_class")
+        shinyjs::showElement(selector = "#biocircos_color")
+        shinyjs::showElement(selector = "#label_color")
+        shinyjs::showElement(selector = "#label_color_class")
       } else {
-        hideElement(selector = "#biocircos_color")
-        hideElement(selector = "#label_color")
-        hideElement(selector = "#label_color_class")
+        shinyjs::hideElement(selector = "#biocircos_color")
+        shinyjs::hideElement(selector = "#label_color")
+        shinyjs::hideElement(selector = "#label_color_class")
       }
       if (input$label_color_class == "R"){
-        showElement(selector = "#ref_col_biocircos")
+        shinyjs::showElement(selector = "#ref_col_biocircos")
       } else {
-        hideElement(selector = "#ref_col_biocircos")
+        shinyjs::hideElement(selector = "#ref_col_biocircos")
       }
       if (vals$arts_data_input == T){
-        showElement(selector = "#arts_header")
-        showElement(selector = "#arts_width")
+        shinyjs::showElement(selector = "#arts_header")
+        shinyjs::showElement(selector = "#arts_width")
       } else {
-        hideElement(selector = "#arts_header")
-        hideElement(selector = "#arts_width")
+        shinyjs::hideElement(selector = "#arts_header")
+        shinyjs::hideElement(selector = "#arts_width")
       }
       
     }
@@ -1931,89 +1930,89 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$hide_data_comparison, {
     
     if ((input$hide_data_comparison == T)){
-      hideElement(selector = "#ref_comparison")
-      hideElement(selector = "#score_type")
-      hideElement(selector = "#plot_step")
-      hideElement(selector = "#plot_start")
+      shinyjs::hideElement(selector = "#ref_comparison")
+      shinyjs::hideElement(selector = "#score_type")
+      shinyjs::hideElement(selector = "#plot_step")
+      shinyjs::hideElement(selector = "#plot_start")
     } else if (vals$deep_data_input == T) {
-      showElement(selector = "#ref_comparison")
-      showElement(selector = "#score_type")
-      showElement(selector = "#plot_step")
-      showElement(selector = "#plot_start")
+      shinyjs::showElement(selector = "#ref_comparison")
+      shinyjs::showElement(selector = "#score_type")
+      shinyjs::showElement(selector = "#plot_step")
+      shinyjs::showElement(selector = "#plot_start")
     } else {
-      hideElement(selector = "#ref_comparison")
-      hideElement(selector = "#score_type")
-      hideElement(selector = "#plot_step")
-      hideElement(selector = "#plot_start")
+      shinyjs::hideElement(selector = "#ref_comparison")
+      shinyjs::hideElement(selector = "#score_type")
+      shinyjs::hideElement(selector = "#plot_step")
+      shinyjs::hideElement(selector = "#plot_start")
     }
   })
   # What to do, if hide DeepBGC filtering options scheme is triggered
   shiny::observeEvent(input$hide_data_filter, {
     
     if ((input$hide_data_filter == T)){
-      hideElement(selector = "#score_a")
-      hideElement(selector = "#score_d")
-      hideElement(selector = "#score_c")
-      hideElement(selector = "#domains_filter")
-      hideElement(selector = "#biodomain_filter")
-      hideElement(selector = "#gene_filter")
-      hideElement(selector = "#cluster_type")
+      shinyjs::hideElement(selector = "#score_a")
+      shinyjs::hideElement(selector = "#score_d")
+      shinyjs::hideElement(selector = "#score_c")
+      shinyjs::hideElement(selector = "#domains_filter")
+      shinyjs::hideElement(selector = "#biodomain_filter")
+      shinyjs::hideElement(selector = "#gene_filter")
+      shinyjs::hideElement(selector = "#cluster_type")
     } else if  (vals$deep_data_input == T){
-      showElement(selector = "#score_a")
-      showElement(selector = "#score_d")
-      showElement(selector = "#score_c")
-      showElement(selector = "#domains_filter")
-      showElement(selector = "#biodomain_filter")
-      showElement(selector = "#gene_filter")
-      showElement(selector = "#cluster_type")
+      shinyjs::showElement(selector = "#score_a")
+      shinyjs::showElement(selector = "#score_d")
+      shinyjs::showElement(selector = "#score_c")
+      shinyjs::showElement(selector = "#domains_filter")
+      shinyjs::showElement(selector = "#biodomain_filter")
+      shinyjs::showElement(selector = "#gene_filter")
+      shinyjs::showElement(selector = "#cluster_type")
     } else {
-      hideElement(selector = "#score_a")
-      hideElement(selector = "#score_d")
-      hideElement(selector = "#score_c")
-      hideElement(selector = "#domains_filter")
-      hideElement(selector = "#biodomain_filter")
-      hideElement(selector = "#gene_filter")
-      hideElement(selector = "#cluster_type")
+      shinyjs::hideElement(selector = "#score_a")
+      shinyjs::hideElement(selector = "#score_d")
+      shinyjs::hideElement(selector = "#score_c")
+      shinyjs::hideElement(selector = "#domains_filter")
+      shinyjs::hideElement(selector = "#biodomain_filter")
+      shinyjs::hideElement(selector = "#gene_filter")
+      shinyjs::hideElement(selector = "#cluster_type")
     }
   })
   # What to do, if hide GECCO comparison options scheme is triggered
   shiny::observeEvent(input$hide_data_comparison_gecco, {
     
     if ((input$hide_data_comparison_gecco == T)){
-      hideElement(selector = "#ref_comparison_gecco")
-      hideElement(selector = "#score_type_gecco")
-      hideElement(selector = "#plot_step_gecco")
-      hideElement(selector = "#plot_start_gecco")
+      shinyjs::hideElement(selector = "#ref_comparison_gecco")
+      shinyjs::hideElement(selector = "#score_type_gecco")
+      shinyjs::hideElement(selector = "#plot_step_gecco")
+      shinyjs::hideElement(selector = "#plot_start_gecco")
     } else if (vals$gecco_data_input == T) {
-      showElement(selector = "#ref_comparison_gecco")
-      showElement(selector = "#score_type_gecco")
-      showElement(selector = "#plot_step_gecco")
-      showElement(selector = "#plot_start_gecco")
+      shinyjs::showElement(selector = "#ref_comparison_gecco")
+      shinyjs::showElement(selector = "#score_type_gecco")
+      shinyjs::showElement(selector = "#plot_step_gecco")
+      shinyjs::showElement(selector = "#plot_start_gecco")
     } else {
-      hideElement(selector = "#ref_comparison_gecco")
-      hideElement(selector = "#score_type_gecco")
-      hideElement(selector = "#plot_step_gecco")
-      hideElement(selector = "#plot_start_gecco")
+      shinyjs::hideElement(selector = "#ref_comparison_gecco")
+      shinyjs::hideElement(selector = "#score_type_gecco")
+      shinyjs::hideElement(selector = "#plot_step_gecco")
+      shinyjs::hideElement(selector = "#plot_start_gecco")
     }
   })
   # What to do, if hide GECCO filtering options scheme is triggered
   shiny::observeEvent(input$hide_data_filter_gecco, {
     
     if ((input$hide_data_filter_gecco == T)){
-      hideElement(selector = "#score_average_gecco")
-      hideElement(selector = "#score_average_gecco")
-      hideElement(selector = "#domains_filter_gecco")
-      hideElement(selector = "#prot_filter_gecco")
+      shinyjs::hideElement(selector = "#score_average_gecco")
+      shinyjs::hideElement(selector = "#score_average_gecco")
+      shinyjs::hideElement(selector = "#domains_filter_gecco")
+      shinyjs::hideElement(selector = "#prot_filter_gecco")
     } else if  (vals$gecco_data_input == T){
-      showElement(selector = "#score_average_gecco")
-      showElement(selector = "#score_average_gecco")
-      showElement(selector = "#domains_filter_gecco")
-      showElement(selector = "#prot_filter_gecco")
+      shinyjs::showElement(selector = "#score_average_gecco")
+      shinyjs::showElement(selector = "#score_average_gecco")
+      shinyjs::showElement(selector = "#domains_filter_gecco")
+      shinyjs::showElement(selector = "#prot_filter_gecco")
     } else {
-      hideElement(selector = "#score_average_gecco")
-      hideElement(selector = "#score_average_gecco")
-      hideElement(selector = "#domains_filter_gecco")
-      hideElement(selector = "#prot_filter_gecco")
+      shinyjs::hideElement(selector = "#score_average_gecco")
+      shinyjs::hideElement(selector = "#score_average_gecco")
+      shinyjs::hideElement(selector = "#domains_filter_gecco")
+      shinyjs::hideElement(selector = "#prot_filter_gecco")
     }
   })
   
