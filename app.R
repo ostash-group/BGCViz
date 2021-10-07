@@ -11,7 +11,6 @@
 library(tidyverse)
 library(plyr)
 library(plotly)
-library(BioCircos)
 library(ggplot2)
 library(shinyjs)
 library(rjson)
@@ -157,7 +156,7 @@ ui <- shiny::fluidPage(
         shiny::tabPanel(title = "Compare data with Gecco", value = 5 ,shiny::plotOutput("gecco_barplot",height = "500px"), plotlyOutput("gecco_rate")),
         shiny::tabPanel(title = "Annotation visualization and comparison", value = 4,plotlyOutput("deep_reference_2", height = "500px"), 
                  plotlyOutput("deep_reference", height = "500px")),
-        shiny::tabPanel(title = "Biocircos plot", value = 2, BioCircosOutput("biocircos", height = "1000px"), shiny::dataTableOutput("biocircos_legend")),
+        shiny::tabPanel(title = "Biocircos plot", value = 2, BioCircos::BioCircosOutput("biocircos", height = "1000px"), shiny::dataTableOutput("biocircos_legend")),
         shiny::tabPanel(title = "Summarize interception", value = 3,plotlyOutput("barplot_rank", height = "600px"),shiny::tableOutput("group_table")),
         type = "tabs", id = "main"
       )
@@ -2317,7 +2316,7 @@ server <- function(input, output, session) {
       index <- index +1 
     }
     # Add to tracklist. Then it can be populated with links
-    tracklist <- BioCircosArcTrack('myArcTrack', arcs_chromosomes, arcs_begin, arcs_end, 
+    tracklist <- BioCircos::BioCircosArcTrack('myArcTrack', arcs_chromosomes, arcs_begin, arcs_end, 
                                    minRadius = 0.90, maxRadius = 0.97, labels = arc_labels,colors = arc_col )
     # Function to get interception between two matrices. Returns a list of two elements - IDs from first matrix and 
     # from second one. IDs are duplicated, if intercepted more than one time
@@ -2472,13 +2471,13 @@ server <- function(input, output, session) {
       group_colors <- count(unlist(label_color))
       for (i in seq(1:dim(group_colors)[1])){
         subset <- unname( which(label_color %in% group_colors$x[i]))
-        tracklist = tracklist + BioCircosLinkTrack(as.character(i), chromosomes_start[subset], link_pos_start[subset], 
+        tracklist = tracklist + BioCircos::BioCircosLinkTrack(as.character(i), chromosomes_start[subset], link_pos_start[subset], 
                                                    link_pos_start_1[subset], chromosomes_end[subset], link_pos_end[subset], 
                                                    link_pos_end_2[subset], maxRadius = 0.85, labels = link_labels[subset],
                                                    displayLabel = FALSE, color = group_colors$x[i])
       }
     } else if ((input$label_color == F) & (length(chromosomes_start) > 0)){
-      tracklist = tracklist + BioCircosLinkTrack('myLinkTrack_master', chromosomes_start, link_pos_start, 
+      tracklist = tracklist + BioCircos::BioCircosLinkTrack('myLinkTrack_master', chromosomes_start, link_pos_start, 
                                                  link_pos_start_1, chromosomes_end, link_pos_end, 
                                                  link_pos_end_2, maxRadius = 0.85, labels = link_labels,
                                                 displayLabel = FALSE, color = rename_data$Color[rename_data$Group_color == 'base'])
@@ -3221,11 +3220,11 @@ server <- function(input, output, session) {
   ##                      Biocircos plot tab                       -
   ##---------------------------------------------------------------
   # Render Biocircos Plot for all-vs-all comparison
-  output$biocircos <- renderBioCircos({
+  output$biocircos <- BioCircos::renderBioCircos({
     shiny::req(vals$data_upload_count >1)
     
     # Plot BioCircos
-    BioCircos(vals$tracklist, genome = vals$Biocircos_chromosomes, genomeTicksScale = 1e+6)
+    BioCircos::BioCircos(vals$tracklist, genome = vals$Biocircos_chromosomes, genomeTicksScale = 1e+6)
   })
   
   
