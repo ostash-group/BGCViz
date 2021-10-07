@@ -8,7 +8,6 @@
 # GECCO, ARTS, SEMPI to visualized interception of those different annotations 
 # in one genome
 #
-library(plotly)
 library(shinyjs)
 library(rjson)
 library(stringr)
@@ -148,12 +147,12 @@ ui <- shiny::fluidPage(
     shiny::mainPanel(
       # Define tabs and their correcponding plots
       shiny::tabsetPanel(
-        shiny::tabPanel(title = "Compare data with DeepBGC", value = 1 ,shiny::plotOutput("deep_barplot",height = "500px"), plotlyOutput("deep_rate")),
-        shiny::tabPanel(title = "Compare data with Gecco", value = 5 ,shiny::plotOutput("gecco_barplot",height = "500px"), plotlyOutput("gecco_rate")),
-        shiny::tabPanel(title = "Annotation visualization and comparison", value = 4,plotlyOutput("deep_reference_2", height = "500px"), 
-                 plotlyOutput("deep_reference", height = "500px")),
+        shiny::tabPanel(title = "Compare data with DeepBGC", value = 1 ,shiny::plotOutput("deep_barplot",height = "500px"), plotly::plotlyOutput("deep_rate")),
+        shiny::tabPanel(title = "Compare data with Gecco", value = 5 ,shiny::plotOutput("gecco_barplot",height = "500px"), plotly::plotlyOutput("gecco_rate")),
+        shiny::tabPanel(title = "Annotation visualization and comparison", value = 4,plotly::plotlyOutput("deep_reference_2", height = "500px"), 
+                 plotly::plotlyOutput("deep_reference", height = "500px")),
         shiny::tabPanel(title = "Biocircos plot", value = 2, BioCircos::BioCircosOutput("biocircos", height = "1000px"), DT::dataTableOutput("biocircos_legend")),
-        shiny::tabPanel(title = "Summarize interception", value = 3,plotlyOutput("barplot_rank", height = "600px"),shiny::tableOutput("group_table")),
+        shiny::tabPanel(title = "Summarize interception", value = 3,plotly::plotlyOutput("barplot_rank", height = "600px"),shiny::tableOutput("group_table")),
         type = "tabs", id = "main"
       )
   )
@@ -2601,7 +2600,7 @@ server <- function(input, output, session) {
   })
   
   # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data
-  output$deep_rate <- renderPlotly({
+  output$deep_rate <- plotly::renderPlotly({
     shiny::req(!is.null(vals$fullness_deep))
     
     
@@ -2644,7 +2643,7 @@ server <- function(input, output, session) {
     }
     
     # Calculate rates and plot interactive plot with plotly
-    ggplotly(test %>%
+    plotly::ggplotly(test %>%
                tidyr::pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
                ggplot2::ggplot(ggplot2::aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
                ggplot2::geom_line(ggplot2::aes(color=Rates)) +
@@ -2759,7 +2758,7 @@ server <- function(input, output, session) {
   })
   
   # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data
-  output$gecco_rate <- renderPlotly({
+  output$gecco_rate <- plotly::renderPlotly({
     shiny::req(!is.null(vals$fullness_gecco))
     
     # Reuse stored dataframe from previous plot
@@ -2801,7 +2800,7 @@ server <- function(input, output, session) {
     }
     
     # Calculate rates and plot interactive plot with plotly
-    ggplotly(test %>%
+    plotly::ggplotly(test %>%
                tidyr::pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
                ggplot2::ggplot(ggplot2::aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
                ggplot2::geom_line(ggplot2::aes(color=Rates)) +
@@ -2817,7 +2816,7 @@ server <- function(input, output, session) {
   
   # Render interactive plot, which shows bgcs of antismash, intercepted with chosen app. Also all app bgs. On hover shows all available information
   # For antismash and PRISM data showed only ID, Start, Stop, Type
-  output$deep_reference <- renderPlotly({
+  output$deep_reference <- plotly::renderPlotly({
     shiny::req(vals$data_upload_count >=1)
     shiny::req(vals$need_filter == F)
     shiny::req(vals$can_plot_deep_ref == T)
@@ -3087,9 +3086,9 @@ server <- function(input, output, session) {
               ggplot2::xlab("Chromosome length")+ 
               ggplot2::theme(legend.title = ggplot2::element_blank()) +
               ggplot2::ggtitle("Annotations' comparison to the reference")
-            to_plot <- ggplotly(plot, tooltip = tooltip)
+            to_plot <- plotly::ggplotly(plot, tooltip = tooltip)
             to_plot <- to_plot %>% 
-              layout(legend=list(font = list(
+              plotly::layout(legend=list(font = list(
                 family = "sans-serif",
                 size = 12,
                 color = "#000"),
@@ -3110,7 +3109,7 @@ server <- function(input, output, session) {
     to_plot
   })
   
-  output$deep_reference_2 <- renderPlotly({
+  output$deep_reference_2 <- plotly::renderPlotly({
     shiny::req(vals$can_plot_deep_ref_2 == T)
     vals$can_plot_deep_ref_2 == F
     shiny::req(vals$data_upload_count >=1)
@@ -3193,7 +3192,7 @@ server <- function(input, output, session) {
                                                                  Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3) 
     }
     }
-    to_plot <- ggplotly(plot +
+    to_plot <- plotly::ggplotly(plot +
                           ggplot2::scale_y_discrete(labels = rename_y_axis) +
                           ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10)) +
                           ggplot2::ylab("")+
@@ -3203,7 +3202,7 @@ server <- function(input, output, session) {
                         # What actually to visualize in tooltip
                         tooltip = tooltip
     )
-    to_plot %>% layout(legend=list(font = list(
+    to_plot %>% plotly::layout(legend=list(font = list(
       family = "sans-serif",
       size = 12,
       color = "#000"),
@@ -3242,7 +3241,7 @@ server <- function(input, output, session) {
   ##                        Summarize tab                         -
   ##---------------------------------------------------------------
   # Render barplot with number plyr::count of interception for BGC IDs
-  output$barplot_rank <- renderPlotly({
+  output$barplot_rank <- plotly::renderPlotly({
     shiny::req(vals$data_upload_count >1)
     shiny::req(vals$need_filter == F)
     shiny::req(vals$can_plot_barplot_rank == T)
@@ -3294,7 +3293,7 @@ server <- function(input, output, session) {
     # Fix column names in the master dataframe
     colnames(ranking_data) <- c("Cluster", "Count", "Label", "Type", "Start", "Stop")
     # Plot
-    ggplotly(ggplot2::ggplot(ranking_data, ggplot2::aes(x = Cluster, y = Count, Type = Type, Start = Start, Stop = Stop)) +
+    plotly::ggplotly(ggplot2::ggplot(ranking_data, ggplot2::aes(x = Cluster, y = Count, Type = Type, Start = Start, Stop = Stop)) +
                ggplot2::geom_bar(stat = "identity", ggplot2::aes(fill = Label)) +
                ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1, size = 10),
                      axis.text.y = ggplot2::element_text(size = 14)) +
