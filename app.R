@@ -9,7 +9,6 @@
 # in one genome
 #
 library(plotly)
-library(ggplot2)
 library(shinyjs)
 library(rjson)
 library(stringr)
@@ -2563,15 +2562,15 @@ server <- function(input, output, session) {
       if (input$ref_comparison == 'A'){
         used_antismash <-  length(vals$anti_data$Cluster)-inter_bgc
         cols <-  c("Only Antismash", "DeepBGC+Antismash", "Only DeepBGC")
-        title <-  ggtitle("Comparison of Antismash and DeepBGC annotations at given score threshold")
+        title <-  ggplot2::ggtitle("Comparison of Antismash and DeepBGC annotations at given score threshold")
       } else if (input$ref_comparison == 'P'){
         used_antismash <-  length(vals$prism_data$Cluster)-inter_bgc
         cols <- c("Only PRISM", "DeepBGC+PRISM", "Only DeepBGC")
-        title <- ggtitle("Comparison of PRISM and DeepBGC annotations at given score threshold")
+        title <- ggplot2::ggtitle("Comparison of PRISM and DeepBGC annotations at given score threshold")
       } else if (input$ref_comparison == 'S') {
         used_antismash <-  length(vals$sempi_data$Cluster)-inter_bgc
         cols <- c("Only SEMPI", "DeepBGC+SEMPI", "Only DeepBGC")
-        title <- ggtitle("Comparison of SEMPI and DeepBGC annotations at given score threshold")
+        title <- ggplot2::ggtitle("Comparison of SEMPI and DeepBGC annotations at given score threshold")
       }
 
       # Combine all vectors into one dataframe
@@ -2593,12 +2592,12 @@ server <- function(input, output, session) {
                        paste("Cluster type score:", as.character(input$score_c)), sep = "\n")
     
     # Plot the barplot
-    ggplot(fullnes_of_annotation, aes(fill=Source, y=Quantity, x=Score)) + 
-      geom_bar(position="dodge", stat="identity")+
-      geom_text(aes(label=Quantity), position=position_dodge(width=0.9), vjust=-0.25) +
-      xlab(paste(input$score_type,"Score")) +
+    ggplot2::ggplot(fullnes_of_annotation, ggplot2::aes(fill=Source, y=Quantity, x=Score)) + 
+      ggplot2::geom_bar(position="dodge", stat="identity")+
+      ggplot2::geom_text(ggplot2::aes(label=Quantity), position=ggplot2::position_dodge(width=0.9), vjust=-0.25) +
+      ggplot2::xlab(paste(input$score_type,"Score")) +
       title +
-      geom_label(aes(x=Inf,y=Inf,hjust=1,vjust=1,label=annotateText ), show.legend = F)
+      ggplot2::geom_label(ggplot2::aes(x=Inf,y=Inf,hjust=1,vjust=1,label=annotateText ), show.legend = F)
   })
   
   # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data
@@ -2616,7 +2615,7 @@ server <- function(input, output, session) {
       tidyr::pivot_wider(names_from = Source, values_from = Quantity)
     if (input$ref_comparison == 'A'){
       data <-  vals$anti_data
-      title <- ggtitle("Rates of DeepBGC/Antismash data annotation")
+      title <- ggplot2::ggtitle("Rates of DeepBGC/Antismash data annotation")
       test <- test %>%
         # Calculate rates. Novelty is nummber of clusters annotated only by deepbgc/ all clusters annotated by antismash + (antismash + deepbgc)
         dplyr::mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+Antismash` + test$`Only Antismash`), 
@@ -2626,7 +2625,7 @@ server <- function(input, output, session) {
                Skip_rate = test$`Only Antismash`/length(data$Cluster))
     } else if (input$ref_comparison == 'P'){
       data <- vals$prism_data
-      title <- ggtitle("Rates of DeepBGC/PRISM data annotation")
+      title <- ggplot2::ggtitle("Rates of DeepBGC/PRISM data annotation")
       test <- test %>%
         dplyr::mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+PRISM` + test$`Only PRISM`), 
                #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
@@ -2635,7 +2634,7 @@ server <- function(input, output, session) {
                Skip_rate = test$`Only PRISM`/length(data$Cluster))
     } else if (input$ref_comparison == 'S'){
       data <- vals$sempi_data
-      title <- ggtitle("Rates of DeepBGC/SEMPI data annotation")
+      title <- ggplot2::ggtitle("Rates of DeepBGC/SEMPI data annotation")
       test <- test %>%
         dplyr::mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+SEMPI` + test$`Only SEMPI`), 
                #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
@@ -2647,12 +2646,12 @@ server <- function(input, output, session) {
     # Calculate rates and plot interactive plot with plotly
     ggplotly(test %>%
                tidyr::pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
-               ggplot(aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
-               geom_line(aes(color=Rates)) +
-               geom_point(aes(shape=Rates), alpha = .4, size = 3) +
+               ggplot2::ggplot(ggplot2::aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
+               ggplot2::geom_line(ggplot2::aes(color=Rates)) +
+               ggplot2::geom_point(ggplot2::aes(shape=Rates), alpha = .4, size = 3) +
                title +
-               ylab("Rate") +
-               xlab(paste(input$score_type,"Score threshold")),
+               ggplot2::ylab("Rate") +
+               ggplot2::xlab(paste(input$score_type,"Score threshold")),
              tooltip = c("Rate"))
   })
   ##----------------------------------------------------------------
@@ -2722,15 +2721,15 @@ server <- function(input, output, session) {
       if (input$ref_comparison_gecco == 'A'){
         used_antismash <-  length(vals$anti_data$Cluster)-inter_bgc
         cols <-  c("Only Antismash", "GECCO+Antismash", "Only GECCO")
-        title <-  ggtitle("Comparison of Antismash and GECCO annotations at given score threshold")
+        title <-  ggplot2::ggtitle("Comparison of Antismash and GECCO annotations at given score threshold")
       } else if (input$ref_comparison_gecco == 'P'){
         used_antismash <-  length(vals$prism_data$Cluster)-inter_bgc
         cols <- c("Only PRISM", "GECCO+PRISM", "Only GECCO")
-        title <- ggtitle("Comparison of PRISM and GECCO annotations at given score threshold")
+        title <- ggplot2::ggtitle("Comparison of PRISM and GECCO annotations at given score threshold")
       } else if (input$ref_comparison_gecco == 'S') {
         used_antismash <-  length(vals$sempi_data$Cluster)-inter_bgc
         cols <- c("Only SEMPI", "GECCO+SEMPI", "Only GECCO")
-        title <- ggtitle("Comparison of SEMPI and GECCO annotations at given score threshold")
+        title <- ggplot2::ggtitle("Comparison of SEMPI and GECCO annotations at given score threshold")
       }
       
       # Combine all vectors into one dataframe
@@ -2751,12 +2750,12 @@ server <- function(input, output, session) {
                        paste("Cluster type score:", as.character(input$score_cluster_gecco)), sep = "\n")
     
     # Plot the barplot
-    ggplot(fullnes_of_annotation, aes(fill=Source, y=Quantity, x=Score)) + 
-      geom_bar(position="dodge", stat="identity")+
-      geom_text(aes(label=Quantity), position=position_dodge(width=0.9), vjust=-0.25) +
-      xlab(paste(input$score_type,"Score")) +
+    ggplot2::ggplot(fullnes_of_annotation, ggplot2::aes(fill=Source, y=Quantity, x=Score)) + 
+      ggplot2::geom_bar(position="dodge", stat="identity")+
+      ggplot2::geom_text(ggplot2::aes(label=Quantity), position=ggplot2::position_dodge(width=0.9), vjust=-0.25) +
+      ggplot2::xlab(paste(input$score_type,"Score")) +
       title +
-      geom_label(aes(x=Inf,y=Inf,hjust=1,vjust=1,label=annotateText ), show.legend = F)
+      ggplot2::geom_label(ggplot2::aes(x=Inf,y=Inf,hjust=1,vjust=1,label=annotateText ), show.legend = F)
   })
   
   # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data
@@ -2773,7 +2772,7 @@ server <- function(input, output, session) {
       tidyr::pivot_wider(names_from = Source, values_from = Quantity)
     if (input$ref_comparison_gecco == 'A'){
       data <-  vals$anti_data
-      title <- ggtitle("Rates of GECCO/Antismash data annotation")
+      title <- ggplot2::ggtitle("Rates of GECCO/Antismash data annotation")
       test <- test %>%
         # Calculate rates. Novelty is nummber of clusters annotated only by deepbgc/ all clusters annotated by antismash + (antismash + deepbgc)
         dplyr::mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+Antismash` + test$`Only Antismash`), 
@@ -2783,7 +2782,7 @@ server <- function(input, output, session) {
                Skip_rate = test$`Only Antismash`/length(data$Cluster))
     } else if (input$ref_comparison_gecco == 'P'){
       data <- vals$prism_data
-      title <- ggtitle("Rates of GECCO/PRISM data annotation")
+      title <- ggplot2::ggtitle("Rates of GECCO/PRISM data annotation")
       test <- test %>%
         dplyr::mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+PRISM` + test$`Only PRISM`), 
                #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
@@ -2792,7 +2791,7 @@ server <- function(input, output, session) {
                Skip_rate = test$`Only PRISM`/length(data$Cluster))
     } else if (input$ref_comparison_gecco == 'S'){
       data <- vals$sempi_data
-      title <- ggtitle("Rates of GECCO/SEMPI data annotation")
+      title <- ggplot2::ggtitle("Rates of GECCO/SEMPI data annotation")
       test <- test %>%
         dplyr::mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+SEMPI` + test$`Only SEMPI`), 
                #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
@@ -2804,12 +2803,12 @@ server <- function(input, output, session) {
     # Calculate rates and plot interactive plot with plotly
     ggplotly(test %>%
                tidyr::pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
-               ggplot(aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
-               geom_line(aes(color=Rates)) +
-               geom_point(aes(shape=Rates), alpha = .4, size = 3) +
+               ggplot2::ggplot(ggplot2::aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
+               ggplot2::geom_line(ggplot2::aes(color=Rates)) +
+               ggplot2::geom_point(ggplot2::aes(shape=Rates), alpha = .4, size = 3) +
                title +
-               ylab("Rate") +
-               xlab(paste(input$score_type,"Score threshold")),
+               ggplot2::ylab("Rate") +
+               ggplot2::xlab(paste(input$score_type,"Score threshold")),
              tooltip = c("Rate"))
   })
   ##---------------------------------------------------------------
@@ -2870,45 +2869,45 @@ server <- function(input, output, session) {
       }
     
     geom_anti <- function(data){
-      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
                                   ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
     geom_prism <- function(data){
-      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
     geom_deep <- function(data){
-      geom_segment(data=data,aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+      ggplot2::geom_segment(data=data,ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
                                                                ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
                                                                deepbgc_score = deepbgc_score,activity = activity ),size =3)
       }
     geom_rre <- function(data){
       if (vals$rre_more == T){
-      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
                                                            ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
                                                            P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
                                                            Probability = Probability),size = 3)
       } else {
-        geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+        ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
                                     ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value
                                     ),size = 3)
       }
       }
     geom_sempi <- function(data){
 
-      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
                                   ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
     geom_prism_supp <- function(data){
-      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, ID = ID,
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, ID = ID,
                                   Start = Start, Stop = Stop, Type = Type, Name = Name, Full_name = Full_name,
                                   Score = Score), size = 3)
     }
     geom_arts <- function(data){
-      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type, Hit = Hit, 
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type, Hit = Hit, 
                                   Core = Core, E_value = E_value, Bitscore = Bitscore, Count = Count, Model = Model), size = 3)
     }
     geom_gecco <- function(data){
-      geom_segment(data=data, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
                                   ID = ID, Start = Start, Stop = Stop, Type = Type, Num_proteins= Num_proteins,
                                   Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3)
     }
@@ -3063,7 +3062,7 @@ server <- function(input, output, session) {
           seg_ref_g <- define_spec_seg_df(soft_names, sup_index,seg_ref_g, soft_major, eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), inter = F)
           seg_ref <- seg_ref_g
           if (input$ref == soft_ref[sup_index]){
-            plot <- ggplot(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), aes(x = vals$chr_len, y = Chr)) + 
+            plot <- ggplot2::ggplot(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), ggplot2::aes(x = vals$chr_len, y = Chr)) + 
               eval(as.name(paste0("geom_", soft_names[sup_index])))(seg_ref)
             soft_let <- abbr[sup_index]
             lettrs <- lett[2:length(lett)]
@@ -3082,12 +3081,12 @@ server <- function(input, output, session) {
             }
             
             plot <- plot +
-              scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
-              theme(axis.text.y = element_text(size = 10)) +
-              ylab("")+
-              xlab("Chromosome length")+ 
-              theme(legend.title = element_blank()) +
-              ggtitle("Annotations' comparison to the reference")
+              ggplot2::scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
+              ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10)) +
+              ggplot2::ylab("")+
+              ggplot2::xlab("Chromosome length")+ 
+              ggplot2::theme(legend.title = ggplot2::element_blank()) +
+              ggplot2::ggtitle("Annotations' comparison to the reference")
             to_plot <- ggplotly(plot, tooltip = tooltip)
             to_plot <- to_plot %>% 
               layout(legend=list(font = list(
@@ -3139,68 +3138,68 @@ server <- function(input, output, session) {
                 "P_value", "RRE_start","RRE_stop", "Probability", "Name", "Full_name",  "Hit", "Core", "Count", "Bitscore", "Model",
                 "Num_domains", "Num_proteins", "Average_p", "Max_p")
     
-    plot <- ggplot(data, aes(x = vals$chr_len, y = Chr))
+    plot <- ggplot2::ggplot(data, ggplot2::aes(x = vals$chr_len, y = Chr))
     if (vals$anti_data_input == TRUE){
       plot <- plot + 
-        geom_segment(data=vals$seg_df_ref_a, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
+        ggplot2::geom_segment(data=vals$seg_df_ref_a, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
                                                  ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
     if (vals$deep_data_input == TRUE){
       if (dim(vals$seg_df_ref_d)[1] >0) {
       plot <- plot +
-        geom_segment(data=vals$seg_df_ref_d,aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
+        ggplot2::geom_segment(data=vals$seg_df_ref_d,ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
                                       ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
                                       deepbgc_score = deepbgc_score,activity = activity ),size =3)
       }
     }
     if (vals$rre_data_input == TRUE){
       if (vals$rre_more == T){
-      plot <- plot + geom_segment(data=vals$seg_df_ref_r, aes(x, y, xend=xend, yend=yend, color = Type2, Score = Score, Software = Software,
+      plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_r, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Score = Score, Software = Software,
                                                     ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
                                                     P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
                                                     Probability = Probability),size = 3)
       } else {
-        plot <- plot + geom_segment(data=vals$seg_df_ref_r, aes(x, y, xend=xend, yend=yend, color = Type2,  Software = Software,
+        plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_r, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2,  Software = Software,
                                                                 ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value),size = 3)
       }
     }
     if (vals$prism_data_input == TRUE){
-      plot <- plot + geom_segment(data=vals$seg_df_ref_p, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
+      plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_p, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
                                                     ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
       
       
     }
     if (vals$sempi_data_input == TRUE){
-      plot <- plot + geom_segment(data=vals$seg_df_ref_s, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
+      plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_s, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
                                                               ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
       
       
     }
     if (input$prism_supp == TRUE){
-      plot <- plot + geom_segment(data=vals$seg_df_ref_p_s, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, ID = ID,
+      plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_p_s, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, ID = ID,
                                                             Start = Start, Stop = Stop, Type = Type, Name = Name, Full_name = Full_name,
                                                             Score = Score), size = 3)
     }
     if (vals$arts_data_input == TRUE){
-      plot <- plot + geom_segment(data=vals$seg_df_ref_ar, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
+      plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_ar, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
                                                                 ID = ID, Start = Start, Stop = Stop, Type = Type, Hit = Hit,
                                                                 Core = Core, E_value = E_value, Bitscore = Bitscore, Count = Count,
                                                                 Model = Model), size = 3)
     }
     if (vals$gecco_data_input == TRUE){
       if (dim(vals$seg_df_ref_g)[1] >0) {
-      plot <- plot + geom_segment(data =  vals$seg_df_ref_g, aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
+      plot <- plot + ggplot2::geom_segment(data =  vals$seg_df_ref_g, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
                                                                  ID = ID, Start = Start, Stop = Stop, Type = Type, Num_proteins= Num_proteins,
                                                                  Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3) 
     }
     }
     to_plot <- ggplotly(plot +
-                          scale_y_discrete(labels = rename_y_axis) +
-                          theme(axis.text.y = element_text(size = 10)) +
-                          ylab("")+
-                          xlab("Chromosome length")+
-                          theme(legend.title = element_blank()) +
-                          ggtitle("All annotations"), 
+                          ggplot2::scale_y_discrete(labels = rename_y_axis) +
+                          ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10)) +
+                          ggplot2::ylab("")+
+                          ggplot2::xlab("Chromosome length")+
+                          ggplot2::theme(legend.title = ggplot2::element_blank()) +
+                          ggplot2::ggtitle("All annotations"), 
                         # What actually to visualize in tooltip
                         tooltip = tooltip
     )
@@ -3295,11 +3294,11 @@ server <- function(input, output, session) {
     # Fix column names in the master dataframe
     colnames(ranking_data) <- c("Cluster", "Count", "Label", "Type", "Start", "Stop")
     # Plot
-    ggplotly(ggplot(ranking_data, aes(x = Cluster, y = Count, Type = Type, Start = Start, Stop = Stop)) +
-               geom_bar(stat = "identity", aes(fill = Label)) +
-               theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 10),
-                     axis.text.y = element_text(size = 14)) +
-               ggtitle("Number of times cluster is annotated with other tool"),
+    ggplotly(ggplot2::ggplot(ranking_data, ggplot2::aes(x = Cluster, y = Count, Type = Type, Start = Start, Stop = Stop)) +
+               ggplot2::geom_bar(stat = "identity", ggplot2::aes(fill = Label)) +
+               ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1, size = 10),
+                     axis.text.y = ggplot2::element_text(size = 14)) +
+               ggplot2::ggtitle("Number of times cluster is annotated with other tool"),
              tooltip=c("Type", "Start", "Stop")  
              )
 
