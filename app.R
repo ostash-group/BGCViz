@@ -8,8 +8,6 @@
 # GECCO, ARTS, SEMPI to visualized interception of those different annotations 
 # in one genome
 #
-library(tidyverse)
-library(plyr)
 library(plotly)
 library(ggplot2)
 library(shinyjs)
@@ -137,7 +135,7 @@ ui <- shiny::fluidPage(
       shiny::sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
       shiny::sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
       shiny::sliderInput("score_c", "Cluster_type score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-      # Domains, biodomains and proteins filter. Remain >= of set threshold
+      # Domains, biodomains and proteins dplyr::filter. Remain >= of set threshold
       shiny::sliderInput("domains_filter", "Domain number threshold for DeepBGC data", min = 0, max = 100, value = 5),
       shiny::sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
       shiny::sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
@@ -218,7 +216,7 @@ server <- function(input, output, session) {
   ##----------------------------------------------------------------
   ##                        Helper functions                       -
   ##----------------------------------------------------------------
-  # Need to get them to a separate file later
+  # Need to get them to a tidyr::separate file later
   # TODO
   files_in_dir <- list.files()
   # Iterate over those files and if found "_biocircos.csv" add remove them
@@ -342,21 +340,21 @@ server <- function(input, output, session) {
   }
   # Filtering the DeepBGC
   filter_deepbgc <- function(){
-    score_a <- apply(vals$deep_data %>% select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
-    score_d <- apply(vals$deep_data %>% select(c("deepbgc_score")),1, function(x) max(x))
-    score_c <- apply(vals$deep_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
+    score_a <- apply(vals$deep_data %>% dplyr::select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
+    score_d <- apply(vals$deep_data %>% dplyr::select(c("deepbgc_score")),1, function(x) max(x))
+    score_c <- apply(vals$deep_data %>% dplyr::select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
     deep_data_chromo <- vals$deep_data %>%
-      mutate(score = apply(vals$deep_data %>%
-                             select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
+      dplyr::mutate(score = apply(vals$deep_data %>%
+                             dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
     # Cluster_type column. Here extract colnames, and assign max value to a new column
-    deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
+    deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
     # If max score is under_threshold, print "under_threshold"
     deep_data_chromo <- deep_data_chromo%>%
-      mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "under_threshold"))
+      dplyr::mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "under_threshold"))
     #Finally store deepbgc data in plotting variable. Do final scores processing 
     biocircos_deep <- deep_data_chromo%>%
-      mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
-      filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , 
+      dplyr::mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
+      dplyr::filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , 
              score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
              num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
     biocircos_deep['Start'] <- biocircos_deep$nucl_start
@@ -368,15 +366,15 @@ server <- function(input, output, session) {
   }
   # Filtering GECCO
   filter_gecco <- function(){
-    score_a_gecco <- apply(vals$gecco_data %>% select(c("average_p")),1, function(x) max(x))
-    score_c_gecco <- apply(vals$gecco_data %>% select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
+    score_a_gecco <- apply(vals$gecco_data %>% dplyr::select(c("average_p")),1, function(x) max(x))
+    score_c_gecco <- apply(vals$gecco_data %>% dplyr::select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
     # Store master prism data in local variable
     gecco_data <- vals$gecco_data %>%
-      mutate(score = apply(vals$gecco_data %>%
+      dplyr::mutate(score = apply(vals$gecco_data %>%
                              dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) %>%
-      mutate(Cluster_type = ifelse(score>as.numeric(input$score_cluster_gecco)/100, Type2, "under_threshold")) %>%
-      mutate( Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
-      filter(score_a >= as.numeric(input$score_average_gecco )/ 100, score_c >=as.numeric(input$score_cluster_gecco)/100 ,
+      dplyr::mutate(Cluster_type = ifelse(score>as.numeric(input$score_cluster_gecco)/100, Type2, "under_threshold")) %>%
+      dplyr::mutate( Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
+      dplyr::filter(score_a >= as.numeric(input$score_average_gecco )/ 100, score_c >=as.numeric(input$score_cluster_gecco)/100 ,
              num_domains >= input$domains_filter_gecco, num_prot>=input$prot_filter_gecco)
     return(gecco_data)
   }
@@ -448,7 +446,7 @@ server <- function(input, output, session) {
   ###                                                                     ###
   ###########################################################################
   ###########################################################################
-  # TODO Make separate functions for different data types. 
+  # TODO Make tidyr::separate functions for different data types. 
   # For now you just have duplicated the code. Specifically for ARTS!
   #----------------------------------------------------------------
   ##            Loading and processing of example data             -
@@ -516,9 +514,9 @@ server <- function(input, output, session) {
                    "terpene_probability",    "nrp_probability"  , "other_probability" )
     # Read data
     gecco_data <- gecco_data %>%
-      mutate(pks=polyketide_probability, other = other_probability, nrps = nrp_probability, alkaloid = alkaloid_probability, 
+      dplyr::mutate(pks=polyketide_probability, other = other_probability, nrps = nrp_probability, alkaloid = alkaloid_probability, 
              terpene = terpene_probability, saccharide = saccharide_probability, ripp = ripp_probability) %>%
-      select(-one_of(drop_cols))
+      dplyr::select(-dplyr::one_of(drop_cols))
     gecco_data$num_prot <- sapply( str_split(as.character(gecco_data$proteins), ";"), length)
     gecco_data$num_domains <- sapply( str_split(as.character(gecco_data$domains), ";"), length)
     names(gecco_data)[names(gecco_data) == "start"] <- "Start"
@@ -746,7 +744,7 @@ server <- function(input, output, session) {
       vals$data_upload_count <-  vals$data_upload_count +1
       vals$arts_data_input <- T
       dup_table_id <- arts_data %>%
-        filter(Core != "Not_core")
+        dplyr::filter(Core != "Not_core")
       shiny::updateSelectInput(session, "dup_choice",
                         choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
                         selected = "All" )
@@ -775,9 +773,9 @@ server <- function(input, output, session) {
     drop_cols <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
     # Read data
     vals$deep_data <- read.delim("example_data/sco_deep.tsv") %>%
-      mutate(pks=Polyketide, other = Other, nrps = NRP, alkaloid = Alkaloid, 
+      dplyr::mutate(pks=Polyketide, other = Other, nrps = NRP, alkaloid = Alkaloid, 
              terpene = Terpene, saccharide = Saccharide, ripp = RiPP) %>%
-      select(-one_of(drop_cols))
+      dplyr::select(-dplyr::one_of(drop_cols))
     # Add chromosome info column
     vals$deep_data$chromosome <-  rep("D", length(vals$deep_data$bgc_candidate_id))
     # Add ID column as number seuquence of dataframe length
@@ -815,8 +813,8 @@ server <- function(input, output, session) {
     vals$rre_data <- read.delim("example_data/sco_rre.txt")
     # Clean RRE data. Extract coordinates and Locus tag with double underscore delimiter (__)
     vals$rre_data <- vals$rre_data %>%
-      separate(Gene.name, c("Sequence","Coordinates","Locus_tag"),sep = "__") %>%
-      separate(Coordinates, c("Start", "Stop"),sep = "-")
+      tidyr::separate(Gene.name, c("Sequence","Coordinates","Locus_tag"),sep = "__") %>%
+      tidyr::separate(Coordinates, c("Start", "Stop"),sep = "-")
     # Add chromosome info column
     vals$rre_data$chromosome <- rep("RRE",length(vals$rre_data$Sequence))
     # Add ID column
@@ -901,8 +899,8 @@ server <- function(input, output, session) {
         location <- data.frame(location)
         colnames(location) <- "split"
         anti_data <- location %>%
-          separate(split, c("Start", "Stop")) %>%
-          transmute(ID = rownames(location), Start, Stop)
+          tidyr::separate(split, c("Start", "Stop")) %>%
+          dplyr::transmute(ID = rownames(location), Start, Stop)
         
         anti_data <- cbind(anti_data, types)
         colnames(anti_data) <- c("Cluster", "Start", "Stop", "Type")
@@ -1015,9 +1013,9 @@ server <- function(input, output, session) {
                    "terpene_probability",    "nrp_probability"  , "other_probability" )
     # Read data
     gecco_data <- gecco_data %>%
-      mutate(pks=polyketide_probability, other = other_probability, nrps = nrp_probability, alkaloid = alkaloid_probability, 
+      dplyr::mutate(pks=polyketide_probability, other = other_probability, nrps = nrp_probability, alkaloid = alkaloid_probability, 
              terpene = terpene_probability, saccharide = saccharide_probability, ripp = ripp_probability) %>%
-      select(-one_of(drop_cols))
+      dplyr::select(-dplyr::one_of(drop_cols))
     gecco_data$num_prot <- sapply( str_split(as.character(gecco_data$proteins), ";"), length)
     gecco_data$num_domains <- sapply( str_split(as.character(gecco_data$domains), ";"), length)
     names(gecco_data)[names(gecco_data) == "start"] <- "Start"
@@ -1105,7 +1103,7 @@ server <- function(input, output, session) {
       vals$arts_data <- arts_data
       vals$data_upload_count <-  vals$data_upload_count +1
       dup_table_id <- arts_data %>%
-        filter(Core != "Not_core")
+        dplyr::filter(Core != "Not_core")
       shiny::updateSelectInput(session, "dup_choice",
                         choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
                         selected = "All" )
@@ -1188,7 +1186,7 @@ server <- function(input, output, session) {
       vals$data_upload_count <-  vals$data_upload_count +1
       vals$arts_data_input <- T
       dup_table_id <- arts_data %>%
-        filter(Core != "Not_core")
+        dplyr::filter(Core != "Not_core")
       shiny::updateSelectInput(session, "dup_choice",
                         choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
                         selected = "All" )
@@ -1275,9 +1273,9 @@ server <- function(input, output, session) {
     drop_cols <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
     # Read data
     vals$deep_data <- read.delim(input$deep_data$datapath) %>%
-      mutate(pks=Polyketide, other = Other, nrps = NRP, alkaloid = Alkaloid, 
+      dplyr::mutate(pks=Polyketide, other = Other, nrps = NRP, alkaloid = Alkaloid, 
              terpene = Terpene, saccharide = Saccharide, ripp = RiPP) %>%
-      select(-one_of(drop_cols))
+      dplyr::select(-dplyr::one_of(drop_cols))
     # Add chromosome info column
     vals$deep_data$chromosome <-  rep("D", length(vals$deep_data$bgc_candidate_id))
     # Add ID column as number seuquence of dataframe length
@@ -1315,8 +1313,8 @@ server <- function(input, output, session) {
     vals$rre_data <- read.delim(input$rre_data$datapath)
     # Clean RRE data. Extract coordinates and Locus tag with double underscore delimiter (__)
     vals$rre_data <- vals$rre_data %>%
-      separate(Gene.name, c("Sequence","Coordinates","Locus_tag"),sep = "__") %>%
-      separate(Coordinates, c("Start", "Stop"),sep = "-")
+      tidyr::separate(Gene.name, c("Sequence","Coordinates","Locus_tag"),sep = "__") %>%
+      tidyr::separate(Coordinates, c("Start", "Stop"),sep = "-")
     # Add chromosome info column
     vals$rre_data$chromosome <- rep("RRE",length(vals$rre_data$Sequence))
     # Add ID column
@@ -2031,7 +2029,7 @@ server <- function(input, output, session) {
   ############################################################################
   ############################################################################
   # Compute all interceptions on data upload.
-  # Filter while ploting then.
+  # dplyr::filter while ploting then.
   # TODO make looop for data reading
   shiny::observeEvent(inputData(), {
     shiny::req(vals$data_upload_count>=1)
@@ -2039,14 +2037,14 @@ server <- function(input, output, session) {
     if (vals$anti_data_input == TRUE){
       anti_data <-  vals$anti_data
       anti_inter <- vals$anti_data %>%
-        select(Start, Stop)
+        dplyr::select(Start, Stop)
       anti_inter$seqnames <- "chr"
       
     }
     if (vals$deep_data_input == TRUE){
       deep_data <- vals$deep_data
       deep_inter <- vals$deep_data %>% 
-        select(nucl_start, nucl_end)
+        dplyr::select(nucl_start, nucl_end)
       
       deep_inter$seqnames <- "chr"
     }
@@ -2058,7 +2056,7 @@ server <- function(input, output, session) {
       rre_data <- data.frame(vals$rre_data)
       # Start/Stop columns from rre data as matrix
       rre_inter <- rre_data %>%
-        select(Start, Stop)
+        dplyr::select(Start, Stop)
       rre_inter$seqnames <- "chr"
     }
     if (vals$prism_data_input == TRUE){
@@ -2066,7 +2064,7 @@ server <- function(input, output, session) {
       prism_data <- vals$prism_data
       # Start/Stop columns from prism data as matrix
       prism_inter <- prism_data %>%
-        select(Start,Stop)
+        dplyr::select(Start,Stop)
       prism_inter$seqnames <- "chr"
     }
     if (vals$sempi_data_input == TRUE){
@@ -2074,13 +2072,13 @@ server <- function(input, output, session) {
       sempi_data <- vals$sempi_data
       # Start/Stop columns from prism data as matrix
       sempi_inter <- vals$sempi_data %>%
-        select(Start,Stop)
+        dplyr::select(Start,Stop)
       sempi_inter$seqnames <- "chr"
     }
     if (vals$prism_supp_data_input == T){
       prism_supp_data <- vals$prism_supp_data
       prism_supp_inter <- vals$prism_supp_data %>%
-        select(Start,Stop)
+        dplyr::select(Start,Stop)
       prism_supp_inter$seqnames <- "chr"
       if (input$prism_supp_data_input_width == TRUE) {
         Stop_vals_prism_supp <- as.numeric(vals$prism_supp_data$Stop)+50000
@@ -2091,14 +2089,14 @@ server <- function(input, output, session) {
     if (vals$arts_data_input == T){
       arts_data <- vals$arts_data
       arts_inter <- vals$arts_data %>%
-        select(Start,Stop) 
+        dplyr::select(Start,Stop) 
       arts_inter$seqnames <- "chr"
     }
     if (vals$gecco_data_input == TRUE){
       gecco_data <- vals$gecco_data
       # Start/Stop columns from prism data as matrix
       gecco_inter <- vals$gecco_data %>%
-        select(Start,Stop)
+        dplyr::select(Start,Stop)
       gecco_inter$seqnames <- "chr"
     }
     
@@ -2152,7 +2150,7 @@ server <- function(input, output, session) {
    }
   
   })
-  # Filter ARTS, DeepBGC, GECCO interception data
+  # dplyr::filter ARTS, DeepBGC, GECCO interception data
   # and general dataframes to plot, if data filtering 
   # options are triggered
   shiny::observeEvent(dynamicInput(), {
@@ -2209,7 +2207,7 @@ server <- function(input, output, session) {
     if (vals$arts_data_input == TRUE){
       if (input$dup_choice != "All"){
         vals$arts_data_filtered <- data.frame(vals$arts_data) %>%
-          filter(Core == str_split(str_split(input$dup_choice, " ,")[[1]][[2]], "Core:")[[1]][[2]] | Core == "Not_core")
+          dplyr::filter(Core == str_split(str_split(input$dup_choice, " ,")[[1]][[2]], "Core:")[[1]][[2]] | Core == "Not_core")
         if (vals$data_upload_count!=1){
           new_arts <- lapply(inters$arts, function(x){
             new_to <- x$to[x$to %in% vals$arts_data_filtered$Cluster]
@@ -2468,7 +2466,7 @@ server <- function(input, output, session) {
     
     # Add links and labels to the track list for subsequent visualization 
     if ((input$label_color == T) & (length(chromosomes_start) > 0)){
-      group_colors <- count(unlist(label_color))
+      group_colors <- plyr::count(unlist(label_color))
       for (i in seq(1:dim(group_colors)[1])){
         subset <- unname( which(label_color %in% group_colors$x[i]))
         tracklist = tracklist + BioCircos::BioCircosLinkTrack(as.character(i), chromosomes_start[subset], link_pos_start[subset], 
@@ -2509,7 +2507,7 @@ server <- function(input, output, session) {
     # Create empty dataframe to populate later
     fullnes_of_annotation <- data.frame(NA, NA, NA)
     colnames(fullnes_of_annotation) <- c("Score", "Source", "Quantity")
-    fullnes_of_annotation <- drop_na(fullnes_of_annotation)
+    fullnes_of_annotation <- tidyr::drop_na(fullnes_of_annotation)
     
     deep_inter_1 <- vals$deep_data_filtered
     # Decide which score to use for basic thresholds on x axis
@@ -2525,8 +2523,8 @@ server <- function(input, output, session) {
     for (dataframe_1 in seq(input$plot_start, 99, input$plot_step)){
 
       deep_inter <- deep_inter_1 %>%
-        filter(score>=dataframe_1/100) %>%
-        select(Start, Stop) 
+        dplyr::filter(score>=dataframe_1/100) %>%
+        dplyr::select(Start, Stop) 
       if (length(deep_inter$Start) > 0) {
         deep_inter$seqnames <- "chr"
       }
@@ -2535,15 +2533,15 @@ server <- function(input, output, session) {
       # Store antismash bgc start amd atop values as matrix
       if (input$ref_comparison == 'A'){
         anti_inter <- vals$anti_data %>%
-        select(Start, Stop) 
+        dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
       } else if (input$ref_comparison == 'P'){
         anti_inter <- vals$prism_data %>%
-          select(Start, Stop) 
+          dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
       } else if (input$ref_comparison == 'S'){
         anti_inter <- vals$sempi_data %>%
-          select(Start, Stop) 
+          dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
       } 
       
@@ -2616,13 +2614,13 @@ server <- function(input, output, session) {
     
     # Store dataframe into variable. Widen it to calculate rates
     test <- fullnes_of_annotation %>%
-      pivot_wider(names_from = Source, values_from = Quantity)
+      tidyr::pivot_wider(names_from = Source, values_from = Quantity)
     if (input$ref_comparison == 'A'){
       data <-  vals$anti_data
       title <- ggtitle("Rates of DeepBGC/Antismash data annotation")
       test <- test %>%
         # Calculate rates. Novelty is nummber of clusters annotated only by deepbgc/ all clusters annotated by antismash + (antismash + deepbgc)
-        mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+Antismash` + test$`Only Antismash`), 
+        dplyr::mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+Antismash` + test$`Only Antismash`), 
                #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
                Annotation_rate = test$`DeepBGC+Antismash`/length(data$Cluster), 
                # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
@@ -2631,7 +2629,7 @@ server <- function(input, output, session) {
       data <- vals$prism_data
       title <- ggtitle("Rates of DeepBGC/PRISM data annotation")
       test <- test %>%
-        mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+PRISM` + test$`Only PRISM`), 
+        dplyr::mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+PRISM` + test$`Only PRISM`), 
                #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
                Annotation_rate = test$`DeepBGC+PRISM`/length(data$Cluster), 
                # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
@@ -2640,7 +2638,7 @@ server <- function(input, output, session) {
       data <- vals$sempi_data
       title <- ggtitle("Rates of DeepBGC/SEMPI data annotation")
       test <- test %>%
-        mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+SEMPI` + test$`Only SEMPI`), 
+        dplyr::mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+SEMPI` + test$`Only SEMPI`), 
                #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
                Annotation_rate = test$`DeepBGC+SEMPI`/length(data$Cluster), 
                # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
@@ -2649,7 +2647,7 @@ server <- function(input, output, session) {
     
     # Calculate rates and plot interactive plot with plotly
     ggplotly(test %>%
-               pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
+               tidyr::pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
                ggplot(aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
                geom_line(aes(color=Rates)) +
                geom_point(aes(shape=Rates), alpha = .4, size = 3) +
@@ -2668,7 +2666,7 @@ server <- function(input, output, session) {
     # Create empty dataframe to populate later
     fullnes_of_annotation <- data.frame(NA, NA, NA)
     colnames(fullnes_of_annotation) <- c("Score", "Source", "Quantity")
-    fullnes_of_annotation <- drop_na(fullnes_of_annotation)
+    fullnes_of_annotation <- tidyr::drop_na(fullnes_of_annotation)
     
     gecco_inter_1 <- vals$gecco_data_filtered
     # Decide which score to use for basic thresholds on x axis
@@ -2682,10 +2680,10 @@ server <- function(input, output, session) {
     # Loop over thresholds with given step. Get the interception of antismash data with DeepBGC one at given x axis thresholds with additionsl ones
     for (dataframe_1 in seq(input$plot_start_gecco, 99, input$plot_step_gecco)){
 
-      # Filter dataframe. Get only rows, which >= of a given thresholds. Select only start and stop of those rows as a matrix
+      # dplyr::filter dataframe. Get only rows, which >= of a given thresholds. dplyr::select only start and stop of those rows as a matrix
       gecco_inter <- gecco_inter_1 %>%
-        filter(score>=dataframe_1/100) %>%
-        select(Start, Stop) 
+        dplyr::filter(score>=dataframe_1/100) %>%
+        dplyr::select(Start, Stop) 
       if (length(gecco_inter$Start) > 0) {
         gecco_inter$seqnames <- "chr"
       }
@@ -2694,15 +2692,15 @@ server <- function(input, output, session) {
       # Store antismash bgc start amd atop values as matrix
       if (input$ref_comparison_gecco == 'A'){
         anti_inter <- vals$anti_data %>%
-          select(Start, Stop) 
+          dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
       } else if (input$ref_comparison_gecco == 'P'){
         anti_inter <- vals$prism_data %>%
-          select(Start, Stop) 
+          dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
       } else if (input$ref_comparison_gecco == 'S'){
         anti_inter <- vals$sempi_data %>%
-          select(Start, Stop) 
+          dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
       } 
       
@@ -2773,13 +2771,13 @@ server <- function(input, output, session) {
     
     # Store dataframe into variable. Widen it to calculate rates
     test <- fullnes_of_annotation %>%
-      pivot_wider(names_from = Source, values_from = Quantity)
+      tidyr::pivot_wider(names_from = Source, values_from = Quantity)
     if (input$ref_comparison_gecco == 'A'){
       data <-  vals$anti_data
       title <- ggtitle("Rates of GECCO/Antismash data annotation")
       test <- test %>%
         # Calculate rates. Novelty is nummber of clusters annotated only by deepbgc/ all clusters annotated by antismash + (antismash + deepbgc)
-        mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+Antismash` + test$`Only Antismash`), 
+        dplyr::mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+Antismash` + test$`Only Antismash`), 
                #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
                Annotation_rate = test$`GECCO+Antismash`/length(data$Cluster), 
                # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
@@ -2788,7 +2786,7 @@ server <- function(input, output, session) {
       data <- vals$prism_data
       title <- ggtitle("Rates of GECCO/PRISM data annotation")
       test <- test %>%
-        mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+PRISM` + test$`Only PRISM`), 
+        dplyr::mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+PRISM` + test$`Only PRISM`), 
                #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
                Annotation_rate = test$`GECCO+PRISM`/length(data$Cluster), 
                # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
@@ -2797,7 +2795,7 @@ server <- function(input, output, session) {
       data <- vals$sempi_data
       title <- ggtitle("Rates of GECCO/SEMPI data annotation")
       test <- test %>%
-        mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+SEMPI` + test$`Only SEMPI`), 
+        dplyr::mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+SEMPI` + test$`Only SEMPI`), 
                #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
                Annotation_rate = test$`GECCO+SEMPI`/length(data$Cluster), 
                # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
@@ -2806,7 +2804,7 @@ server <- function(input, output, session) {
     
     # Calculate rates and plot interactive plot with plotly
     ggplotly(test %>%
-               pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
+               tidyr::pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
                ggplot(aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
                geom_line(aes(color=Rates)) +
                geom_point(aes(shape=Rates), alpha = .4, size = 3) +
@@ -3232,7 +3230,7 @@ server <- function(input, output, session) {
     shiny::req(vals$data_upload_count >=1)
     
     plot_data <- vals$rename_data
-    new_data <- drop_na(data.frame(cbind(as.character(plot_data$Group_color), as.character(plot_data$Color))) )
+    new_data <- tidyr::drop_na(data.frame(cbind(as.character(plot_data$Group_color), as.character(plot_data$Color))) )
     new_data <- new_data[!apply(new_data == "", 1, all),]
     colnames(new_data) <- c("Name", "Color")
     color_vec <- new_data$Color
@@ -3245,7 +3243,7 @@ server <- function(input, output, session) {
   ##---------------------------------------------------------------
   ##                        Summarize tab                         -
   ##---------------------------------------------------------------
-  # Render barplot with number count of interception for BGC IDs
+  # Render barplot with number plyr::count of interception for BGC IDs
   output$barplot_rank <- renderPlotly({
     shiny::req(vals$data_upload_count >1)
     shiny::req(vals$need_filter == F)
@@ -3272,7 +3270,7 @@ server <- function(input, output, session) {
     ranking_data <- NULL
     for (upload in data_uploads){
       if (vals[[upload]] == T){
-         counts_var <-count(as.factor(unlist(sapply(inters[[soft_names[index]]], function(x){x$to}))))
+         counts_var <-plyr::count(as.factor(unlist(sapply(inters[[soft_names[index]]], function(x){x$to}))))
         # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
         anot_var <- vals[[data_to_use[index]]][vals[[data_to_use[index]]]$Cluster %in% as.numeric(levels(counts_var$x)),]
         # Add prefices to the ID to plot for a barplot.  
@@ -3371,7 +3369,7 @@ server <- function(input, output, session) {
           index <- index +1
         }
         excluded_names <- soft_let[soft_let != as.name(soft_let[i])]
-        data <- df_test %>% group_by_if(colnames(df_test)==soft_let[i]) %>% summarise(a = paste(eval(as.name(excluded_names[1])), collapse=","),
+        data <- df_test %>% dplyr::group_by_if(colnames(df_test)==soft_let[i]) %>% dplyr::summarise(a = paste(eval(as.name(excluded_names[1])), collapse=","),
                                                                                       b=paste(eval(as.name(excluded_names[2])), collapse=","),
                                                                                       c=paste(eval(as.name(excluded_names[3])), collapse=","),
                                                                                       d=paste(eval(as.name(excluded_names[4])), collapse=","),
@@ -3388,7 +3386,7 @@ server <- function(input, output, session) {
         for (f in seq(1:length(data_uploads))){
           if (vals[[data_uploads[f]]] != TRUE){
             data <- data %>%
-              select(-as.name(soft_namings[f]))
+              dplyr::select(-as.name(soft_namings[f]))
           }
         }
         
