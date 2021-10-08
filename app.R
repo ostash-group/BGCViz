@@ -460,17 +460,8 @@ server <- function(input, output, session) {
   # TODO Make tidyr::separate functions for different data types. 
   # For now you just have duplicated the code. Specifically for ARTS!
   # Reading functions:
-  read_antismash <- function(file){
-    
-  }
-  
-  
-  #----------------------------------------------------------------
-  ##            Loading and processing of example data             -
-  ##----------------------------------------------------------------
-  shiny::observeEvent(input$anti_sco,{
-    
-    anti_data <- read.csv("example_data/sco_antismash.csv")
+  read_antismash <- function(data){
+    anti_data <- data
     # Add chromosome column
     anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
     # Type magic
@@ -491,24 +482,22 @@ server <- function(input, output, session) {
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
-                        selected = "Antismash" )
+                               selected = "Antismash" )
       shiny::updateSelectInput(session, "group_by",
-                        selected = "A" )
+                               selected = "A" )
       shiny::updateSelectInput(session, "ref_comparison",
-                        selected = "A")
+                               selected = "A")
       shiny::updateSelectInput(session, "ref_col_biocircos",
-                        selected =  "Antismash")
+                               selected =  "Antismash")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "Antismash")
-
+                               selected = "Antismash")
+      
     }
-    
-  })
-  
-  shiny::observeEvent(input$gecco_sco,{
-    
-    gecco_data <- read.delim("example_data/sco_gecco.tsv")
+    return(anti_data)
+  }
+  read_gecco <- function(data){
     # Add chromosome column
+    gecco_data <- data
     gecco_data$chromosome <-  rep("G", length(gecco_data$type))
     # Type magic
     gecco_data$Cluster <- seq(1:length(gecco_data$chromosome))
@@ -523,7 +512,7 @@ server <- function(input, output, session) {
     # Read data
     gecco_data <- gecco_data %>%
       dplyr::mutate(pks=polyketide_probability, other = other_probability, nrps = nrp_probability, alkaloid = alkaloid_probability, 
-             terpene = terpene_probability, saccharide = saccharide_probability, ripp = ripp_probability) %>%
+                    terpene = terpene_probability, saccharide = saccharide_probability, ripp = ripp_probability) %>%
       dplyr::select(-dplyr::one_of(drop_cols))
     gecco_data$num_prot <- sapply( stringr::str_split(as.character(gecco_data$proteins), ";"), length)
     gecco_data$num_domains <- sapply( stringr::str_split(as.character(gecco_data$domains), ";"), length)
@@ -542,27 +531,24 @@ server <- function(input, output, session) {
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
-                        selected = "GECCO" )
+                               selected = "GECCO" )
       shiny::updateSelectInput(session, "group_by",
-                        selected = "G")
+                               selected = "G")
       shiny::updateSelectInput(session, "ref_col_biocircos",
-                        selected =  "GECCO")
+                               selected =  "GECCO")
       
     }
-    
-  })
-  
-  shiny::observeEvent(input$prism_sco,{
-    # Read data
-    
-    data <- rjson::fromJSON(file = "example_data/sco_prism.json")
-    processed_data <- process_prism_json_suppl(data)
-    shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
-    prism_data <- processed_data[[1]]
-    vals$prism_supp_data_input = T
-    vals$prism_supp <- processed_data[[2]]
-    vals$prism_supp_data <- processed_data[[2]]
-    vals$prism_json = T
+  }
+  read_prism <- function(data, json=T){
+    if (json==T){
+      processed_data <- process_prism_json_suppl(data)
+      shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
+      prism_data <- processed_data[[1]]
+      vals$prism_supp_data_input = T
+      vals$prism_supp <- processed_data[[2]]
+      vals$prism_supp_data <- processed_data[[2]]
+      vals$prism_json = T 
+    }
     
     vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
     vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PS")
@@ -590,21 +576,19 @@ server <- function(input, output, session) {
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
-                        selected = "PRISM" )
+                               selected = "PRISM" )
       shiny::updateSelectInput(session, "group_by",
-                        selected = "P" )
+                               selected = "P" )
       shiny::updateSelectInput(session, "ref_comparison",
-                        selected = "P")
+                               selected = "P")
       shiny::updateSelectInput(session, "ref_col_biocircos",
-                        selected =  "PRISM")
+                               selected =  "PRISM")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "PRISM")
+                               selected = "PRISM")
     }
-  })
-  
-  shiny::observeEvent(input$sempi_sco,{
-    
-    sempi_data <- read.csv("example_data/sco_sempi.csv")
+  }
+  read_sempi <- function(data){
+    sempi_data <- data
     sempi_data['Type2'] <- stringr::str_trim(tolower(sempi_data$Type))
     vals$sempi_type <- sempi_data$Type2
     vals$sempi_data <- sempi_data
@@ -625,376 +609,18 @@ server <- function(input, output, session) {
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
-                        selected = "SEMPI" )
+                               selected = "SEMPI" )
       shiny::updateSelectInput(session, "group_by",
-                        selected = "S" )
+                               selected = "S" )
       shiny::updateSelectInput(session, "ref_comparison",
-                        selected = "S")
+                               selected = "S")
       shiny::updateSelectInput(session, "ref_col_biocircos",
-                        selected =  "SEMPI")
+                               selected =  "SEMPI")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "SEMPI")
+                               selected = "SEMPI")
     }
-    
-  })
-  
-  shiny::observeEvent(input$arts_sco, {
-    
-    data <- read.delim("example_data/sco_duptable.tsv")
-    disable_event_logic()
-    get_location_duptable <- function(x, y){
-      test <- stringr::str_split(x, ";")
-      test2<- sub(".*loc\\|", "", test[[1]])
-      test3 <- stringr::str_split(test2, " ")
-      res <- list()
-      for (i in seq(1:length(test3))){
-        id <- paste('hit',as.character(i), sep = "_")
-        start <- test3[[i]][1]
-        stop <- test3[[i]][2]
-        res_1 <- list(id,start, stop)
-        res <- append(res, list(res_1))
-      }
-      return(res)
-      
-    }
-    
-    dup_table <- data.frame()
-    for (i in seq(1:dim(data)[1])){
-      lst <- get_location_duptable(data$X.Hits_listed.[i])
-      fin_data <- data.frame(do.call("rbind", lst))
-      fin_data$Core_gene <- data$X.Core_gene[i]
-      fin_data$Description <- data$Description[i]
-      fin_data$Count <- data$Count[i]
-      colnames(fin_data) <- c("Hit", "Start", "Stop", "Core", "Description", "Count")
-      dup_table <- rbind(dup_table, fin_data)
-    }
-    dup_table$Hit <- unlist(dup_table$Hit)
-    dup_table$Start <- unlist(dup_table$Start)
-    dup_table$Stop <- unlist(dup_table$Stop)
-    dup_table$Start <- as.numeric(dup_table$Start )
-    dup_table$Stop <- as.numeric(dup_table$Stop)
-    dup_table$ID <- seq(1: dim(dup_table)[1])
-    dup_table$Cluster <- dup_table$ID
-    dup_table$Type <- 'core'
-    dup_table$Type2 <- dup_table$Type
-    dup_table$Evalue <- NA 
-    dup_table$Bitscore <- NA 
-    dup_table$Model <- "Core" 
-    vals$dup_data <- dup_table
-    vals$dup_data_input = T
-    
-    data <- read.delim("example_data/sco_knownhits.tsv")
-    locations <- sapply(data$Sequence.description, function(x){
-      tail(stringr::str_split(x , "\\|")[[1]], 1)
-    })
-    
-    start <- sapply(locations, function(x){
-      stringr::str_split(x, "_")[[1]][1]
-    })
-    stop <- sapply(locations, function(x){
-      stringr::str_split(x, "_")[[1]][2]
-    })
-    
-    known_table <- data.frame(cbind(start, stop))
-    colnames(known_table) <- c("Start", "Stop")
-    rownames(known_table) <- seq(1:dim(known_table)[1])
-    known_table$Start <- as.numeric(known_table$Start )
-    known_table$Stop <- as.numeric(known_table$Stop)
-    known_table$Description <- data$Description
-    known_table$Model <- data$X.Model
-    known_table$Evalue <- data$evalue
-    known_table$Bitscore <- data$bitscore
-    known_table$ID <- seq(1:dim(known_table)[1])
-    known_table$Cluster <-known_table$ID
-    known_table$Type <- 'resistance'
-    known_table$Type2 <- known_table$Type
-    known_table$Hit <- NA
-    known_table$Core <- "Not_core"
-    known_table$Count <- 1
-    vals$known_data <- known_table
-    vals$known_data_input <- TRUE
-      dup_table <- vals$dup_data
-      known_table <- vals$known_data
-      arts_data <- rbind(dup_table, known_table)
-      arts_data <- arts_data %>%
-        dplyr::arrange(Start)
-      arts_data$ID <- seq(1:dim(arts_data)[1])
-      arts_data$Cluster <- arts_data$ID
-      vals$arts_data <- arts_data 
-      vals$data_upload_count <-  vals$data_upload_count +1
-      vals$arts_data_input <- T
-      dup_table_id <- arts_data %>%
-        dplyr::filter(Core != "Not_core")
-      shiny::updateSelectInput(session, "dup_choice",
-                        choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
-                        selected = "All" )
-      vals$upl_arts = T
-      vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
-      vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "AR")
-      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
-      update_ui_with_data()
-      if (vals$data_upload_count == 1){
-        shiny::updateSelectInput(session, "ref",
-                          selected = "ARTS" )
-        shiny::updateSelectInput(session, "group_by",
-                          selected = "AR" )
-        shiny::updateSelectInput(session, "ref_col_biocircos",
-                          selected =  "ARTS")
-      }
-  })
-  
-  shiny::observeEvent(input$deep_sco, {
-    
-    drop_cols <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
-    # Read data
-    vals$deep_data <- read.delim("example_data/sco_deep.tsv") %>%
-      dplyr::mutate(pks=Polyketide, other = Other, nrps = NRP, alkaloid = Alkaloid, 
-             terpene = Terpene, saccharide = Saccharide, ripp = RiPP) %>%
-      dplyr::select(-dplyr::one_of(drop_cols))
-    # Add chromosome info column
-    vals$deep_data$chromosome <-  rep("D", length(vals$deep_data$bgc_candidate_id))
-    # Add ID column as number seuquence of dataframe length
-    vals$deep_data$ID <- seq(1:length(vals$deep_data$bgc_candidate_id))
-    vals$deep_data$Cluster <- vals$deep_data$ID
-    write.csv(vals$deep_data, "deep_data.csv", row.names = F)
-    vals$deep_data_input = TRUE
-    vals$data_upload_count <- vals$data_upload_count +1
-    vals$deep_data_filtered <- filter_deepbgc()
-    vals$choices$ref <- c(vals$choices$ref, "DeepBGC" = "DeepBGC")
-    vals$choices$group_by <- c(vals$choices$group_by, "DeepBGC" = "D")
-    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "DeepBGC" = "DeepBGC")
-    update_ui_with_data()
-    disable_event_logic()
-    if (vals$data_upload_count == 1){
-      shiny::updateSelectInput(session, "ref",
-                        selected = "DeepBGC" )
-      shiny::updateSelectInput(session, "group_by",
-                        selected = "D" )
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        choices = "DeepBGC",
-                        selected = "DeepBGC")
-      
-    }
-  })
-  
-  shiny::observeEvent(input$rre_sco, {
-    
-    # Read data
-    vals$rre_data <- read.delim("example_data/sco_rre.txt")
-    # Clean RRE data. Extract coordinates and Locus tag with double underscore delimiter (__)
-    vals$rre_data <- vals$rre_data %>%
-      tidyr::separate(Gene.name, c("Sequence","Coordinates","Locus_tag"),sep = "__") %>%
-      tidyr::separate(Coordinates, c("Start", "Stop"),sep = "-")
-    # Add chromosome info column
-    vals$rre_data$chromosome <- rep("RRE",length(vals$rre_data$Sequence))
-    # Add ID column
-    vals$rre_data$ID <- seq(1:length(vals$rre_data$Sequence))
-    vals$rre_data$Cluster <- vals$rre_data$ID
-    vals$rre_data <- data.frame(vals$rre_data)
-    vals$rre_data['Type'] <- 'ripp'
-    vals$rre_data['Type2'] <- 'ripp'
-    write.csv(vals$rre_data, "rre_data.csv", row.names = F)
-    
-    vals$rre_data_input = TRUE
-    vals$data_upload_count <- vals$data_upload_count +1
-    vals$choices$ref <- c(vals$choices$ref, "RRE-Finder" = "RRE-Finder")
-    vals$choices$group_by <- c(vals$choices$group_by, "RRE-Finder" = "R")
-    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "RRE-Finder" = "RRE")
-    update_ui_with_data()
-    disable_event_logic()
-    if (vals$data_upload_count == 1){
-      shiny::updateSelectInput(session, "ref",
-                        selected = "RRE-Finder" )
-      shiny::updateSelectInput(session, "group_by",
-                        selected = "R" )
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        choices = "RRE-Finder",
-                        selected = "RRE")
-      
-    }
-    if (!is.null(vals$rre_data$Probability)){
-      vals$rre_more = T
-    } else {
-      vals$rre_more = F
-    }
-  })
-  
-  ##----------------------------------------------------------------
-  ##                Loading and processing user data               -
-  ##----------------------------------------------------------------
-  shiny::observeEvent(input$anti_data,{
-    
-    disable_event_logic()
-    # Read data
-    if (input$anti_input_options==T){
-      anti_data <- read.csv(input$anti_data$datapath)
-    }else{
-       data <- rjson::fromJSON(file = input$anti_data$datapath)
-        types <- sapply(data$records, function(y){
-          lapply(y$features, function(x){
-            if (unlist(x$type == 'region')){
-              tolower(x$qualifiers$product)
-            }
-          })
-        })
-        
-        types <-  Filter(Negate(is.null), types)
-
-        types <- sapply(types, function(x){
-          if (length(unlist(x))>1){
-            tmp <- stringr::str_trim(paste0(unlist(x), collapse = '', sep = " "))
-            gsub(" ", "__", tmp)
-          }else{
-            x
-          }
-        })
-        
-        location <- sapply(data$records, function(y){
-          unlist(sapply(y$features, function(x){
-            if (unlist(x$type == 'region')){
-              unlist(x$location)
-            }
-          })
-          )
-        })
-        
-        
-        location <- gsub("\\[", "", location)
-        location <- gsub("\\]", "", location)
-        location <- data.frame(location)
-        colnames(location) <- "split"
-        anti_data <- location %>%
-          tidyr::separate(split, c("Start", "Stop")) %>%
-          dplyr::transmute(ID = rownames(location), Start, Stop)
-        
-        anti_data <- cbind(anti_data, types)
-        colnames(anti_data) <- c("Cluster", "Start", "Stop", "Type")
-        anti_data$Cluster <- as.numeric(anti_data$Cluster)
-        anti_data$Start <- as.numeric(anti_data$Start)
-        anti_data$Stop <- as.numeric(anti_data$Stop)
-
-    }
-
-    # Add chromosome column
-    anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
-    # Type magic
-    anti_data$Type <- stringr::str_trim(tolower(anti_data$Type))
-    anti_data['Type2'] <- stringr::str_trim(tolower(anti_data$Type))
-    vals$anti_type <- anti_data$Type2
-    vals$anti_data <- anti_data
-    # Save file
-    write.csv(vals$anti_data, "anti_data.csv", row.names = F)
-    vals$anti_data_input = TRUE 
-    vals$data_upload_count <- vals$data_upload_count +1
-    vals$choices$ref <- c(vals$choices$ref, "Antismash" = "Antismash")
-    vals$choices$group_by <- c(vals$choices$group_by, "Antismash" = "A")
-    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "Antismash" = "Antismash")
-    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Antismash" = "Antismash")
-    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "Antismash" = "A")
-    update_ui_with_data()
-    if (vals$data_upload_count == 1){
-      shiny::updateSelectInput(session, "ref",
-                        selected = "Antismash" )
-      shiny::updateSelectInput(session, "group_by",
-                        selected = "A" )
-      shiny::updateSelectInput(session, "ref_comparison",
-                        selected = "A")
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        selected =  "Antismash")
-      shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "Antismash")
-    }
-
-  })
-  
-  shiny::observeEvent(input$sempi_data,{
-    
-    
-    sempi_data <- read.csv(input$sempi_data$datapath)
-    sempi_data['Type2'] <- stringr::str_trim(tolower(sempi_data$Type))
-    vals$sempi_type <- sempi_data$Type2
-    vals$sempi_data <- sempi_data
-    # Add chromosome info column
-    vals$sempi_data$chromosome <-  rep("S", length(vals$sempi_data$Cluster))
-    # Add ID column (same as Cluster)
-    vals$sempi_data$ID <- vals$sempi_data$Cluster
-    # Save file
-    write.csv(vals$sempi_data, "sempi_data.csv", row.names = F)
-    vals$sempi_data_input = TRUE
-    vals$data_upload_count <- vals$data_upload_count +1
-    vals$choices$ref <- c(vals$choices$ref, "SEMPI" = "SEMPI")
-    vals$choices$group_by <- c(vals$choices$group_by, "SEMPI" = "S")
-    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "SEMPI" = "SEMPI")
-    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "SEMPI" = "SEMPI")
-    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "SEMPI" = "S")
-    update_ui_with_data()
-    disable_event_logic()
-    if (vals$data_upload_count == 1){
-      shiny::updateSelectInput(session, "ref",
-                        selected = "SEMPI" )
-      shiny::updateSelectInput(session, "group_by",
-                        selected = "S" )
-      shiny::updateSelectInput(session, "ref_comparison",
-                        selected = "S")
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        selected =  "SEMPI")
-      shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "SEMPI")
-    }
-    
-  })
-  
-  shiny::observeEvent(input$gecco_data,{
-    
-    gecco_data <- read.delim(input$gecco_data$datapath)
-    gecco_data$chromosome <-  rep("G", length(gecco_data$type))
-    # Type magic
-    gecco_data$Cluster <- seq(1:length(gecco_data$chromosome))
-    gecco_data$ID <- gecco_data$Cluster
-    gecco_data$Type <- stringr::str_trim(tolower(gecco_data$type))
-    gecco_data$Type <- gsub("polyketide", "pks", gecco_data$Type)
-    gecco_data$Type <- gsub("nrp", "nrps", gecco_data$Type)
-    gecco_data$Type <- gsub("unknown", "under_threshold", gecco_data$Type)
-    gecco_data['Type2'] <- stringr::str_trim(tolower(gecco_data$Type))
-    drop_cols <- c("alkaloid_probability" ,  "polyketide_probability", "ripp_probability",  "saccharide_probability",
-                   "terpene_probability",    "nrp_probability"  , "other_probability" )
-    # Read data
-    gecco_data <- gecco_data %>%
-      dplyr::mutate(pks=polyketide_probability, other = other_probability, nrps = nrp_probability, alkaloid = alkaloid_probability, 
-             terpene = terpene_probability, saccharide = saccharide_probability, ripp = ripp_probability) %>%
-      dplyr::select(-dplyr::one_of(drop_cols))
-    gecco_data$num_prot <- sapply( stringr::str_split(as.character(gecco_data$proteins), ";"), length)
-    gecco_data$num_domains <- sapply( stringr::str_split(as.character(gecco_data$domains), ";"), length)
-    names(gecco_data)[names(gecco_data) == "start"] <- "Start"
-    names(gecco_data)[names(gecco_data) == "end"] <-  "Stop"
-    vals$gecco_data <- gecco_data
-    vals$gecco_data_filtered <- filter_gecco()
-    # Save file
-    write.csv(vals$gecco_data, "gecco_data.csv", row.names = F)
-    vals$gecco_data_input = TRUE 
-    vals$data_upload_count <- vals$data_upload_count +1
-    vals$choices$ref <- c(vals$choices$ref, "GECCO" = "GECCO")
-    vals$choices$group_by <- c(vals$choices$group_by, "GECCO" = "G")
-    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "GECCO" = "GECCO")
-    update_ui_with_data()
-    disable_event_logic()
-    if (vals$data_upload_count == 1){
-      shiny::updateSelectInput(session, "ref",
-                        selected = "GECCO" )
-      shiny::updateSelectInput(session, "group_by",
-                        selected = "G")
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        selected =  "GECCO")
-    }
-    
-  })
-  
-  # These are for ARTS data processing
-  # input$known_data and inoput$dup_data
-  shiny::observeEvent(input$known_data, {
-    disable_event_logic()
-    
-    data <- read.delim(input$known_data$datapath)
+  }
+  read_arts_knownhits <- function(data){
     locations <- sapply(data$Sequence.description, function(x){
       tail(stringr::str_split(x , "\\|")[[1]], 1)
     })
@@ -1042,25 +668,21 @@ server <- function(input, output, session) {
       dup_table_id <- arts_data %>%
         dplyr::filter(Core != "Not_core")
       shiny::updateSelectInput(session, "dup_choice",
-                        choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
-                        selected = "All" )
+                               choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
+                               selected = "All" )
       vals$upl_arts = T
       if (vals$data_upload_count == 1){
         shiny::updateSelectInput(session, "ref",
-                          selected = "ARTS" )
+                                 selected = "ARTS" )
         shiny::updateSelectInput(session, "group_by",
-                          selected = "AR" )
+                                 selected = "AR" )
         shiny::updateSelectInput(session, "ref_col_biocircos",
-                          selected =  "ARTS")
+                                 selected =  "ARTS")
       }
     } 
-  })
-  
-  shiny::observeEvent(input$dup_data, {
-    disable_event_logic()
     
-    data <- read.delim(input$dup_data$datapath)
-    
+  }
+  read_arts_dupdata <- function(data){
     get_location_duptable <- function(x, y){
       test <- stringr::str_split(x, ";")
       test2<- sub(".*loc\\|", "", test[[1]])
@@ -1120,81 +742,27 @@ server <- function(input, output, session) {
       dup_table_id <- arts_data %>%
         dplyr::filter(Core != "Not_core")
       shiny::updateSelectInput(session, "dup_choice",
-                        choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
-                        selected = "All" )
+                               choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
+                               selected = "All" )
       if (vals$data_upload_count == 1){
         shiny::updateSelectInput(session, "ref",
-                          selected = "ARTS" )
+                                 selected = "ARTS" )
         shiny::updateSelectInput(session, "group_by",
-                          selected = "AR" )
+                                 selected = "AR" )
         shiny::updateSelectInput(session, "ref_col_biocircos",
-                          selected =  "ARTS")
+                                 selected =  "ARTS")
       }
     } 
-  })
-  
-  shiny::observeEvent(input$prism_data,{
-    
-    # Read data
-    if (input$prism_input_options == T){
-      prism_data <- read.csv(input$prism_data$datapath)
-    } else{
-      data <- rjson::fromJSON(file = input$prism_data$datapath)
-      processed_data <- process_prism_json_suppl(data)
-      shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
-      prism_data <- processed_data[[1]]
-      vals$prism_supp <- processed_data[[2]]
-      vals$prism_supp_data_input = T
-      vals$prism_supp_data <- processed_data[[2]]
-      vals$prism_json = T
-      vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
-      vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PS")
-      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
-      update_ui_with_data()
-    }
-    vals$choices$ref <- c(vals$choices$ref, "PRISM" = "PRISM")
-    vals$choices$group_by <- c(vals$choices$group_by, "PRISM" = "P")
-    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM" = "PRISM")
-    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "PRISM" = "PRISM")
-    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "PRISM" = "P")
-    update_ui_with_data()
-    prism_data$Type <- stringr::str_trim(tolower(prism_data$Type))
-    prism_data['Type2'] <- stringr::str_trim(tolower(prism_data$Type))
-    vals$prism_data <- prism_data
-    vals$prism_type <- prism_data$Type2
-    
-    # Add chromosome info column
-    vals$prism_data$chromosome <-  rep("P", length(vals$prism_data$Cluster))
-    # Add ID column (same as Cluster)
-    vals$prism_data$ID <- vals$prism_data$Cluster
-    # Save file
-    write.csv(vals$prism_data, "prism_data.csv", row.names = F)
-    vals$prism_data_input = TRUE
-    vals$data_upload_count <- vals$data_upload_count +1
-    disable_event_logic()
-    if (vals$data_upload_count == 1){
-      shiny::updateSelectInput(session, "ref",
-                        selected = "PRISM" )
-      shiny::updateSelectInput(session, "group_by",
-                        selected = "P" )
-      shiny::updateSelectInput(session, "ref_comparison",
-                        selected = "P")
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        selected =  "PRISM")
-      shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "PRISM")
-    }
-  })
-  
-  shiny::observeEvent(input$deep_data, {
-    
+  }
+  read_deep <- function(data){
     drop_cols <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
     # Read data
-    vals$deep_data <- read.delim(input$deep_data$datapath) %>%
+    deep_data <- data %>%
       dplyr::mutate(pks=Polyketide, other = Other, nrps = NRP, alkaloid = Alkaloid, 
-             terpene = Terpene, saccharide = Saccharide, ripp = RiPP) %>%
+                    terpene = Terpene, saccharide = Saccharide, ripp = RiPP) %>%
       dplyr::select(-dplyr::one_of(drop_cols))
     # Add chromosome info column
+    vals$deep_data <- deep_data
     vals$deep_data$chromosome <-  rep("D", length(vals$deep_data$bgc_candidate_id))
     # Add ID column as number seuquence of dataframe length
     vals$deep_data$ID <- seq(1:length(vals$deep_data$bgc_candidate_id))
@@ -1210,22 +778,18 @@ server <- function(input, output, session) {
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
-                        selected = "DeepBGC" )
+                               selected = "DeepBGC" )
       shiny::updateSelectInput(session, "group_by",
-                        selected = "D" )
+                               selected = "D" )
       shiny::updateSelectInput(session, "ref_col_biocircos",
-                        choices = "DeepBGC",
-                        selected = "DeepBGC")
+                               choices = "DeepBGC",
+                               selected = "DeepBGC")
       
     }
-  })
-  
-  shiny::observeEvent(input$rre_data, {
-    
-    # Read data
-    vals$rre_data <- read.delim(input$rre_data$datapath)
+  }
+  read_rre <- function(data){
     # Clean RRE data. Extract coordinates and Locus tag with double underscore delimiter (__)
-    vals$rre_data <- vals$rre_data %>%
+    vals$rre_data <- data %>%
       tidyr::separate(Gene.name, c("Sequence","Coordinates","Locus_tag"),sep = "__") %>%
       tidyr::separate(Coordinates, c("Start", "Stop"),sep = "-")
     # Add chromosome info column
@@ -1237,6 +801,7 @@ server <- function(input, output, session) {
     vals$rre_data['Type'] <- 'ripp'
     vals$rre_data['Type2'] <- 'ripp'
     write.csv(vals$rre_data, "rre_data.csv", row.names = F)
+    
     vals$rre_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
     vals$choices$ref <- c(vals$choices$ref, "RRE-Finder" = "RRE-Finder")
@@ -1246,12 +811,12 @@ server <- function(input, output, session) {
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
-                        selected = "RRE-Finder" )
+                               selected = "RRE-Finder" )
       shiny::updateSelectInput(session, "group_by",
-                        selected = "R" )
+                               selected = "R" )
       shiny::updateSelectInput(session, "ref_col_biocircos",
-                        choices = "RRE-Finder",
-                        selected = "RRE")
+                               choices = "RRE-Finder",
+                               selected = "RRE")
       
     }
     if (!is.null(vals$rre_data$Probability)){
@@ -1259,6 +824,180 @@ server <- function(input, output, session) {
     } else {
       vals$rre_more = F
     }
+  }
+  
+  #----------------------------------------------------------------
+  ##            Loading and processing of example data             -
+  ##----------------------------------------------------------------
+  shiny::observeEvent(input$anti_sco,{
+    
+    anti_data <- read.csv("example_data/sco_antismash.csv")
+    anti_data <- read_antismash(anti_data)
+    
+  })
+  
+  shiny::observeEvent(input$gecco_sco,{
+    
+    gecco_data <- read.delim("example_data/sco_gecco.tsv")
+    read_gecco(gecco_data)
+    
+  })
+  
+  shiny::observeEvent(input$prism_sco,{
+    # Read data
+    
+    data <- rjson::fromJSON(file = "example_data/sco_prism.json")
+    read_prism(data)
+    
+  })
+  
+  shiny::observeEvent(input$sempi_sco,{
+    
+    sempi_data <- read.csv("example_data/sco_sempi.csv")
+    read_sempi(sempi_data)
+    
+  })
+  
+  shiny::observeEvent(input$arts_sco, {
+    
+    data <- read.delim("example_data/sco_duptable.tsv")
+    disable_event_logic()
+    read_arts_dupdata(data)
+    
+    data <- read.delim("example_data/sco_knownhits.tsv")
+    read_arts_knownhits(data)
+  })
+  
+  shiny::observeEvent(input$deep_sco, {
+    
+    data <- read.delim("example_data/sco_deep.tsv") 
+    read_deep(data)
+  })
+  
+  shiny::observeEvent(input$rre_sco, {
+    
+    # Read data
+    data <-  read.delim("example_data/sco_rre.txt")
+    read_rre(data)
+    
+  })
+  
+  ##----------------------------------------------------------------
+  ##                Loading and processing user data               -
+  ##----------------------------------------------------------------
+  shiny::observeEvent(input$anti_data,{
+    
+    disable_event_logic()
+    # Read data
+    if (input$anti_input_options==T){
+      anti_data <- read.csv(input$anti_data$datapath)
+    }else{
+       data <- rjson::fromJSON(file = input$anti_data$datapath)
+        types <- sapply(data$records, function(y){
+          lapply(y$features, function(x){
+            if (unlist(x$type == 'region')){
+              tolower(x$qualifiers$product)
+            }
+          })
+        })
+        
+        types <-  Filter(Negate(is.null), types)
+
+        types <- sapply(types, function(x){
+          if (length(unlist(x))>1){
+            tmp <- stringr::str_trim(paste0(unlist(x), collapse = '', sep = " "))
+            gsub(" ", "__", tmp)
+          }else{
+            x
+          }
+        })
+        
+        location <- sapply(data$records, function(y){
+          unlist(sapply(y$features, function(x){
+            if (unlist(x$type == 'region')){
+              unlist(x$location)
+            }
+          })
+          )
+        })
+        
+        
+        location <- gsub("\\[", "", location)
+        location <- gsub("\\]", "", location)
+        location <- data.frame(location)
+        colnames(location) <- "split"
+        anti_data <- location %>%
+          tidyr::separate(split, c("Start", "Stop")) %>%
+          dplyr::transmute(ID = rownames(location), Start, Stop)
+        
+        anti_data <- cbind(anti_data, types)
+        colnames(anti_data) <- c("Cluster", "Start", "Stop", "Type")
+        anti_data$Cluster <- as.numeric(anti_data$Cluster)
+        anti_data$Start <- as.numeric(anti_data$Start)
+        anti_data$Stop <- as.numeric(anti_data$Stop)
+
+    }
+
+    read_antismash(anti_data)
+
+  })
+  
+  shiny::observeEvent(input$sempi_data,{
+    
+    
+    sempi_data <- read.csv(input$sempi_data$datapath)
+    read_sempi(sempi_data)
+    
+  })
+  
+  shiny::observeEvent(input$gecco_data,{
+    
+    gecco_data <- read.delim(input$gecco_data$datapath)
+    read_gecco(gecco_data)
+    
+  })
+  
+  # These are for ARTS data processing
+  # input$known_data and inoput$dup_data
+  shiny::observeEvent(input$known_data, {
+    disable_event_logic()
+    
+    data <- read.delim(input$known_data$datapath)
+   read_arts_knownhits(data)
+  })
+  
+  shiny::observeEvent(input$dup_data, {
+    disable_event_logic()
+    
+    data <- read.delim(input$dup_data$datapath)
+    
+    read_arts_dupdata(data)
+  })
+  
+  shiny::observeEvent(input$prism_data,{
+    
+    # Read data
+    if (input$prism_input_options == T){
+      prism_data <- read.csv(input$prism_data$datapath)
+      read_prism(prism_data, json=F)
+    } else{
+      data <- rjson::fromJSON(file = input$prism_data$datapath)
+      read_prism(data)
+    }
+    
+  })
+  
+  shiny::observeEvent(input$deep_data, {
+    
+     data <- read.delim(input$deep_data$datapath)
+     read_deep(data)
+  })
+  
+  shiny::observeEvent(input$rre_data, {
+    
+    # Read data
+    rre_data <- read.delim(input$rre_data$datapath)
+    read_rre(rre_data)
   })
   
   ############################################################################
