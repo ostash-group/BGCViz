@@ -459,6 +459,12 @@ server <- function(input, output, session) {
   ###########################################################################
   # TODO Make tidyr::separate functions for different data types. 
   # For now you just have duplicated the code. Specifically for ARTS!
+  # Reading functions:
+  read_antismash <- function(file){
+    
+  }
+  
+  
   #----------------------------------------------------------------
   ##            Loading and processing of example data             -
   ##----------------------------------------------------------------
@@ -479,18 +485,9 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "Antismash" = "Antismash")
     vals$choices$group_by <- c(vals$choices$group_by, "Antismash" = "A")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "Antismash" = "Antismash")
-    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Antismash" = "A")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Antismash" = "Antismash")
     vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "Antismash" = "A")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
-    shiny::updateSelectInput(session, "ref_comparison_gecco",
-                      choices = vals$choices$ref_comparison_gecco )
-    shiny::updateSelectInput(session, "ref_comparison",
-                      choices = vals$choices$ref_comparison )
+    update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
@@ -502,7 +499,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref_col_biocircos",
                         selected =  "Antismash")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "A")
+                        selected = "Antismash")
 
     }
     
@@ -541,12 +538,7 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "GECCO" = "GECCO")
     vals$choices$group_by <- c(vals$choices$group_by, "GECCO" = "G")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "GECCO" = "GECCO")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
+    update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
@@ -563,24 +555,19 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$prism_sco,{
     # Read data
     
-      data <- rjson::fromJSON(file = "example_data/sco_prism.json")
-      processed_data <- process_prism_json_suppl(data)
-      shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
-      prism_data <- processed_data[[1]]
-      vals$prism_supp_data_input = T
-      vals$prism_supp <- processed_data[[2]]
-      vals$prism_supp_data <- processed_data[[2]]
-      vals$prism_json = T
-      
-      vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
-      vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PS")
-      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
-      shiny::updateSelectInput(session, "ref",
-                        choices = vals$choices$ref )
-      shiny::updateSelectInput(session, "group_by",
-                        choices = vals$choices$group_by )
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        choices = vals$choices$ref_col_biocircos )
+    data <- rjson::fromJSON(file = "example_data/sco_prism.json")
+    processed_data <- process_prism_json_suppl(data)
+    shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
+    prism_data <- processed_data[[1]]
+    vals$prism_supp_data_input = T
+    vals$prism_supp <- processed_data[[2]]
+    vals$prism_supp_data <- processed_data[[2]]
+    vals$prism_json = T
+    
+    vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
+    vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PS")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
+    update_ui_with_data()
     prism_data$Type <- stringr::str_trim(tolower(prism_data$Type))
     prism_data['Type2'] <- stringr::str_trim(tolower(prism_data$Type))
     vals$prism_data <- prism_data
@@ -597,18 +584,9 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "PRISM" = "PRISM")
     vals$choices$group_by <- c(vals$choices$group_by, "PRISM" = "P")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM" = "PRISM")
-    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "PRISM" = "P")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "PRISM" = "PRISM")
     vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "PRISM" = "P")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
-    shiny::updateSelectInput(session, "ref_comparison_gecco",
-                      choices = vals$choices$ref_comparison_gecco )
-    shiny::updateSelectInput(session, "ref_comparison",
-                      choices = vals$choices$ref_comparison )
+    update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
@@ -620,7 +598,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref_col_biocircos",
                         selected =  "PRISM")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "P")
+                        selected = "PRISM")
     }
   })
   
@@ -641,18 +619,9 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "SEMPI" = "SEMPI")
     vals$choices$group_by <- c(vals$choices$group_by, "SEMPI" = "S")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "SEMPI" = "SEMPI")
-    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "SEMPI" = "S")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "SEMPI" = "SEMPI")
     vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "SEMPI" = "S")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
-    shiny::updateSelectInput(session, "ref_comparison_gecco",
-                      choices = vals$choices$ref_comparison_gecco )
-    shiny::updateSelectInput(session, "ref_comparison",
-                      choices = vals$choices$ref_comparison )
+    update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
@@ -664,7 +633,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref_col_biocircos",
                         selected =  "SEMPI")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "S")
+                        selected = "SEMPI")
     }
     
   })
@@ -763,12 +732,7 @@ server <- function(input, output, session) {
       vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
       vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "AR")
       vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
-      shiny::updateSelectInput(session, "ref",
-                        choices = vals$choices$ref )
-      shiny::updateSelectInput(session, "group_by",
-                        choices = vals$choices$group_by )
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        choices = vals$choices$ref_col_biocircos )
+      update_ui_with_data()
       if (vals$data_upload_count == 1){
         shiny::updateSelectInput(session, "ref",
                           selected = "ARTS" )
@@ -799,12 +763,7 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "DeepBGC" = "DeepBGC")
     vals$choices$group_by <- c(vals$choices$group_by, "DeepBGC" = "D")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "DeepBGC" = "DeepBGC")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
+    update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
@@ -841,12 +800,7 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "RRE-Finder" = "RRE-Finder")
     vals$choices$group_by <- c(vals$choices$group_by, "RRE-Finder" = "R")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "RRE-Finder" = "RRE")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
+    update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
@@ -935,18 +889,9 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "Antismash" = "Antismash")
     vals$choices$group_by <- c(vals$choices$group_by, "Antismash" = "A")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "Antismash" = "Antismash")
-    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Antismash" = "A")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Antismash" = "Antismash")
     vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "Antismash" = "A")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
-    shiny::updateSelectInput(session, "ref_comparison_gecco",
-                      choices = vals$choices$ref_comparison_gecco )
-    shiny::updateSelectInput(session, "ref_comparison",
-                      choices = vals$choices$ref_comparison )
+    update_ui_with_data()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
                         selected = "Antismash" )
@@ -957,7 +902,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref_col_biocircos",
                         selected =  "Antismash")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "A")
+                        selected = "Antismash")
     }
 
   })
@@ -980,18 +925,9 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "SEMPI" = "SEMPI")
     vals$choices$group_by <- c(vals$choices$group_by, "SEMPI" = "S")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "SEMPI" = "SEMPI")
-    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "SEMPI" = "S")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "SEMPI" = "SEMPI")
     vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "SEMPI" = "S")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
-    shiny::updateSelectInput(session, "ref_comparison_gecco",
-                      choices = vals$choices$ref_comparison_gecco )
-    shiny::updateSelectInput(session, "ref_comparison",
-                      choices = vals$choices$ref_comparison )
+    update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
@@ -1003,7 +939,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref_col_biocircos",
                         selected =  "SEMPI")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "S")
+                        selected = "SEMPI")
     }
     
   })
@@ -1040,12 +976,7 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "GECCO" = "GECCO")
     vals$choices$group_by <- c(vals$choices$group_by, "GECCO" = "G")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "GECCO" = "GECCO")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
+    update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
@@ -1098,12 +1029,7 @@ server <- function(input, output, session) {
       vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
       vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "AR")
       vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
-      shiny::updateSelectInput(session, "ref",
-                        choices = vals$choices$ref )
-      shiny::updateSelectInput(session, "group_by",
-                        choices = vals$choices$group_by )
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        choices = vals$choices$ref_col_biocircos )
+      update_ui_with_data()
       dup_table <- vals$dup_data
       known_table <- vals$known_data
       arts_data <- rbind(dup_table, known_table)
@@ -1180,12 +1106,7 @@ server <- function(input, output, session) {
       vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
       vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "AR")
       vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
-      shiny::updateSelectInput(session, "ref",
-                        choices = vals$choices$ref )
-      shiny::updateSelectInput(session, "group_by",
-                        choices = vals$choices$group_by )
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        choices = vals$choices$ref_col_biocircos )
+      update_ui_with_data()
       dup_table <- vals$dup_data
       known_table <- vals$known_data
       arts_data <- rbind(dup_table, known_table)
@@ -1229,28 +1150,14 @@ server <- function(input, output, session) {
       vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
       vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PS")
       vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
-      shiny::updateSelectInput(session, "ref",
-                        choices = vals$choices$ref )
-      shiny::updateSelectInput(session, "group_by",
-                        choices = vals$choices$group_by )
-      shiny::updateSelectInput(session, "ref_col_biocircos",
-                        choices = vals$choices$ref_col_biocircos )
+      update_ui_with_data()
     }
     vals$choices$ref <- c(vals$choices$ref, "PRISM" = "PRISM")
     vals$choices$group_by <- c(vals$choices$group_by, "PRISM" = "P")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM" = "PRISM")
-    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "PRISM" = "P")
+    vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "PRISM" = "PRISM")
     vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "PRISM" = "P")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
-    shiny::updateSelectInput(session, "ref_comparison_gecco",
-                      choices = vals$choices$ref_comparison_gecco )
-    shiny::updateSelectInput(session, "ref_comparison",
-                      choices = vals$choices$ref_comparison )
+    update_ui_with_data()
     prism_data$Type <- stringr::str_trim(tolower(prism_data$Type))
     prism_data['Type2'] <- stringr::str_trim(tolower(prism_data$Type))
     vals$prism_data <- prism_data
@@ -1275,7 +1182,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref_col_biocircos",
                         selected =  "PRISM")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
-                        selected = "P")
+                        selected = "PRISM")
     }
   })
   
@@ -1299,12 +1206,7 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "DeepBGC" = "DeepBGC")
     vals$choices$group_by <- c(vals$choices$group_by, "DeepBGC" = "D")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "DeepBGC" = "DeepBGC")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
+    update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
@@ -1340,12 +1242,7 @@ server <- function(input, output, session) {
     vals$choices$ref <- c(vals$choices$ref, "RRE-Finder" = "RRE-Finder")
     vals$choices$group_by <- c(vals$choices$group_by, "RRE-Finder" = "R")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "RRE-Finder" = "RRE")
-    shiny::updateSelectInput(session, "ref",
-                      choices = vals$choices$ref )
-    shiny::updateSelectInput(session, "group_by",
-                      choices = vals$choices$group_by )
-    shiny::updateSelectInput(session, "ref_col_biocircos",
-                      choices = vals$choices$ref_col_biocircos )
+    update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
       shiny::updateSelectInput(session, "ref",
@@ -1371,6 +1268,19 @@ server <- function(input, output, session) {
   ###                                                                      ###
   ############################################################################
   ############################################################################
+  # Update choices
+  update_ui_with_data <- function(){
+    shiny::updateSelectInput(session, "ref",
+                             choices = vals$choices$ref )
+    shiny::updateSelectInput(session, "group_by",
+                             choices = vals$choices$group_by )
+    shiny::updateSelectInput(session, "ref_col_biocircos",
+                             choices = vals$choices$ref_col_biocircos )
+    shiny::updateSelectInput(session, "ref_comparison_gecco",
+                             choices = vals$choices$ref_comparison_gecco )
+    shiny::updateSelectInput(session, "ref_comparison",
+                             choices = vals$choices$ref_comparison )
+  }
   # Observe input of chromosome length
   shiny::observeEvent(input$chr_len,{
     
@@ -2692,15 +2602,15 @@ server <- function(input, output, session) {
       
       
       # Store antismash bgc start amd atop values as matrix
-      if (input$ref_comparison_gecco == 'A'){
+      if (input$ref_comparison_gecco == 'Antismash'){
         anti_inter <- vals$anti_data %>%
           dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
-      } else if (input$ref_comparison_gecco == 'P'){
+      } else if (input$ref_comparison_gecco == 'PRISM'){
         anti_inter <- vals$prism_data %>%
           dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
-      } else if (input$ref_comparison_gecco == 'S'){
+      } else if (input$ref_comparison_gecco == 'SEMPI'){
         anti_inter <- vals$sempi_data %>%
           dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
@@ -2722,15 +2632,15 @@ server <- function(input, output, session) {
       }
       
       
-      if (input$ref_comparison_gecco == 'A'){
+      if (input$ref_comparison_gecco == 'Antismash'){
         used_antismash <-  length(vals$anti_data$Cluster)-inter_bgc
         cols <-  c("Only Antismash", "GECCO+Antismash", "Only GECCO")
         title <-  ggplot2::ggtitle("Comparison of Antismash and GECCO annotations at given score threshold")
-      } else if (input$ref_comparison_gecco == 'P'){
+      } else if (input$ref_comparison_gecco == 'PRISM'){
         used_antismash <-  length(vals$prism_data$Cluster)-inter_bgc
         cols <- c("Only PRISM", "GECCO+PRISM", "Only GECCO")
         title <- ggplot2::ggtitle("Comparison of PRISM and GECCO annotations at given score threshold")
-      } else if (input$ref_comparison_gecco == 'S') {
+      } else if (input$ref_comparison_gecco == 'SEMPI') {
         used_antismash <-  length(vals$sempi_data$Cluster)-inter_bgc
         cols <- c("Only SEMPI", "GECCO+SEMPI", "Only GECCO")
         title <- ggplot2::ggtitle("Comparison of SEMPI and GECCO annotations at given score threshold")
@@ -2774,7 +2684,7 @@ server <- function(input, output, session) {
     # Store dataframe into variable. Widen it to calculate rates
     test <- fullnes_of_annotation %>%
       tidyr::pivot_wider(names_from = Source, values_from = Quantity)
-    if (input$ref_comparison_gecco == 'A'){
+    if (input$ref_comparison_gecco == 'Antismash'){
       data <-  vals$anti_data
       title <- ggplot2::ggtitle("Rates of GECCO/Antismash data annotation")
       test <- test %>%
@@ -2784,7 +2694,7 @@ server <- function(input, output, session) {
                Annotation_rate = test$`GECCO+Antismash`/length(data$Cluster), 
                # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
                Skip_rate = test$`Only Antismash`/length(data$Cluster))
-    } else if (input$ref_comparison_gecco == 'P'){
+    } else if (input$ref_comparison_gecco == 'PRISM'){
       data <- vals$prism_data
       title <- ggplot2::ggtitle("Rates of GECCO/PRISM data annotation")
       test <- test %>%
@@ -2793,7 +2703,7 @@ server <- function(input, output, session) {
                Annotation_rate = test$`GECCO+PRISM`/length(data$Cluster), 
                # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
                Skip_rate = test$`Only PRISM`/length(data$Cluster))
-    } else if (input$ref_comparison_gecco == 'S'){
+    } else if (input$ref_comparison_gecco == 'SEMPI'){
       data <- vals$sempi_data
       title <- ggplot2::ggtitle("Rates of GECCO/SEMPI data annotation")
       test <- test %>%
