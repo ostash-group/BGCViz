@@ -207,6 +207,23 @@ server <- function(input, output, session) {
     anti=F,deep=F, gecco=F, arts=F, prism=F, sempi=F, prism_supp=F, rre=F
   )
   vals$rename_data <- read.csv("rename.csv")
+  # Variables, that holds data uploads boolean (so if data is present or not)
+  data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
+                    "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
+  # Universal beginings for variables, used in the app for different data
+  soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
+  # The Namings, meaning how to label the data on the plots
+  soft_namings <- c('Antismash', 'SEMPI','PRISM', 'PRISM-Supp', 'ARTS', 'DeepBGC', 'GECCO', 'RRE_Finder')
+  # Dataframes undes vals$list, that stored the data 
+  data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data_filtered","deep_data_filtered" ,"gecco_data_filtered", "rre_data")
+  # Used for software coding. Then just map to the soft namings
+  soft_let <- c("A", "S", "P", "PS", "AR", "D", "G", "R")
+  # Used in barplot on summarise tab + Annotation on chromosome plots 
+  abbr <- c("A", "S", "P", "P-supp", "AR", "D", "G", "RRE")
+  # Used for deep reference 2 plot
+  soft_datafr <- c("seg_df_ref_a", "seg_df_ref_s" , "seg_df_ref_p", "seg_df_ref_p_s", "seg_df_ref_ar", "seg_df_ref_d", 
+                   "seg_df_ref_g", "seg_df_ref_r")
+  
   ##----------------------------------------------------------------
   ##                        Helper functions                       -
   ##----------------------------------------------------------------
@@ -555,8 +572,8 @@ server <- function(input, output, session) {
       vals$prism_supp_data <- processed_data[[2]]
       vals$prism_json = T
       
-      vals$choices$ref <- c(vals$choices$ref, "PRISM-supp" = "PRISM-supp")
-      vals$choices$group_by <- c(vals$choices$group_by, "PRISM-supp" = "PS")
+      vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
+      vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PS")
       vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
       shiny::updateSelectInput(session, "ref",
                         choices = vals$choices$ref )
@@ -1209,8 +1226,8 @@ server <- function(input, output, session) {
       vals$prism_supp_data_input = T
       vals$prism_supp_data <- processed_data[[2]]
       vals$prism_json = T
-      vals$choices$ref <- c(vals$choices$ref, "PRISM-supp" = "PRISM-supp")
-      vals$choices$group_by <- c(vals$choices$group_by, "PRISM-supp" = "PS")
+      vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
+      vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PS")
       vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
       shiny::updateSelectInput(session, "ref",
                         choices = vals$choices$ref )
@@ -2104,11 +2121,6 @@ server <- function(input, output, session) {
     }
     
     inters <- vals$inters
-    data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
-                      "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
-    soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
-    
-
     index = 1
     for (i in data_uploads){
       index_2 = 1
@@ -2281,17 +2293,13 @@ server <- function(input, output, session) {
     
     
     rename_data <- vals$rename_data
-    data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
-                      "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
-    soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
-    soft <- c("Antismash","SEMPI","PRISM","PRISM-Supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
-   data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data_filtered","deep_data_filtered" ,"gecco_data_filtered", "rre_data")
+
     index <- 1
    # browser()
     for (upload in data_uploads){
       if (vals[[upload]] == T){
         # Store data in local variable
-        init_data <- initialize_biocircos(vals[[data_to_use[index]]], soft[index], Biocircos_chromosomes, arcs_chromosomes, arcs_begin , arcs_end, arc_labels, arc_col, rename_data )
+        init_data <- initialize_biocircos(vals[[data_to_use[index]]], soft_namings[index], Biocircos_chromosomes, arcs_chromosomes, arcs_begin , arcs_end, arc_labels, arc_col, rename_data )
         #Make chromosome list for Biocircos plot. Use chr_len as an input
         Biocircos_chromosomes <- init_data[[1]]
         #Add arcs. Quantity of arcs is length of dataframes
@@ -2415,7 +2423,7 @@ server <- function(input, output, session) {
                    link_pos_end_2, label_1, label_2, label_color))
     }
     data_uploads_2 <- data_uploads
-    soft_2 <- soft
+    soft_2 <- soft_namings
     soft_names_2 <- soft_names
     data_to_use_2 <- data_to_use
     index <- 1
@@ -2427,8 +2435,8 @@ server <- function(input, output, session) {
       index2 <- 1
       if (vals[[upload]] == T){
         for (upload2 in data_uploads_2){
-          if ((vals[[upload2]]==T) & (length(data_uploads_2) > 0) & (soft[index] != soft_2[index2])){
-            output <- add_biocircos_data(inters[[soft_names[index]]][[soft_names_2[index2]]]$from, inters[[soft_names[index]]][[soft_names_2[index2]]]$to, vals[[data_to_use_2[index2]]], vals[[data_to_use[index]]], soft_2[index2], soft[index], rename_data, input$label_color_class)
+          if ((vals[[upload2]]==T) & (length(data_uploads_2) > 0) & (soft_namings[index] != soft_2[index2])){
+            output <- add_biocircos_data(inters[[soft_names[index]]][[soft_names_2[index2]]]$from, inters[[soft_names[index]]][[soft_names_2[index2]]]$to, vals[[data_to_use_2[index2]]], vals[[data_to_use[index]]], soft_2[index2], soft_namings[index], rename_data, input$label_color_class)
             
             chromosomes_start <- c(chromosomes_start, output[[3]])
             # Add link end. Just populate second output from the vectors, used above. 
@@ -2819,34 +2827,23 @@ server <- function(input, output, session) {
     shiny::req(vals$can_plot_deep_ref == T)
     
     shiny::req(vals$data_upload_count >=1)
-    data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
-                      "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
-    soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
-    soft <- c("Antismash","SEMPI","PRISM","PRISM_SUPPORT","ARTS","DeepBGC","GECCO","RRE-Finder" )
-    abbr <- c("A", "S", "P", "P-supp", "AR", "D", "G", "RRE")
-    soft_ref <- c("Antismash","SEMPI","PRISM","PRISM-supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
-    soft_width <-  c("Antismash","SEMPI","PRISM","PRISM-Supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
-    data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data_filtered","deep_data_filtered" ,
-                      "gecco_data_filtered", "rre_data")
-    soft_datafr <- c("seg_df_ref_a", "seg_df_ref_s" , "seg_df_ref_p", "seg_df_ref_p_s", "seg_df_ref_ar", "seg_df_ref_d", 
-                     "seg_df_ref_g", "seg_df_ref_r")
-    
+
     inters <- vals$inters_filtered
     # GENERATE DATA
     index <- 1
     for (upload in data_uploads){
       if (vals[[upload]] == T){
       data<- vals[[data_to_use[index]]]
-      assign(paste0(soft_names[index], "_data"),  correct_width(data, soft_width[index]))
+      assign(paste0(soft_names[index], "_data"),  correct_width(data, soft_namings[index]))
       }
       index <- index +1
     }
 
     
     lett <- rev(LETTERS)[1:9]
-    simple_seg <- function(df, letter, software, soft_name ,soft, inter=T){
+    simple_seg <- function(df, letter, software, soft_name ,soft_namings, inter=T){
       if (inter== T){
-        data <- df[df$Cluster %in% inters[[soft]][[soft_name]]$from, ]
+        data <- df[df$Cluster %in% inters[[soft_namings]][[soft_name]]$from, ]
       } else{
         data <- df
       }
@@ -2913,14 +2910,14 @@ server <- function(input, output, session) {
                 "Num_domains", "Num_proteins", "Average_p", "Max_p")
 
     
-    add_sempi <- function(seg_df, soft, df, inter = T){
+    add_sempi <- function(seg_df, soft_namings, df, inter = T){
       
       return(seg_df)
     }
     
-    add_arts <- function(seg_df, soft, df, inter=T){
+    add_arts <- function(seg_df, soft_namings, df, inter=T){
       if (inter == T){
-        subset_df <- df[df$Cluster %in% inters[[soft]]$arts$from, ]
+        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$arts$from, ]
       }else{
         subset_df <- df
       }
@@ -2933,9 +2930,9 @@ server <- function(input, output, session) {
       seg_df$Model = subset_df$Model
       return(seg_df)
     }
-    add_prism_supp <- function(seg_df, soft, df, inter=T){
+    add_prism_supp <- function(seg_df, soft_namings, df, inter=T){
       if (inter == T){
-        subset_df <- df[df$Cluster %in% inters[[soft]]$prism_supp$from, ]
+        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$prism_supp$from, ]
       }else{
         subset_df <- df
       }
@@ -2945,9 +2942,9 @@ server <- function(input, output, session) {
       seg_df$Full_name = subset_df$Full_name
       return(seg_df)
     }
-    add_deep <- function(seg_df, soft, df, inter=T){
+    add_deep <- function(seg_df, soft_namings, df, inter=T){
       if (inter == T){
-        subset_df <- df[df$Cluster %in% inters[[soft]]$deep$from, ]
+        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$deep$from, ]
       }else{
         subset_df <- df
       }
@@ -2956,9 +2953,9 @@ server <- function(input, output, session) {
       seg_df$activity = subset_df$product_activity
       return(seg_df)
     }
-    add_rre <- function(seg_df, soft, df, inter=T){
+    add_rre <- function(seg_df, soft_namings, df, inter=T){
       if (inter == T){
-        subset_df <- df[df$Cluster %in% inters[[soft]]$rre$from, ]
+        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$rre$from, ]
       }else{
         subset_df <- df
       }
@@ -2978,9 +2975,9 @@ server <- function(input, output, session) {
       
      return(seg_df)
     }
-    add_gecco <- function(seg_df, soft, df, inter=T){
+    add_gecco <- function(seg_df, soft_namings, df, inter=T){
       if (inter == T){
-        subset_df <- df[df$Cluster %in% inters[[soft]]$gecco$from, ]
+        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$gecco$from, ]
       }else{
         subset_df <- df
       }
@@ -3046,7 +3043,7 @@ server <- function(input, output, session) {
       soft_lttrs <- lett
       rename_y_axis <- vals$rename_y_axis
       rename_y_axis <- lapply(1:(length( soft_lttrs)-1), function(x){
-        soft_lttrs[x]=soft[x]
+        soft_lttrs[x]=soft_namings[x]
       })
       names(rename_y_axis) <- soft_lttrs[-length(soft_lttrs)]
       for (upload in data_uploads){
@@ -3054,10 +3051,10 @@ server <- function(input, output, session) {
         soft_lttrs <- soft_lttrs[-1]
         if (vals[[upload]] == T){
           soft_major <- soft_names[sup_index]
-          seg_ref_g <- simple_seg(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), "Z", soft[sup_index], soft_names[sup_index],soft_major, inter = F)
+          seg_ref_g <- simple_seg(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), "Z", soft_namings[sup_index], soft_names[sup_index],soft_major, inter = F)
           seg_ref_g <- define_spec_seg_df(soft_names, sup_index,seg_ref_g, soft_major, eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), inter = F)
           seg_ref <- seg_ref_g
-          if (input$ref == soft_ref[sup_index]){
+          if (input$ref == soft_namings[sup_index]){
             plot <- ggplot2::ggplot(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), ggplot2::aes(x = vals$chr_len, y = Chr)) + 
               eval(as.name(paste0("geom_", soft_names[sup_index])))(seg_ref)
             soft_let <- abbr[sup_index]
@@ -3067,7 +3064,7 @@ server <- function(input, output, session) {
             for (i in data_uploads){
               if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
                 df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-                seg_df <- simple_seg(df, lettrs[index], soft[index], soft_names[index],soft_major)
+                seg_df <- simple_seg(df, lettrs[index], soft_namings[index], soft_names[index],soft_major)
                 seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
                 labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
                 plot <- add_more_annot(seg_df, plot, soft_names, index)
@@ -3112,10 +3109,6 @@ server <- function(input, output, session) {
     shiny::req(vals$data_upload_count >=1)
     rename_y_axis <- vals$rename_y_axis
     data <- NULL
-    data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
-                      "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
-    data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data_filtered","deep_data_filtered" ,
-                      "gecco_data_filtered", "rre_data")
 
     index <- 1
     for (upload in data_uploads){
@@ -3253,13 +3246,6 @@ server <- function(input, output, session) {
     gecco_count <- NULL
 
     inters <- vals$inters_filtered
-    
-    data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
-                      "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
-    soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
-    soft <- c("Antismash","SEMPI","PRISM","PRISM-Supp","ARTS","DeepBGC","GECCO","RRE-Finder" )
-    data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data","deep_data_filtered" ,"gecco_data_filtered", "rre_data")
-    abbr <- c("A", "S", "P", "P-supp", "AR", "D", "G", "RRE")
     index <- 1
     ranking_data <- NULL
     for (upload in data_uploads){
@@ -3270,7 +3256,7 @@ server <- function(input, output, session) {
         # Add prefices to the ID to plot for a barplot.  
         counts_var$x <- sapply(counts_var$x, function(x) paste0(abbr[index],": ", x))
         # Add label column to the dataframe, from which we will plot  
-        counts_var$label <- rep(soft[index], length(counts_var$x))
+        counts_var$label <- rep(soft_namings[index], length(counts_var$x))
         # Add type to the dataframe, from which we would plot (from annotation dataframe)  
         counts_var$Type <- anot_var$Type
         # Add Start positions (to visualize on hover)
@@ -3322,12 +3308,6 @@ server <- function(input, output, session) {
     }
     
     inters <- vals$inters_filtered 
-    data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
-                      "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
-    soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
-    soft_let <- c("A", "S", "P", "PS", "AR", "D", "G", "R")
-    soft_namings <- c('Antismash', 'SEMPI','PRISM', 'PRISM-Supp', 'ARTS', 'DeepBGC', 'GECCO', 'RRE_Finder')
-    
     df_test <- data.frame(matrix(ncol = length(soft_let), nrow = 0))
     colnames(df_test) <- soft_let
     added_inters <- c(soft_names[match(input$group_by, soft_let)])
