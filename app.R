@@ -213,7 +213,7 @@ server <- function(input, output, session) {
   # Universal beginings for variables, used in the app for different data
   soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
   # The Namings, meaning how to label the data on the plots
-  soft_namings <- c('Antismash', 'SEMPI','PRISM', 'PRISM-Supp', 'ARTS', 'DeepBGC', 'GECCO', 'RRE_Finder')
+  soft_namings <- c('Antismash', 'SEMPI','PRISM', 'PRISM-Supp', 'ARTS', 'DeepBGC', 'GECCO', 'RRE-Finder')
   # Dataframes undes vals$list, that stored the data 
   data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data_filtered","deep_data_filtered" ,"gecco_data_filtered", "rre_data")
   # Used for software coding. Then just map to the soft namings
