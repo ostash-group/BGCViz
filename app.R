@@ -792,6 +792,8 @@ server <- function(input, output, session) {
     # Add chromosome info column
     vals$deep_data <- deep_data
     vals$deep_data$chromosome <-  rep("D", length(vals$deep_data$bgc_candidate_id))
+    vals$deep_data$Start <- vals$deep_data$nucl_start
+    vals$deep_data$Stop <- vals$deep_data$nucl_end
     # Add ID column as number seuquence of dataframe length
     vals$deep_data$ID <- seq(1:length(vals$deep_data$bgc_candidate_id))
     vals$deep_data$Cluster <- vals$deep_data$ID
@@ -1728,7 +1730,7 @@ server <- function(input, output, session) {
     if (vals$deep_data_input == TRUE){
       deep_data <- vals$deep_data
       deep_inter <- vals$deep_data %>% 
-        dplyr::select(nucl_start, nucl_end)
+        dplyr::select(Start, Stop)
       
       deep_inter$seqnames <- "chr"
     }
