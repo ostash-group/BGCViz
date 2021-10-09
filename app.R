@@ -25,12 +25,10 @@ ui <- shiny::fluidPage(
       shiny::h3("Data upload and necesary input:"),
       shiny::checkboxInput("hide_uploads", "Hide upload fields"),
       shiny::h5(id = "anti_header_upload","ANTISMASH:"),
-      shiny::checkboxInput("anti_input_options", "My AntiSMASH data is a dataframe, not json results file from antismash", value = T),
       shiny::fileInput("anti_data",
                 "Upload Antismash data", accept = list(".csv", ".json")),
       shiny::actionButton("anti_sco", "Use Antismash example data from S.coelicolor"),
       shiny::h5(id = "prism_header_upload","PRISM:"),
-      shiny::checkboxInput("prism_input_options", "My PRISM data is a dataframe, not json results file", value = T),
       shiny::fileInput("prism_data",
                 "Upload PRISM data", accept = list(".csv", ".json")),
       shiny::actionButton("prism_sco", "Use PRISM example data from S.coelicolor"),
@@ -919,7 +917,7 @@ server <- function(input, output, session) {
     
     disable_event_logic()
     # Read data
-    if (input$anti_input_options==T){
+    if (input$anti_data$type=="text/csv"){
       anti_data <- read.csv(input$anti_data$datapath)
     }else{
        data <- rjson::fromJSON(file = input$anti_data$datapath)
@@ -1007,7 +1005,7 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$prism_data,{
     
     # Read data
-    if (input$prism_input_options == T){
+    if (input$prism_data$type == "text/csv"){
       prism_data <- read.csv(input$prism_data$datapath)
       read_prism(prism_data, json=F)
     } else{
@@ -1427,9 +1425,7 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$hide_uploads, {
     
     if (input$hide_uploads == T){
-      shinyjs::hideElement(selector = "#anti_input_options")
       shinyjs::hideElement(selector = "#anti_data")
-      shinyjs::hideElement(selector = "#prism_input_options")
       shinyjs::hideElement(selector = "#anti_header_upload")
       shinyjs::hideElement(selector = "#prism_header_upload")
       shinyjs::hideElement(selector = "#prism_data")
@@ -1453,9 +1449,7 @@ server <- function(input, output, session) {
       shinyjs::hideElement(selector = "#deep_sco")
       shinyjs::hideElement(selector = "#gecco_sco")
     }else {
-      shinyjs::showElement(selector = "#anti_input_options")
       shinyjs::showElement(selector = "#anti_data")
-      shinyjs::showElement(selector = "#prism_input_options")
       shinyjs::showElement(selector = "#anti_header_upload")
       shinyjs::showElement(selector = "#prism_header_upload")
       shinyjs::showElement(selector = "#prism_data")
