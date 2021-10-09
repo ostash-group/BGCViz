@@ -502,7 +502,7 @@ server <- function(input, output, session) {
     vals$anti_data_input = TRUE 
     vals$data_upload_count <- vals$data_upload_count +1
     vals$choices$ref <- c(vals$choices$ref, "Antismash" = "Antismash")
-    vals$choices$group_by <- c(vals$choices$group_by, "Antismash" = "A")
+    vals$choices$group_by <- c(vals$choices$group_by, "Antismash" = "Antismash")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "Antismash" = "Antismash")
     vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Antismash" = "Antismash")
     vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "Antismash" = "A")
@@ -512,7 +512,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref",
                                selected = "Antismash" )
       shiny::updateSelectInput(session, "group_by",
-                               selected = "A" )
+                               selected = "Antismash" )
       shiny::updateSelectInput(session, "ref_comparison",
                                selected = "A")
       shiny::updateSelectInput(session, "ref_col_biocircos",
@@ -553,7 +553,7 @@ server <- function(input, output, session) {
     vals$gecco_data_input = TRUE 
     vals$data_upload_count <- vals$data_upload_count +1
     vals$choices$ref <- c(vals$choices$ref, "GECCO" = "GECCO")
-    vals$choices$group_by <- c(vals$choices$group_by, "GECCO" = "G")
+    vals$choices$group_by <- c(vals$choices$group_by, "GECCO" = "GECCO")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "GECCO" = "GECCO")
     update_ui_with_data()
     disable_event_logic()
@@ -561,7 +561,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref",
                                selected = "GECCO" )
       shiny::updateSelectInput(session, "group_by",
-                               selected = "G")
+                               selected = "GECCO")
       shiny::updateSelectInput(session, "ref_col_biocircos",
                                selected =  "GECCO")
       
@@ -579,7 +579,7 @@ server <- function(input, output, session) {
     }
     
     vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
-    vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PS")
+    vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PRISM-Supp")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
     update_ui_with_data()
     prism_data$Type <- stringr::str_trim(tolower(prism_data$Type))
@@ -596,7 +596,7 @@ server <- function(input, output, session) {
     vals$prism_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
     vals$choices$ref <- c(vals$choices$ref, "PRISM" = "PRISM")
-    vals$choices$group_by <- c(vals$choices$group_by, "PRISM" = "P")
+    vals$choices$group_by <- c(vals$choices$group_by, "PRISM" = "PRISM")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM" = "PRISM")
     vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "PRISM" = "PRISM")
     vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "PRISM" = "P")
@@ -606,7 +606,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref",
                                selected = "PRISM" )
       shiny::updateSelectInput(session, "group_by",
-                               selected = "P" )
+                               selected = "PRISM" )
       shiny::updateSelectInput(session, "ref_comparison",
                                selected = "P")
       shiny::updateSelectInput(session, "ref_col_biocircos",
@@ -629,7 +629,7 @@ server <- function(input, output, session) {
     vals$sempi_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
     vals$choices$ref <- c(vals$choices$ref, "SEMPI" = "SEMPI")
-    vals$choices$group_by <- c(vals$choices$group_by, "SEMPI" = "S")
+    vals$choices$group_by <- c(vals$choices$group_by, "SEMPI" = "SEMPI")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "SEMPI" = "SEMPI")
     vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "SEMPI" = "SEMPI")
     vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "SEMPI" = "S")
@@ -639,7 +639,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref",
                                selected = "SEMPI" )
       shiny::updateSelectInput(session, "group_by",
-                               selected = "S" )
+                               selected = "SEMPI" )
       shiny::updateSelectInput(session, "ref_comparison",
                                selected = "S")
       shiny::updateSelectInput(session, "ref_col_biocircos",
@@ -681,7 +681,7 @@ server <- function(input, output, session) {
     write.csv(vals$known_data, "knownhits_data.csv", row.names = F)
     if ((vals$dup_data_input == T)){
       vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
-      vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "AR")
+      vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "ARTS")
       vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
       update_ui_with_data()
       dup_table <- vals$dup_data
@@ -703,7 +703,7 @@ server <- function(input, output, session) {
         shiny::updateSelectInput(session, "ref",
                                  selected = "ARTS" )
         shiny::updateSelectInput(session, "group_by",
-                                 selected = "AR" )
+                                 selected = "ARTS" )
         shiny::updateSelectInput(session, "ref_col_biocircos",
                                  selected =  "ARTS")
       }
@@ -754,7 +754,7 @@ server <- function(input, output, session) {
     write.csv(dup_table, "duptable_data.csv", row.names = F)
     if ((vals$known_data_input == T)){
       vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
-      vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "AR")
+      vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "ARTS")
       vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
       update_ui_with_data()
       dup_table <- vals$dup_data
@@ -776,7 +776,7 @@ server <- function(input, output, session) {
         shiny::updateSelectInput(session, "ref",
                                  selected = "ARTS" )
         shiny::updateSelectInput(session, "group_by",
-                                 selected = "AR" )
+                                 selected = "ARTS" )
         shiny::updateSelectInput(session, "ref_col_biocircos",
                                  selected =  "ARTS")
       }
@@ -802,7 +802,7 @@ server <- function(input, output, session) {
     vals$data_upload_count <- vals$data_upload_count +1
     vals$deep_data_filtered <- filter_deepbgc()
     vals$choices$ref <- c(vals$choices$ref, "DeepBGC" = "DeepBGC")
-    vals$choices$group_by <- c(vals$choices$group_by, "DeepBGC" = "D")
+    vals$choices$group_by <- c(vals$choices$group_by, "DeepBGC" = "DeepBGC")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "DeepBGC" = "DeepBGC")
     update_ui_with_data()
     disable_event_logic()
@@ -810,7 +810,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref",
                                selected = "DeepBGC" )
       shiny::updateSelectInput(session, "group_by",
-                               selected = "D" )
+                               selected = "DeepBGC" )
       shiny::updateSelectInput(session, "ref_col_biocircos",
                                choices = "DeepBGC",
                                selected = "DeepBGC")
@@ -830,12 +830,16 @@ server <- function(input, output, session) {
     vals$rre_data <- data.frame(vals$rre_data)
     vals$rre_data['Type'] <- 'ripp'
     vals$rre_data['Type2'] <- 'ripp'
+    vals$rre_data$Start <- as.numeric(vals$rre_data$Start) 
+    vals$rre_data$Stop <- as.numeric(vals$rre_data$Stop)
+    # Store rre data into local variable
+    vals$rre_data <- data.frame(vals$rre_data)
     write.csv(vals$rre_data, "rre_data.csv", row.names = F)
     
     vals$rre_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
     vals$choices$ref <- c(vals$choices$ref, "RRE-Finder" = "RRE-Finder")
-    vals$choices$group_by <- c(vals$choices$group_by, "RRE-Finder" = "R")
+    vals$choices$group_by <- c(vals$choices$group_by, "RRE-Finder" = "RRE-Finder")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "RRE-Finder" = "RRE")
     update_ui_with_data()
     disable_event_logic()
@@ -843,7 +847,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "ref",
                                selected = "RRE-Finder" )
       shiny::updateSelectInput(session, "group_by",
-                               selected = "R" )
+                               selected = "RRE-Finder" )
       shiny::updateSelectInput(session, "ref_col_biocircos",
                                choices = "RRE-Finder",
                                selected = "RRE")
@@ -1716,7 +1720,6 @@ server <- function(input, output, session) {
   ############################################################################
   # Compute all interceptions on data upload.
   # dplyr::filter while ploting then.
-  # TODO make looop for data reading
   shiny::observeEvent(inputData(), {
     shiny::req(vals$data_upload_count>=1)
     # GENERATE DATA
@@ -1766,11 +1769,6 @@ server <- function(input, output, session) {
       prism_supp_inter <- vals$prism_supp_data %>%
         dplyr::select(Start,Stop)
       prism_supp_inter$seqnames <- "chr"
-      if (input$prism_supp_data_input_width == TRUE) {
-        Stop_vals_prism_supp <- as.numeric(vals$prism_supp_data$Stop)+50000
-      } else{
-        Stop_vals_prism_supp <- as.numeric(vals$prism_supp_data$Stop)
-      }
     }
     if (vals$arts_data_input == T){
       arts_data <- vals$arts_data
@@ -2985,15 +2983,15 @@ server <- function(input, output, session) {
     inters <- vals$inters_filtered 
     df_test <- data.frame(matrix(ncol = length(soft_let), nrow = 0))
     colnames(df_test) <- soft_let
-    added_inters <- c(soft_names[match(input$group_by, soft_let)])
+    added_inters <- c(soft_names[match(input$group_by, soft_namings)])
     add_inters <- list()
     if (input$count_all == F){
       df_test[nrow(df_test)+1,] <- NA
     } else{
-      if( (input$group_by == "D") | (input$group_by == "G")){
-        selected_dataframe <- paste0(soft_names[match(input$group_by, soft_let)], "_data_filtered")
+      if( (input$group_by == "DeepBGC") | (input$group_by == "GECCO")){
+        selected_dataframe <- data_to_use[match(input$group_by, soft_namings)]
       } else {
-        selected_dataframe <- paste0(soft_names[match(input$group_by, soft_let)], "_data")
+        selected_dataframe <- data_to_use[match(input$group_by, soft_namings)]
       }
       df_test <- data.frame(matrix(ncol = length(soft_let), nrow = length(vals[[selected_dataframe]]$Cluster)))
       colnames(df_test) <- soft_let
@@ -3001,7 +2999,7 @@ server <- function(input, output, session) {
       df_test[nrow(df_test)+1,] <- NA
     }
     for (i in seq(1:length(data_uploads))){
-      if (input$group_by==soft_let[[i]]){
+      if (input$group_by==soft_namings[[i]]){
         exclude <- i
         soft_n <- names(inters[[soft_names[i]]])
         index <- 1
