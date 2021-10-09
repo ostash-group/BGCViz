@@ -214,10 +214,8 @@ server <- function(input, output, session) {
   soft_namings <- c('Antismash', 'SEMPI','PRISM', 'PRISM-Supp', 'ARTS', 'DeepBGC', 'GECCO', 'RRE-Finder')
   # Dataframes undes vals$list, that stored the data 
   data_to_use <- c( "anti_data" ,"sempi_data" , "prism_data", "prism_supp_data","arts_data_filtered","deep_data_filtered" ,"gecco_data_filtered", "rre_data")
-  # Used for software coding. Then just map to the soft namings
-  soft_let <- c("A", "S", "P", "PS", "AR", "D", "G", "R")
   # Used in barplot on summarise tab + Annotation on chromosome plots 
-  abbr <- c("A", "S", "P", "P-supp", "AR", "D", "G", "RRE")
+  abbr <- c("A", "S", "P", "P-Supp", "AR", "D", "G", "RRE")
   # Used for deep reference 2 plot
   soft_datafr <- c("seg_df_ref_a", "seg_df_ref_s" , "seg_df_ref_p", "seg_df_ref_p_s", "seg_df_ref_ar", "seg_df_ref_d", 
                    "seg_df_ref_g", "seg_df_ref_r")
@@ -2980,8 +2978,8 @@ server <- function(input, output, session) {
     }
     
     inters <- vals$inters_filtered 
-    df_test <- data.frame(matrix(ncol = length(soft_let), nrow = 0))
-    colnames(df_test) <- soft_let
+    df_test <- data.frame(matrix(ncol = length(abbr), nrow = 0))
+    colnames(df_test) <- abbr
     added_inters <- c(soft_names[match(input$group_by, soft_namings)])
     add_inters <- list()
     if (input$count_all == F){
@@ -2992,8 +2990,8 @@ server <- function(input, output, session) {
       } else {
         selected_dataframe <- data_to_use[match(input$group_by, soft_namings)]
       }
-      df_test <- data.frame(matrix(ncol = length(soft_let), nrow = length(vals[[selected_dataframe]]$Cluster)))
-      colnames(df_test) <- soft_let
+      df_test <- data.frame(matrix(ncol = length(abbr), nrow = length(vals[[selected_dataframe]]$Cluster)))
+      colnames(df_test) <- abbr
       df_test[[input$group_by]]<- vals[[selected_dataframe]]$Cluster
       df_test[nrow(df_test)+1,] <- NA
     }
@@ -3007,26 +3005,26 @@ server <- function(input, output, session) {
           df_tmp <-  data.frame(cbind(c(inters[[soft_names[i]]][[soft_n[d]]]$to), c(inters[[soft_names[i]]][[soft_n[d]]]$from)))
           for (h in seq(1:length(soft_n))){
             if (name==soft_names[match(soft_n, soft_names)][h]){
-              colnames(df_tmp) <- c(soft_let[i],soft_let[match(soft_n, soft_names)][h])
+              colnames(df_tmp) <- c(abbr[i],abbr[match(soft_n, soft_names)][h])
               df_test <- merge(df_test, df_tmp,  all = T)
             }
           }
           
           index <- index +1
         }
-        excluded_names <- soft_let[soft_let != as.name(soft_let[i])]
-        data <- df_test %>% dplyr::group_by_if(colnames(df_test)==soft_let[i]) %>% dplyr::summarise(a = paste(eval(as.name(excluded_names[1])), collapse=","),
+        excluded_names <- abbr[abbr != as.name(abbr[i])]
+        data <- df_test %>% dplyr::group_by_if(colnames(df_test)==abbr[i]) %>% dplyr::summarise(a = paste(eval(as.name(excluded_names[1])), collapse=","),
                                                                                       b=paste(eval(as.name(excluded_names[2])), collapse=","),
                                                                                       c=paste(eval(as.name(excluded_names[3])), collapse=","),
                                                                                       d=paste(eval(as.name(excluded_names[4])), collapse=","),
                                                                                       e=paste(eval(as.name(excluded_names[5])), collapse=","),
                                                                                       f=paste(eval(as.name(excluded_names[6])), collapse=","),
                                                                                       g=paste(eval(as.name(excluded_names[7])), collapse=","))
-        colnames(data) <- c(soft_let[i], excluded_names)
-        for (p in soft_let){
+        colnames(data) <- c(abbr[i], excluded_names)
+        for (p in abbr){
           data[[p]] <- gsub('NA,|,NA', '', data[[p]])
           data[[p]][nrow(data)] <- refine_unique(data[[p]])
-          names(data)[names(data) == p] <- soft_namings[match(p, soft_let)]
+          names(data)[names(data) == p] <- soft_namings[match(p, abbr)]
         }
         data["Group"] <- paste("group", rownames(data), sep = "_")
         for (f in seq(1:length(data_uploads))){
