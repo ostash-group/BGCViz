@@ -505,7 +505,7 @@ server <- function(input, output, session) {
     vals$choices$group_by <- c(vals$choices$group_by, "Antismash" = "Antismash")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "Antismash" = "Antismash")
     vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Antismash" = "Antismash")
-    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "Antismash" = "A")
+    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "Antismash" = "Antismash")
     update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
@@ -514,7 +514,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "group_by",
                                selected = "Antismash" )
       shiny::updateSelectInput(session, "ref_comparison",
-                               selected = "A")
+                               selected = "Antismash")
       shiny::updateSelectInput(session, "ref_col_biocircos",
                                selected =  "Antismash")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
@@ -599,7 +599,7 @@ server <- function(input, output, session) {
     vals$choices$group_by <- c(vals$choices$group_by, "PRISM" = "PRISM")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM" = "PRISM")
     vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "PRISM" = "PRISM")
-    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "PRISM" = "P")
+    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "PRISM" = "PRISM")
     update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
@@ -608,7 +608,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "group_by",
                                selected = "PRISM" )
       shiny::updateSelectInput(session, "ref_comparison",
-                               selected = "P")
+                               selected = "PRISM")
       shiny::updateSelectInput(session, "ref_col_biocircos",
                                selected =  "PRISM")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
@@ -632,7 +632,7 @@ server <- function(input, output, session) {
     vals$choices$group_by <- c(vals$choices$group_by, "SEMPI" = "SEMPI")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "SEMPI" = "SEMPI")
     vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "SEMPI" = "SEMPI")
-    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "SEMPI" = "S")
+    vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "SEMPI" = "SEMPI")
     update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
@@ -641,7 +641,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "group_by",
                                selected = "SEMPI" )
       shiny::updateSelectInput(session, "ref_comparison",
-                               selected = "S")
+                               selected = "SEMPI")
       shiny::updateSelectInput(session, "ref_col_biocircos",
                                selected =  "SEMPI")
       shiny::updateSelectInput(session, "ref_comparison_gecco",
@@ -840,7 +840,7 @@ server <- function(input, output, session) {
     vals$data_upload_count <- vals$data_upload_count +1
     vals$choices$ref <- c(vals$choices$ref, "RRE-Finder" = "RRE-Finder")
     vals$choices$group_by <- c(vals$choices$group_by, "RRE-Finder" = "RRE-Finder")
-    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "RRE-Finder" = "RRE")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "RRE-Finder" = "RRE-Finder")
     update_ui_with_data()
     disable_event_logic()
     if (vals$data_upload_count == 1){
@@ -849,8 +849,7 @@ server <- function(input, output, session) {
       shiny::updateSelectInput(session, "group_by",
                                selected = "RRE-Finder" )
       shiny::updateSelectInput(session, "ref_col_biocircos",
-                               choices = "RRE-Finder",
-                               selected = "RRE")
+                               selected = "RRE-Finder")
       
     }
     if (!is.null(vals$rre_data$Probability)){
@@ -2206,15 +2205,15 @@ server <- function(input, output, session) {
       
       
       # Store antismash bgc start amd atop values as matrix
-      if (input$ref_comparison == 'A'){
+      if (input$ref_comparison == 'Antismash'){
         anti_inter <- vals$anti_data %>%
         dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
-      } else if (input$ref_comparison == 'P'){
+      } else if (input$ref_comparison == 'PRISM'){
         anti_inter <- vals$prism_data %>%
           dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
-      } else if (input$ref_comparison == 'S'){
+      } else if (input$ref_comparison == 'SEMPI'){
         anti_inter <- vals$sempi_data %>%
           dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
@@ -2236,15 +2235,15 @@ server <- function(input, output, session) {
       }
       
 
-      if (input$ref_comparison == 'A'){
+      if (input$ref_comparison == 'Antismash'){
         used_antismash <-  length(vals$anti_data$Cluster)-inter_bgc
         cols <-  c("Only Antismash", "DeepBGC+Antismash", "Only DeepBGC")
         title <-  ggplot2::ggtitle("Comparison of Antismash and DeepBGC annotations at given score threshold")
-      } else if (input$ref_comparison == 'P'){
+      } else if (input$ref_comparison == 'PRISM'){
         used_antismash <-  length(vals$prism_data$Cluster)-inter_bgc
         cols <- c("Only PRISM", "DeepBGC+PRISM", "Only DeepBGC")
         title <- ggplot2::ggtitle("Comparison of PRISM and DeepBGC annotations at given score threshold")
-      } else if (input$ref_comparison == 'S') {
+      } else if (input$ref_comparison == 'SEMPI') {
         used_antismash <-  length(vals$sempi_data$Cluster)-inter_bgc
         cols <- c("Only SEMPI", "DeepBGC+SEMPI", "Only DeepBGC")
         title <- ggplot2::ggtitle("Comparison of SEMPI and DeepBGC annotations at given score threshold")
@@ -2290,7 +2289,7 @@ server <- function(input, output, session) {
     # Store dataframe into variable. Widen it to calculate rates
     test <- fullnes_of_annotation %>%
       tidyr::pivot_wider(names_from = Source, values_from = Quantity)
-    if (input$ref_comparison == 'A'){
+    if (input$ref_comparison == 'Antismash'){
       data <-  vals$anti_data
       title <- ggplot2::ggtitle("Rates of DeepBGC/Antismash data annotation")
       test <- test %>%
@@ -2300,7 +2299,7 @@ server <- function(input, output, session) {
                Annotation_rate = test$`DeepBGC+Antismash`/length(data$Cluster), 
                # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
                Skip_rate = test$`Only Antismash`/length(data$Cluster))
-    } else if (input$ref_comparison == 'P'){
+    } else if (input$ref_comparison == 'PRISM'){
       data <- vals$prism_data
       title <- ggplot2::ggtitle("Rates of DeepBGC/PRISM data annotation")
       test <- test %>%
@@ -2309,7 +2308,7 @@ server <- function(input, output, session) {
                Annotation_rate = test$`DeepBGC+PRISM`/length(data$Cluster), 
                # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
                Skip_rate = test$`Only PRISM`/length(data$Cluster))
-    } else if (input$ref_comparison == 'S'){
+    } else if (input$ref_comparison == 'SEMPI'){
       data <- vals$sempi_data
       title <- ggplot2::ggtitle("Rates of DeepBGC/SEMPI data annotation")
       test <- test %>%
