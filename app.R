@@ -252,6 +252,10 @@ server <- function(input, output, session) {
     iterate_one_more_time <- c()
     should_iterate = F
     for (i in seq(1:length(test_name))){
+      if (length(dupl_names) == 0){
+        should_iterate = F
+        break
+      }
       if (test_name[i]==dupl_names[1]){
         dupl_names = dupl_names[-1]
         test_score[i] = paste0(test_score[i], "/" ,to_add[1])
@@ -259,7 +263,7 @@ server <- function(input, output, session) {
         iterate_one_more_time <- c(iterate_one_more_time, i)
       }
     }
-    if (length(iterate_one_more_time)>1){
+    if ((length(iterate_one_more_time)>1) && (length(dupl_names) != 0)){
       should_iterate = T
     }
     while (should_iterate == T) {
