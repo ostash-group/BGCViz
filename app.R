@@ -205,6 +205,11 @@ server <- function(input, output, session) {
     anti=F,deep=F, gecco=F, arts=F, prism=F, sempi=F, prism_supp=F, rre=F
   )
   vals$rename_data <- read.csv("rename.csv")
+  rename_data <- read.csv("rename.csv")
+  coloring_datatable <-data.frame( tidyr::drop_na(data.frame(cbind(as.character(rename_data$Group_color), as.character(rename_data$Color), rename_data$Hierarchy)) ))
+  coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all),]
+  colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
+  vals$coloring_datatable <- DT::datatable(coloring_datatable,  rownames = F, editable = "column")
   # Variables, that holds data uploads boolean (so if data is present or not)
   data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
                     "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
@@ -1934,14 +1939,14 @@ server <- function(input, output, session) {
       arc_labels <- c(arc_labels, biocircos_anti$Type)
       if ((input$biocircos_color == T)){
         arc_colors <- sapply(biocircos_anti$Type2, function(x){
-          if (x %in% rename_data$Group_color){
-            rename_data$Color[rename_data$Group_color == x]
+          if (x %in% coloring_datatable$x$data$Name){
+            coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == x]
           } else {
-            rename_data$Color[rename_data$Group_color == 'base']
+            coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base']
           }
         })
       } else {
-        arc_colors <- rename_data$Color[rename_data$Group_color == 'base']
+        arc_colors <- coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base']
       }
       arc_col <- c(arc_col,as.character(arc_colors) )
       return(list(Biocircos_chromosomes,arcs_chromosomes, arcs_begin , arcs_end, arc_labels, arc_col))
@@ -1963,6 +1968,7 @@ server <- function(input, output, session) {
     
     
     rename_data <- vals$rename_data
+    coloring_datatable <- vals$coloring_datatable
 
     index <- 1
    # browser()
@@ -2027,66 +2033,66 @@ server <- function(input, output, session) {
         if (class == 'P'){
           subset_vec <- data2$Type2[match(inter_rre_s, data2$Cluster)] == data1$Type2[match(inter_s_rre_n, data1$Cluster)]
           label_color <- as.character(c(sapply(data2$Type2[match(inter_rre_s, data2$Cluster )], function (x){
-            if (x %in% rename_data$Group_color) {
-              as.character(rename_data$Color[rename_data$Group_color == x])
+            if (x %in% coloring_datatable$x$data$Name) {
+              as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == x])
             }
             else{
-              as.character(rename_data$Color[rename_data$Group_color == 'base'])
+              as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'])
             }
           })))
           if (length(label_color) != 0){
             for (t in seq(1:length(label_color))){
               if (!is.null(subset_vec[t])){
                 if (subset_vec[t] == F){
-                  label_color[t] <- as.character(rename_data$Color[rename_data$Group_color == 'base'])
+                  label_color[t] <- as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'])
                 }
               }
             }
           }
         } else if (class == 'H'){
-          if (grep(paste0("^", data1_label, "$"), rename_data$Hierarchy) < (grep(paste0("^", data2_label, "$"), rename_data$Hierarchy))){
+          if (grep(paste0("^", data1_label, "$"), coloring_datatable$x$data$Hierarchy) < (grep(paste0("^", data2_label, "$"), coloring_datatable$x$data$Hierarchy))){
             label_color <- as.character(c(sapply(data1$Type2[match(inter_s_rre_n, data1$Cluster )], function (x){
-              if (x %in% rename_data$Group_color) {
-                as.character(rename_data$Color[rename_data$Group_color == x])
+              if (x %in% coloring_datatable$x$data$Name) {
+                as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == x])
               }
               else{
-                as.character(rename_data$Color[rename_data$Group_color == 'base'])
+                as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'])
               }
             })))
           } else {
             label_color <-as.character( c(sapply(data2$Type2[ match(inter_rre_s, data2$Cluster )], function (x){
-              if (x %in% rename_data$Group_color) {
-                as.character(rename_data$Color[rename_data$Group_color == x])
+              if (x %in% coloring_datatable$x$data$Name) {
+                as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == x])
               }
               else{
-                as.character(rename_data$Color[rename_data$Group_color == 'base'])
+                as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'])
               }
             })))
           }
         }else if (class == 'R'){
           if (data2_label == input$ref_col_biocircos){
             label_color <- as.character(c(sapply(data1$Type2[match(inter_s_rre_n, data1$Cluster)], function (x){
-              if (x %in% rename_data$Group_color) {
-                as.character(rename_data$Color[rename_data$Group_color == x])
+              if (x %in% coloring_datatable$x$data$Name) {
+                as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == x])
               }
               else{
-                as.character(rename_data$Color[rename_data$Group_color == 'base'])
+                as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'])
               }
             })))
           } else if (data1_label == input$ref_col_biocircos){
             label_color <- as.character(c(sapply(data2$Type2[match(inter_rre_s,data2$Cluster)], function (x){
-              if (x %in% rename_data$Group_color) {
-                as.character(rename_data$Color[rename_data$Group_color == x])
+              if (x %in% coloring_datatable$x$data$Name) {
+                as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == x])
               }
               else{
-                as.character( rename_data$Color[rename_data$Group_color == 'base'])
+                as.character( coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'])
               }
             })))
           } else{
-            label_color <- as.character(rep(rename_data$Color[rename_data$Group_color == 'base'], length(chromosomes_start)))
+            label_color <- as.character(rep(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'], length(chromosomes_start)))
           }
         } else {
-          label_color <-as.character( rep(rename_data$Color[rename_data$Group_color == 'base'], length(chromosomes_start)))
+          label_color <-as.character( rep(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'], length(chromosomes_start)))
         }
       }
       return(list( inter_s_rre_n, inter_s_rre_n, chromosomes_start, chromosomes_end, link_pos_start, link_pos_start_1, link_pos_end, 
@@ -2150,7 +2156,7 @@ server <- function(input, output, session) {
       tracklist = tracklist + BioCircos::BioCircosLinkTrack('myLinkTrack_master', chromosomes_start, link_pos_start, 
                                                  link_pos_start_1, chromosomes_end, link_pos_end, 
                                                  link_pos_end_2, maxRadius = 0.85, labels = link_labels,
-                                                displayLabel = FALSE, color = rename_data$Color[rename_data$Group_color == 'base'])
+                                                displayLabel = FALSE, color = coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'])
     } else{
       shiny::showNotification(paste("No interceptions are being made in the Biocircos plot. Please provide data with clusters that do have intercepting borders"), type = "warning", duration=NULL)
     }
@@ -2885,17 +2891,24 @@ server <- function(input, output, session) {
   
   output$biocircos_legend <- DT::renderDataTable({
     shiny::req(vals$data_upload_count >=1)
-    
-    plot_data <- vals$rename_data
-    new_data <- tidyr::drop_na(data.frame(cbind(as.character(plot_data$Group_color), as.character(plot_data$Color))) )
-    new_data <- new_data[!apply(new_data == "", 1, all),]
-    colnames(new_data) <- c("Name", "Color")
-    color_vec <- new_data$Color
+    rownames = FALSE
+    new_data <- vals$coloring_datatable
+    color_vec <- new_data$x$data$Color
     options(DT.options = list(pageLength = 50))
-    DT::datatable(new_data, rownames = F) %>% DT::formatStyle('Color',
-                                                      backgroundColor=DT::styleEqual(color_vec, color_vec))
+    new_data %>% DT::formatStyle('Color', backgroundColor=DT::styleEqual(color_vec, color_vec))
     
     
+  })
+  # TODO here!!!!!
+  proxy = DT::dataTableProxy('biocircos_legend')
+  shiny::observeEvent(input$biocircos_legend_cell_edit, {
+    info = input$x1_cell_edit
+    str(info)
+    i = info$row
+    j = info$col + 1
+    v = info$value
+    vals$coloring_datatable[i, j] <<- DT:::coerceValue(v, vals$coloring_datatable[i, j])
+    DT::replaceData(proxy, vals$coloring_datatable, resetPaging = FALSE, rownames = FALSE)
   })
   ##---------------------------------------------------------------
   ##                        Summarize tab                         -
