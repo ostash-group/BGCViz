@@ -154,6 +154,7 @@ ui <- shiny::fluidPage(
   )
 )
 
+
 # Define server logic
 server <- function(input, output, session) {
   ##---------------------------------------------------------------
@@ -204,12 +205,14 @@ server <- function(input, output, session) {
   vals$computed <- list(
     anti=F,deep=F, gecco=F, arts=F, prism=F, sempi=F, prism_supp=F, rre=F
   )
+  # Making coloring datatable
   vals$rename_data <- read.csv("rename.csv")
   rename_data <- read.csv("rename.csv")
   coloring_datatable <-data.frame( tidyr::drop_na(data.frame(cbind(as.character(rename_data$Group_color), as.character(rename_data$Color), rename_data$Hierarchy)) ))
   coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all),]
   colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
-  vals$coloring_datatable <- DT::datatable(coloring_datatable,  rownames = F, editable = "column")
+  vals$coloring_datatable <- DT::datatable(coloring_datatable,  rownames = F, editable = "column", options = list( dom='t',ordering=F))
+  
   # Variables, that holds data uploads boolean (so if data is present or not)
   data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
                     "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
@@ -1428,6 +1431,10 @@ server <- function(input, output, session) {
     
     rename_data <- read.csv(input$rename_data$datapath)
     vals$rename_data <- rename_data
+    coloring_datatable <-data.frame( tidyr::drop_na(data.frame(cbind(as.character(rename_data$Group_color), as.character(rename_data$Color), rename_data$Hierarchy)) ))
+    coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all),]
+    colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
+    vals$coloring_datatable <- DT::datatable(coloring_datatable,  rownames = F, editable = "column")
   })
   # What to do, if hide uploads scheme is triggered
   shiny::observeEvent(input$hide_uploads, {
@@ -2899,16 +2906,16 @@ server <- function(input, output, session) {
     
     
   })
-  # TODO here!!!!!
-  proxy = DT::dataTableProxy('biocircos_legend')
+
+  # Updating values in Datatable on edit
   shiny::observeEvent(input$biocircos_legend_cell_edit, {
-    info = input$x1_cell_edit
-    str(info)
-    i = info$row
-    j = info$col + 1
-    v = info$value
-    vals$coloring_datatable[i, j] <<- DT:::coerceValue(v, vals$coloring_datatable[i, j])
-    DT::replaceData(proxy, vals$coloring_datatable, resetPaging = FALSE, rownames = FALSE)
+    if (input$biocircos_legend_cell_edit$col[1] == 0){
+      vals$coloring_datatable$x$data$Name <- input$biocircos_legend_cell_edit$value
+    } else if (input$biocircos_legend_cell_edit$col[1] == 1){
+      vals$coloring_datatable$x$data$Color <- input$biocircos_legend_cell_edit$value
+    } else if (input$biocircos_legend_cell_edit$col[1] == 2){
+      vals$coloring_datatable$x$data$Hierarchy <- input$biocircos_legend_cell_edit$value
+    }
   })
   ##---------------------------------------------------------------
   ##                        Summarize tab                         -
