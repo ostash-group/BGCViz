@@ -2744,7 +2744,9 @@ server <- function(input, output, session) {
           seg_ref_g <- simple_seg(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), "Z", soft_namings[sup_index], soft_names[sup_index],soft_major, inter = F)
           seg_ref_g <- define_spec_seg_df(soft_names, sup_index,seg_ref_g, soft_major, eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), inter = F)
           seg_ref <- seg_ref_g
+          
           if (input$ref == soft_namings[sup_index]){
+            shiny::validate(need(nrow(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))))>0,"Reference data is empty, and so, insufficient for plotting. Please select another one") )
             plot <- ggplot2::ggplot(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), ggplot2::aes(x = vals$chr_len, y = Chr)) + 
               eval(as.name(paste0("geom_", soft_names[sup_index])))(seg_ref)
             soft_let <- abbr[sup_index]
@@ -2762,7 +2764,6 @@ server <- function(input, output, session) {
               index = index +1
               
             }
-            
             plot <- plot +
               ggplot2::scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
               ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10)) +
