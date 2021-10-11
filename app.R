@@ -1293,7 +1293,7 @@ server <- function(input, output, session) {
   # Make hybrids from the data, if checkbox is checked   
   # TODO Put the function to the root. 
   # Tou have duplicated code
-  shiny::observeEvent(input$anti_hybrid, {
+  shiny::observeEvent(input$anti_hybrid, ignoreInit=T,{
     
     hybrid_col <- function(data){
       data_split <- stringr::str_split(data$Type2, "__")
@@ -1314,7 +1314,7 @@ server <- function(input, output, session) {
     }
     
     })
-  shiny::observeEvent(input$prism_hybrid, {
+  shiny::observeEvent(input$prism_hybrid,ignoreInit=T, {
     
     hybrid_col <- function(data){
       data_split <- stringr::str_split(data$Type2, "__")
@@ -1334,7 +1334,7 @@ server <- function(input, output, session) {
       vals$prism_data$Type2 <- vals$prism_type
     }
   })
-  shiny::observeEvent(input$sempi_hybrid, {
+  shiny::observeEvent(input$sempi_hybrid,  ignoreInit=T,{
     
     hybrid_col <- function(data){
       data_split <- stringr::str_split(data$Type2, "__")
@@ -1419,9 +1419,18 @@ server <- function(input, output, session) {
     vals$anti_data['Type2']  <- vals$anti_data['Type']
     vals$sempi_data['Type2'] <- vals$sempi_data['Type']
     vals$ prism_data['Type2'] <- vals$ prism_data['Type']
-    shiny::updateCheckboxInput(inputId = "anti_hybrid", value = F)
-    shiny::updateCheckboxInput(inputId = "sempi_hybrid", value =F)
-    shiny::updateCheckboxInput(inputId = "prism_hybrid", value = F)
+    if (input$anti_hybrid==T){
+      shiny::showNotification(paste("Antismash cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration=10)
+      shiny::updateCheckboxInput(inputId = "anti_hybrid", value = F)
+    }
+    if (input$prism_hybrid==T){
+      shiny::showNotification(paste("PRISM cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration=10)
+      shiny::updateCheckboxInput(inputId = "prism_hybrid", value = F)
+    }
+    if (input$sempi_hybrid==T){
+      shiny::showNotification(paste("SEMPI cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration=10)
+      shiny::updateCheckboxInput(inputId = "sempi_hybrid", value = F)
+    }
       shinyjs::showElement(selector = "#rename")
       shinyjs::hideElement(selector = "#reset_name")
     vals$renamed <- F
