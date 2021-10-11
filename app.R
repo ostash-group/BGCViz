@@ -1141,12 +1141,7 @@ server <- function(input, output, session) {
   shiny::observeEvent(vals$deep_data_input,{
     
     if (vals$deep_data_input == T){
-      shinyjs::showElement(selector = "#ref_comparison")
-      shinyjs::showElement(selector = "#hide_data_comparison")
       shinyjs::showElement(selector = "#hide_data_filter")
-      shinyjs::showElement(selector = "#score_type")
-      shinyjs::showElement(selector = "#plot_step")
-      shinyjs::showElement(selector = "#plot_start")
       shinyjs::showElement(selector = "#score_a")
       shinyjs::showElement(selector = "#score_d")
       shinyjs::showElement(selector = "#score_c")
@@ -1154,15 +1149,9 @@ server <- function(input, output, session) {
       shinyjs::showElement(selector = "#biodomain_filter")
       shinyjs::showElement(selector = "#gene_filter")
       shinyjs::showElement(selector = "#cluster_type")
-      shinyjs::showElement(selector = "#data_comparison_header")
       shinyjs::showElement(selector = "#data_filter_header")
     } else{
-      shinyjs::hideElement(selector = "#ref_comparison")
-      shinyjs::hideElement(selector = "#score_type")
-      shinyjs::hideElement(selector = "#hide_data_comparison")
       shinyjs::hideElement(selector = "#hide_data_filter")
-      shinyjs::hideElement(selector = "#plot_step")
-      shinyjs::hideElement(selector = "#plot_start")
       shinyjs::hideElement(selector = "#score_a")
       shinyjs::hideElement(selector = "#score_d")
       shinyjs::hideElement(selector = "#score_c")
@@ -1170,7 +1159,6 @@ server <- function(input, output, session) {
       shinyjs::hideElement(selector = "#biodomain_filter")
       shinyjs::hideElement(selector = "#gene_filter")
       shinyjs::hideElement(selector = "#cluster_type")
-      shinyjs::hideElement(selector = "#data_comparison_header")
       shinyjs::hideElement(selector = "#data_filter_header")
     }
   })
@@ -1256,8 +1244,20 @@ server <- function(input, output, session) {
       }
       if ((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )) {
         shiny::showTab("main", "1")
+        shinyjs::showElement(selector = "#data_comparison_header")
+        shinyjs::showElement(selector = "#ref_comparison")
+        shinyjs::showElement(selector = "#hide_data_comparison")
+        shinyjs::showElement(selector = "#score_type")
+        shinyjs::showElement(selector = "#plot_step")
+        shinyjs::showElement(selector = "#plot_start")
       } else {
         shiny::hideTab("main", "1")
+        shinyjs::hideElement(selector = "#data_comparison_header")
+        shinyjs::hideElement(selector = "#ref_comparison")
+        shinyjs::hideElement(selector = "#score_type")
+        shinyjs::hideElement(selector = "#hide_data_comparison")
+        shinyjs::hideElement(selector = "#plot_step")
+        shinyjs::hideElement(selector = "#plot_start")
         if ((vals$deep_data_input == T) & (vals$data_upload_count >1)){
           shiny::showNotification(paste("It seems that you would like to compare the DeepBGC data to the reference (in a new tab)? Please upload Antismash, SEMPI or PRISM datasets to do that."), type = "message", duration=10)
         }
@@ -1638,11 +1638,15 @@ server <- function(input, output, session) {
       shinyjs::hideElement(selector = "#plot_step")
       shinyjs::hideElement(selector = "#plot_start")
     } else if (vals$deep_data_input == T) {
+      shinyjs::showElement(selector = "#data_comparison_header")
+      shinyjs::showElement(selector = "#hide_data_comparison")
       shinyjs::showElement(selector = "#ref_comparison")
       shinyjs::showElement(selector = "#score_type")
       shinyjs::showElement(selector = "#plot_step")
       shinyjs::showElement(selector = "#plot_start")
     } else {
+      shinyjs::hideElement(selector = "#data_comparison_header")
+      shinyjs::hideElement(selector = "#hide_data_comparison")
       shinyjs::hideElement(selector = "#ref_comparison")
       shinyjs::hideElement(selector = "#score_type")
       shinyjs::hideElement(selector = "#plot_step")
