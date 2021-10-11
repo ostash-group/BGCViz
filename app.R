@@ -375,7 +375,7 @@ server <- function(input, output, session) {
     })
     res_genes$Full_name  <- fix_duplicates(test_full_name , order_vec, resist_genes_orfs, ref_names)
     
-    final_reg <- rbind(res_genes, reg_genes)
+    final_reg <- rbind(res_genes, reg_genes) %>% dplyr::arrange(Start)
     final_reg$ID <- seq(1:dim(final_reg)[1])
     final_reg$Cluster <- final_reg$ID
     rownames(final_reg) <- as.numeric(seq(1:dim(final_reg)[1]))
