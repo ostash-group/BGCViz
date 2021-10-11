@@ -1710,17 +1710,17 @@ server <- function(input, output, session) {
     
     if ((input$hide_data_filter_gecco == T)){
       shinyjs::hideElement(selector = "#score_average_gecco")
-      shinyjs::hideElement(selector = "#score_average_gecco")
+      shinyjs::hideElement(selector = "#score_cluster_gecco")
       shinyjs::hideElement(selector = "#domains_filter_gecco")
       shinyjs::hideElement(selector = "#prot_filter_gecco")
     } else if  (vals$gecco_data_input == T){
       shinyjs::showElement(selector = "#score_average_gecco")
-      shinyjs::showElement(selector = "#score_average_gecco")
+      shinyjs::showElement(selector = "#score_cluster_gecco")
       shinyjs::showElement(selector = "#domains_filter_gecco")
       shinyjs::showElement(selector = "#prot_filter_gecco")
     } else {
       shinyjs::hideElement(selector = "#score_average_gecco")
-      shinyjs::hideElement(selector = "#score_average_gecco")
+      shinyjs::hideElement(selector = "#score_cluster_gecco")
       shinyjs::hideElement(selector = "#domains_filter_gecco")
       shinyjs::hideElement(selector = "#prot_filter_gecco")
     }
