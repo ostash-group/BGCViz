@@ -179,7 +179,7 @@ server <- function(input, output, session) {
           input$score_a,  input$score_average_gecco,input$score_cluster_gecco, input$domains_filter_gecco, 
           input$prot_filter_gecco, input$dup_choice, vals$need_filter, input$prism_supp
     )
-  })
+  }) %>% shiny::debounce(1000)
   
 
 
@@ -3031,7 +3031,7 @@ server <- function(input, output, session) {
   output$group_table <- shiny::renderTable({
     shiny::req(vals$data_upload_count >1)
     shiny::req(vals$need_filter == F)
-    shiny::req(vals$can_plot_group_table == T)
+      shiny::req(vals$can_plot_group_table == T)
     
     refine_unique <- function(data){
       n <- tail(data, n=1)
