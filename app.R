@@ -165,7 +165,7 @@ server <- function(input, output, session) {
   biocircos_listen <- shiny::reactive({
     list( input$biocircos_color,vals$need_filter, input$label_color, input$label_color_class, 
           input$ref_col_biocircos, vals$inters_filtered, input$prism_supp, input$prism_supp_data_input_width,
-          input$arts_width, input$sempi_width, input$rre_width, input$rename, input$reset_name
+          input$arts_width, input$sempi_width, input$rre_width, input$rename, input$reset_name,  vals$coloring_datatable
           )
   })
   inputData <- shiny::reactive({
