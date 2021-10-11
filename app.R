@@ -696,6 +696,7 @@ server <- function(input, output, session) {
       arts_data$ID <- seq(1:dim(arts_data)[1])
       arts_data$Cluster <- arts_data$ID
       vals$arts_data <- arts_data
+      vals$arts_data_input <- T
       vals$data_upload_count <-  vals$data_upload_count +1
       dup_table_id <- arts_data %>%
         dplyr::filter(Core != "Not_core")
@@ -716,7 +717,7 @@ server <- function(input, output, session) {
   }
   read_arts_dupdata <- function(data){
     get_location_duptable <- function(x, y){
-      test <- stringr:v:str_split(x, ";")
+      test <- stringr::str_split(x, ";")
       test2<- sub(".*loc\\|", "", test[[1]])
       test3 <- stringr::str_split(test2, " ")
       res <- list()
