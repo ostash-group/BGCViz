@@ -1745,7 +1745,7 @@ server <- function(input, output, session) {
   ############################################################################
   # Compute all interceptions on data upload.
   # dplyr::filter while ploting then.
-  shiny::observeEvent(inputData(), {
+  shiny::observeEvent(inputData(), ignoreInit = T,{
     shiny::req(vals$data_upload_count>=1)
     # GENERATE DATA
     if (vals$anti_data_input == TRUE){
@@ -1808,7 +1808,7 @@ server <- function(input, output, session) {
         dplyr::select(Start,Stop)
       gecco_inter$seqnames <- "chr"
     }
-    
+
     get_inter <- function(inter1, inter2){
       query <- GenomicRanges::makeGRangesFromDataFrame(inter2)
       subject <- GenomicRanges::makeGRangesFromDataFrame(inter1)
