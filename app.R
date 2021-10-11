@@ -164,8 +164,9 @@ server <- function(input, output, session) {
                                     input$sempi_sco,input$anti_sco, input$prism_sco)})
   biocircos_listen <- shiny::reactive({
     list( input$biocircos_color,vals$need_filter, input$label_color, input$label_color_class, 
-          input$ref_col_biocircos, vals$inters_filtered, input$prism_supp, input$prism_supp_data_input_width,
+          input$ref_col_biocircos, vals$inters_filtered,  input$prism_supp_data_input_width, vals$prism_supp_data_input,
           input$arts_width, input$sempi_width, input$rre_width, input$rename, input$reset_name,  vals$coloring_datatable
+          
           )
   })
   inputData <- shiny::reactive({
@@ -176,7 +177,7 @@ server <- function(input, output, session) {
   dynamicInput <-  shiny::reactive({
     list(  input$cluster_type, input$gene_filter,input$biodomain_filter,  input$score_c, input$score_d, 
           input$score_a,  input$score_average_gecco,input$score_cluster_gecco, input$domains_filter_gecco, 
-          input$prot_filter_gecco, input$dup_choice, vals$need_filter
+          input$prot_filter_gecco, input$dup_choice, vals$need_filter, input$prism_supp
     )
   })
   
@@ -1742,6 +1743,26 @@ server <- function(input, output, session) {
   ###                                                                      ###
   ############################################################################
   ############################################################################
+  shiny::observeEvent(input$prism_supp, ignoreInit = T,{
+    if (input$prism_supp == T){
+      vals$prism_supp_data_input = T
+      vals$need_filter <- T
+      if (!("PRISM-Supp" %in% names(vals$choices$ref))){
+        vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
+        vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PRISM-Supp")
+        vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
+        update_ui_with_data()
+      }
+    } else {
+      vals$prism_supp_data_input = F
+      vals$need_filter <- T
+      vals$choices$ref <- vals$choices$ref[!(names(vals$choices$ref)%in%c("PRISM-Supp"))]
+      vals$choices$group_by <- vals$choices$group_by[!(names(vals$choices$group_by)%in%c("PRISM-Supp"))]
+      vals$choices$ref_col_biocircos <- vals$choices$ref_col_biocircos[!(names(vals$choices$ref_col_biocircos)%in%c("PRISM-Supp"))]
+      update_ui_with_data()
+    }
+  })
+  
   # Compute all interceptions on data upload.
   # dplyr::filter while ploting then.
   shiny::observeEvent(inputData(), ignoreInit = T,{
@@ -1930,6 +1951,12 @@ server <- function(input, output, session) {
         vals$arts_data_filtered <- vals$arts_data
         vals$inters_filtered <- inters
         
+      }
+    }
+    if (input$prism_supp == FALSE){
+      inters$prism_supp <- NULL
+      for (name in names(inters)) {
+        inters[[name]][which(names(inters[[name]])%in%c("prism_supp"))]<-NULL
       }
     }
     if ((vals$gecco_data_input == F) & (vals$deep_data_input == F )& (vals$arts_data_input == F )) {
@@ -2525,7 +2552,11 @@ server <- function(input, output, session) {
     
     shiny::req(vals$data_upload_count >=1)
 
-    inters <- vals$inters_filtered
+    if (is.null(vals$inters_filtered)){
+      inters <- vals$inters
+    } else {
+      inters <- vals$inters_filtered
+    }
     # GENERATE DATA
     index <- 1
     for (upload in data_uploads){
@@ -2950,7 +2981,11 @@ server <- function(input, output, session) {
     arts_count <- NULL
     gecco_count <- NULL
 
-    inters <- vals$inters_filtered
+    if (is.null(vals$inters_filtered)){
+      inters <- vals$inters
+    } else {
+      inters <- vals$inters_filtered
+    } 
     index <- 1
     ranking_data <- NULL
     for (upload in data_uploads){
@@ -3012,7 +3047,11 @@ server <- function(input, output, session) {
       return(paste(names(Filter(Negate(is.null), res)), collapse = ","))
     }
     
-    inters <- vals$inters_filtered 
+    if (is.null(vals$inters_filtered)){
+      inters <- vals$inters
+    } else {
+      inters <- vals$inters_filtered
+    }
     df_test <- data.frame(matrix(ncol = length(abbr), nrow = 0))
     colnames(df_test) <- abbr
     added_inters <- c(soft_names[match(input$group_by, soft_namings)])
@@ -3020,11 +3059,7 @@ server <- function(input, output, session) {
     if (input$count_all == F){
       df_test[nrow(df_test)+1,] <- NA
     } else{
-      if( (input$group_by == "DeepBGC") | (input$group_by == "GECCO")){
-        selected_dataframe <- data_to_use[match(input$group_by, soft_namings)]
-      } else {
-        selected_dataframe <- data_to_use[match(input$group_by, soft_namings)]
-      }
+      selected_dataframe <- data_to_use[match(input$group_by, soft_namings)]
       df_test <- data.frame(matrix(ncol = length(abbr), nrow = length(vals[[selected_dataframe]]$Cluster)))
       colnames(df_test) <- abbr
       df_test[[input$group_by]]<- vals[[selected_dataframe]]$Cluster
