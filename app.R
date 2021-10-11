@@ -169,10 +169,8 @@ server <- function(input, output, session) {
           )
   })
   inputData <- shiny::reactive({
-    list( input$sempi_data,input$rre_data,  input$anti_data, input$prism_data,
-          input$known_data,input$dup_data,  input$prism_supp_data, input$deep_data, input$gecco_data,
-          input$sempi_sco,input$rre_sco,  input$anti_sco, input$prism_sco,
-          input$arts_sco, input$prism_supp_sco, input$deep_sco, input$gecco_sco
+    list( vals$sempi_data_input, vals$rre_data_input,  vals$anti_data_input, vals$prism_data_input,
+          vals$known_data_input,vals$dup_data_input,  vals$prism_supp_data_input, vals$deep_data_input, vals$gecco_data_input
     )
   })
   dynamicInput <-  shiny::reactive({
@@ -718,7 +716,7 @@ server <- function(input, output, session) {
   }
   read_arts_dupdata <- function(data){
     get_location_duptable <- function(x, y){
-      test <- stringr::str_split(x, ";")
+      test <- stringr:v:str_split(x, ";")
       test2<- sub(".*loc\\|", "", test[[1]])
       test3 <- stringr::str_split(test2, " ")
       res <- list()
@@ -1746,7 +1744,6 @@ server <- function(input, output, session) {
   # Compute all interceptions on data upload.
   # dplyr::filter while ploting then.
   shiny::observeEvent(inputData(), ignoreInit = T,{
-    shiny::req(vals$data_upload_count>=1)
     # GENERATE DATA
     if (vals$anti_data_input == TRUE){
       anti_data <-  vals$anti_data
