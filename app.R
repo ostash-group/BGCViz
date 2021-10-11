@@ -1178,12 +1178,6 @@ server <- function(input, output, session) {
   shiny::observeEvent(vals$gecco_data_input,{
     
     if (vals$gecco_data_input == T){
-      shinyjs::showElement(selector = "#data_comparison_header_gecco")
-      shinyjs::showElement(selector = "#hide_data_comparison_gecco")
-      shinyjs::showElement(selector = "#ref_comparison_gecco")
-      shinyjs::showElement(selector = "#score_type_gecco")
-      shinyjs::showElement(selector = "#plot_step_gecco")
-      shinyjs::showElement(selector = "#plot_start_gecco")
       shinyjs::showElement(selector = "#data_filter_header_gecco")
       shinyjs::showElement(selector = "#hide_data_filter_gecco")
       shinyjs::showElement(selector = "#score_average_gecco")
@@ -1191,12 +1185,6 @@ server <- function(input, output, session) {
       shinyjs::showElement(selector = "#domains_filter_gecco")
       shinyjs::showElement(selector = "#prot_filter_gecco")
     } else{
-      shinyjs::hideElement(selector = "#data_comparison_header_gecco")
-      shinyjs::hideElement(selector = "#hide_data_comparison_gecco")
-      shinyjs::hideElement(selector = "#ref_comparison_gecco")
-      shinyjs::hideElement(selector = "#score_type_gecco")
-      shinyjs::hideElement(selector = "#plot_step_gecco")
-      shinyjs::hideElement(selector = "#plot_start_gecco")
       shinyjs::hideElement(selector = "#data_filter_header_gecco")
       shinyjs::hideElement(selector = "#hide_data_filter_gecco")
       shinyjs::hideElement(selector = "#score_average_gecco")
@@ -1248,8 +1236,20 @@ server <- function(input, output, session) {
       shiny::showTab("main", "3")
       if ((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )){
         shiny::showTab("main", "5")
+        shinyjs::showElement(selector = "#data_comparison_header_gecco")
+        shinyjs::showElement(selector = "#hide_data_comparison_gecco")
+        shinyjs::showElement(selector = "#ref_comparison_gecco")
+        shinyjs::showElement(selector = "#score_type_gecco")
+        shinyjs::showElement(selector = "#plot_step_gecco")
+        shinyjs::showElement(selector = "#plot_start_gecco")
       } else {
         shiny::hideTab("main", "5")
+        shinyjs::hideElement(selector = "#data_comparison_header_gecco")
+        shinyjs::hideElement(selector = "#hide_data_comparison_gecco")
+        shinyjs::hideElement(selector = "#ref_comparison_gecco")
+        shinyjs::hideElement(selector = "#score_type_gecco")
+        shinyjs::hideElement(selector = "#plot_step_gecco")
+        shinyjs::hideElement(selector = "#plot_start_gecco")
         if ((vals$gecco_data_input == T) & (vals$data_upload_count >1)){
           shiny::showNotification(paste("It seems that you would like to compare the GECCO data to the reference (in a new tab)? Please upload Antismash, SEMPI or PRISM datasets to do that."), type = "message", duration=10)
         }
@@ -1680,18 +1680,21 @@ server <- function(input, output, session) {
   })
   # What to do, if hide GECCO comparison options scheme is triggered
   shiny::observeEvent(input$hide_data_comparison_gecco, {
-    
     if ((input$hide_data_comparison_gecco == T)){
       shinyjs::hideElement(selector = "#ref_comparison_gecco")
       shinyjs::hideElement(selector = "#score_type_gecco")
       shinyjs::hideElement(selector = "#plot_step_gecco")
       shinyjs::hideElement(selector = "#plot_start_gecco")
-    } else if (vals$gecco_data_input == T) {
+    } else if ((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )) {
+      shinyjs::showElement(selector = "#data_comparison_header_gecco")
+      shinyjs::showElement(selector = "#hide_data_comparison_gecco")
       shinyjs::showElement(selector = "#ref_comparison_gecco")
       shinyjs::showElement(selector = "#score_type_gecco")
       shinyjs::showElement(selector = "#plot_step_gecco")
       shinyjs::showElement(selector = "#plot_start_gecco")
     } else {
+      shinyjs::hideElement(selector = "#data_comparison_header_gecco")
+      shinyjs::hideElement(selector = "#hide_data_comparison_gecco")
       shinyjs::hideElement(selector = "#ref_comparison_gecco")
       shinyjs::hideElement(selector = "#score_type_gecco")
       shinyjs::hideElement(selector = "#plot_step_gecco")
