@@ -175,13 +175,20 @@ server <- function(input, output, session) {
     )
   })
   dynamicInput <-  shiny::reactive({
-    list(  input$cluster_type, input$gene_filter,input$biodomain_filter,  input$score_c, input$score_d, 
-          input$score_a,  input$score_average_gecco,input$score_cluster_gecco, input$domains_filter_gecco, 
-          input$prot_filter_gecco, input$dup_choice, vals$need_filter, input$prism_supp
+    list( input$dup_choice, vals$need_filter, input$prism_supp
     )
-  }) %>% shiny::debounce(1000)
+  }) 
+  deep_reference <- shiny::reactive({
+    list( vals$inters_filtered, vals$rre_more, input$ref, input$arts_width, input$sempi_width, input$rre_width,
+          input$prism_supp_data_input_width)
+  })
   
-
+  to_debounce <-  shiny::reactive({
+    list(  input$cluster_type, input$gene_filter,input$biodomain_filter,  input$score_c, input$score_d, 
+           input$score_a,  input$score_average_gecco,input$score_cluster_gecco, input$domains_filter_gecco, 
+           input$prot_filter_gecco
+    )
+  }) %>% shiny::debounce(500)
 
   # Some dataframes that are used through the app + some vectors of untercepted values
   vals <- shiny::reactiveValues(deep_data = NULL, anti_data = NULL, rre_data=NULL, prism_data=NULL, chr_len = NULL, fullness_deep = NULL,
@@ -211,7 +218,7 @@ server <- function(input, output, session) {
   coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all),]
   colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
   vals$coloring_datatable <- DT::datatable(coloring_datatable,  rownames = F, editable = "column", options = list( dom='t',ordering=F))
-  
+
   # Variables, that holds data uploads boolean (so if data is present or not)
   data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
                     "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
@@ -1743,7 +1750,7 @@ server <- function(input, output, session) {
   ###                                                                      ###
   ############################################################################
   ############################################################################
-  shiny::observeEvent(input$prism_supp, ignoreInit = T,{
+  shiny::observeEvent(input$prism_supp, ignoreInit = T,priority = 3,{
     if (input$prism_supp == T){
       vals$prism_supp_data_input = T
       vals$need_filter <- T
@@ -1765,7 +1772,7 @@ server <- function(input, output, session) {
   
   # Compute all interceptions on data upload.
   # dplyr::filter while ploting then.
-  shiny::observeEvent(inputData(), ignoreInit = T,{
+  shiny::observeEvent(inputData(), ignoreInit = T,priority = 5,{
     # GENERATE DATA
     if (vals$anti_data_input == TRUE){
       anti_data <-  vals$anti_data
@@ -1876,7 +1883,9 @@ server <- function(input, output, session) {
   # dplyr::filter ARTS, DeepBGC, GECCO interception data
   # and general dataframes to plot, if data filtering 
   # options are triggered
-  shiny::observeEvent(dynamicInput(), {
+  shiny::observeEvent({dynamicInput()
+    to_debounce()
+    }, ignoreInit = T, priority = 4 ,{
     shiny::req(vals$data_upload_count>=1)
     inters <- vals$inters
     if (vals$deep_data_input == TRUE){
@@ -1969,7 +1978,7 @@ server <- function(input, output, session) {
     
   })
   # Compute the Biociros plot. Store information to plot later
-  shiny::observeEvent(biocircos_listen(), {
+  shiny::observeEvent(biocircos_listen(),  ignoreInit = T,priority = 3 ,{
     shiny::req(vals$data_upload_count >=2)
     shiny::req(vals$need_filter == F)
     shiny::req(vals$can_plot_biocircos == T)
@@ -2213,6 +2222,292 @@ server <- function(input, output, session) {
     vals$Biocircos_chromosomes <- Biocircos_chromosomes
   })
   
+  shiny::observeEvent(deep_reference(), ignoreInit = T,{
+    shiny::req(vals$data_upload_count >=1)
+    shiny::req(vals$need_filter == F)
+    shiny::req(vals$can_plot_deep_ref == T)
+    shiny::req(input$ref != "")
+    shiny::req(vals$data_upload_count >=1)
+    
+    if (is.null(vals$inters_filtered)){
+      inters <- vals$inters
+    } else {
+      inters <- vals$inters_filtered
+    }
+    # GENERATE DATA
+    index <- 1
+    for (upload in data_uploads){
+      if (vals[[upload]] == T){
+        data<- vals[[data_to_use[index]]]
+        assign(paste0(soft_names[index], "_data"),  correct_width(data, soft_namings[index]))
+      }
+      index <- index +1
+    }
+    
+    
+    lett <- rev(LETTERS)[1:9]
+    simple_seg <- function(df, letter, software, soft_name ,soft_namings, inter=T){
+      if (inter== T){
+        data <- df[df$Cluster %in% inters[[soft_namings]][[soft_name]]$from, ]
+      } else{
+        data <- df
+      }
+      
+      seg_df <-  data.frame(x=as.numeric(data$Start),
+                            y=rep(letter, length(data$Cluster)),
+                            xend=as.numeric(  data$Stop),
+                            yend=rep(letter, length(data$Cluster)),
+                            Type = as.factor(data$Type),
+                            Type2 = as.factor(data$Type2),
+                            Software = rep(software, length(data$Cluster)),
+                            ID = data$Cluster,
+                            Start = data$Start,
+                            Stop = data$Stop)
+      return(seg_df)
+    }
+    
+    geom_anti <- function(data){
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
+                                                    ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+    }
+    geom_prism <- function(data){
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+    }
+    geom_deep <- function(data){
+      ggplot2::geom_segment(data=data,ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                   ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
+                                                   deepbgc_score = deepbgc_score,activity = activity ),size =3)
+    }
+    geom_rre <- function(data){
+      if (vals$rre_more == T){
+        ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
+                                                      ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
+                                                      P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
+                                                      Probability = Probability),size = 3)
+      } else {
+        ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
+                                                      ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value
+        ),size = 3)
+      }
+    }
+    geom_sempi <- function(data){
+      
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
+                                                    ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+    }
+    geom_prism_supp <- function(data){
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, ID = ID,
+                                                    Start = Start, Stop = Stop, Type = Type, Name = Name, Full_name = Full_name,
+                                                    Score = Score), size = 3)
+    }
+    geom_arts <- function(data){
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type, Hit = Hit, 
+                                                    Core = Core, E_value = E_value, Bitscore = Bitscore, Count = Count, Model = Model), size = 3)
+    }
+    geom_gecco <- function(data){
+      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
+                                                    ID = ID, Start = Start, Stop = Stop, Type = Type, Num_proteins= Num_proteins,
+                                                    Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3)
+    }
+    
+    tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
+                "P_value", "RRE_start","RRE_stop", "Probability", "Name", "Full_name",  "Hit", "Core", "Count", "Bitscore", "Model",
+                "Num_domains", "Num_proteins", "Average_p", "Max_p")
+    
+    
+    add_sempi <- function(seg_df, soft_namings, df, inter = T){
+      
+      return(seg_df)
+    }
+    
+    add_arts <- function(seg_df, soft_namings, df, inter=T){
+      if (inter == T){
+        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$arts$from, ]
+      }else{
+        subset_df <- df
+      }
+      seg_df$Hit = subset_df$Hit
+      seg_df$xend = as.numeric(subset_df$Stop)
+      seg_df$Core = subset_df$Core
+      seg_df$Count = subset_df$Count
+      seg_df$E_value = subset_df$Evalue
+      seg_df$Bitscore = subset_df$Bitscore
+      seg_df$Model = subset_df$Model
+      return(seg_df)
+    }
+    add_prism_supp <- function(seg_df, soft_namings, df, inter=T){
+      if (inter == T){
+        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$prism_supp$from, ]
+      }else{
+        subset_df <- df
+      }
+      seg_df$xend <-  as.numeric(subset_df$Stop)
+      seg_df$Score = subset_df$Score
+      seg_df$Name = subset_df$Name
+      seg_df$Full_name = subset_df$Full_name
+      return(seg_df)
+    }
+    add_deep <- function(seg_df, soft_namings, df, inter=T){
+      if (inter == T){
+        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$deep$from, ]
+      }else{
+        subset_df <- df
+      }
+      seg_df$num_domains = subset_df$num_domains
+      seg_df$deepbgc_score = subset_df$deepbgc_score
+      seg_df$activity = subset_df$product_activity
+      return(seg_df)
+    }
+    add_rre <- function(seg_df, soft_namings, df, inter=T){
+      if (inter == T){
+        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$rre$from, ]
+      }else{
+        subset_df <- df
+      }
+      if (vals$rre_more == T){
+        seg_df$xend=as.numeric(subset_df$Stop)
+        seg_df$Score = subset_df$Score
+        seg_df$Stop = subset_df$Stop
+        seg_df$E_value = subset_df$E.value
+        seg_df$P_value = subset_df$P.value
+        seg_df$RRE_start = subset_df$RRE.start
+        seg_df$RRE_stop = subset_df$RRE.end
+        seg_df$Probability = subset_df$Probability
+      } else {
+        seg_df$xend=subset_df$Stop
+        seg_df$E_value = subset_df$E.value
+      }
+      
+      return(seg_df)
+    }
+    add_gecco <- function(seg_df, soft_namings, df, inter=T){
+      if (inter == T){
+        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$gecco$from, ]
+      }else{
+        subset_df <- df
+      }
+      seg_df$Num_proteins = subset_df$num_prot
+      seg_df$Num_domains = subset_df$num_domains
+      seg_df$Average_p = subset_df$average_p
+      seg_df$Max_p = subset_df$max_p
+      return(seg_df)
+    }
+    
+    add_more_annot <- function(seg_df, plot, soft_names, index){
+      if (dim(seg_df)[1] > 0){
+        if (soft_names[index] == "anti"){
+          plot <- plot + geom_anti(seg_df)
+        } else if (soft_names[index] == "sempi") {
+          plot <- plot + geom_sempi(seg_df)
+        }
+        else if (soft_names[index] == "prism") {
+          plot <- plot + geom_prism(seg_df)
+        }
+        else if (soft_names[index] == "prism_supp") {
+          plot <- plot + geom_prism_supp(seg_df)
+        }
+        else if (soft_names[index] == "arts") {
+          plot <- plot + geom_arts(seg_df)
+        }
+        else if (soft_names[index] == "deep") {
+          plot <- plot + geom_deep(seg_df)
+        }
+        else if (soft_names[index] == "rre") {
+          plot <- plot + geom_rre(seg_df)
+        } else if (soft_names[index] == "gecco") {
+          plot <- plot+geom_gecco(seg_df)
+        }
+        return(plot)
+      } else{
+        return(plot)
+      }
+    }
+    
+    define_spec_seg_df <- function(soft_names, index,seg_df, soft_major, df , inter=T){
+      if (inter == F){
+        soft_major <- "Not applicable"
+      }
+      if ((soft_names[index] == "prism_supp") & (soft_names[index] != soft_major)){
+        seg_df <-  add_prism_supp(seg_df, soft_major, df, inter)
+      } else if ((soft_names[index] == "arts")& (soft_names[index] != soft_major)){
+        seg_df <- add_arts(seg_df, soft_major, df, inter)
+      } else if ((soft_names[index] == "deep")& (soft_names[index] != soft_major)){
+        seg_df <- add_deep(seg_df, soft_major, df, inter)
+      } else if ((soft_names[index] == "gecco")& (soft_names[index] != soft_major)){
+        seg_df <- add_gecco(seg_df, soft_major, df, inter)
+      } else if ((soft_names[index] == "rre")& (soft_names[index] != soft_major)){
+        seg_df <- add_rre(seg_df, soft_major, df, inter)
+      }else if ((soft_names[index] == "sempi")& (soft_names[index] != soft_major)){
+        seg_df <- add_sempi(seg_df, soft_major, df, inter)
+      }
+      return(seg_df)
+    }
+    
+    # MAKE COMPUTATIONS
+    sup_index <- 1
+    soft_lttrs <- lett
+    rename_y_axis <- vals$rename_y_axis
+    rename_y_axis <- lapply(1:(length( soft_lttrs)-1), function(x){
+      soft_lttrs[x]=soft_namings[x]
+    })
+    names(rename_y_axis) <- soft_lttrs[-length(soft_lttrs)]
+    for (upload in data_uploads){
+      soft_lttr <- soft_lttrs[1]
+      soft_lttrs <- soft_lttrs[-1]
+      if (vals[[upload]] == T){
+        soft_major <- soft_names[sup_index]
+        seg_ref_g <- simple_seg(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), "Z", soft_namings[sup_index], soft_names[sup_index],soft_major, inter = F)
+        seg_ref_g <- define_spec_seg_df(soft_names, sup_index,seg_ref_g, soft_major, eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), inter = F)
+        seg_ref <- seg_ref_g
+        
+        if (input$ref == soft_namings[sup_index]){
+          shiny::validate(need(nrow(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))))>0,"Reference data is empty, and so, insufficient for plotting. Please select another one") )
+          plot <- ggplot2::ggplot(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), ggplot2::aes(x = vals$chr_len, y = Chr)) + 
+            eval(as.name(paste0("geom_", soft_names[sup_index])))(seg_ref)
+          soft_let <- abbr[sup_index]
+          lettrs <- lett[2:length(lett)]
+          labels_1 <- list()
+          index = 1
+          for (i in data_uploads){
+            if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
+              df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
+              seg_df <- simple_seg(df, lettrs[index], soft_namings[index], soft_names[index],soft_major)
+              seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
+              labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
+              plot <- add_more_annot(seg_df, plot, soft_names, index)
+            }
+            index = index +1
+            
+          }
+          plot <- plot +
+            ggplot2::scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
+            ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10)) +
+            ggplot2::ylab("")+
+            ggplot2::xlab("Chromosome length")+ 
+            ggplot2::theme(legend.title = ggplot2::element_blank()) +
+            ggplot2::ggtitle("Annotations' comparison to the reference")
+          to_plot <- plotly::ggplotly(plot, tooltip = tooltip)
+          to_plot <- to_plot %>% 
+            plotly::layout(legend=list(font = list(
+              family = "sans-serif",
+              size = 12,
+              color = "#000"),
+              bordercolor = "#FFFFFF",
+              borderwidth = 2,
+              title=list(text='<b> Cluster Types </b>')))
+          
+          
+        }
+        seg_ref$yend <- rep(soft_lttr, length(eval(as.name(paste(soft_names[sup_index], "_data", sep = "")))$Cluster))
+        seg_ref$y <- rep(soft_lttr, length(eval(as.name(paste(soft_names[sup_index], "_data", sep = "")))$Cluster))
+        vals[[soft_datafr[sup_index]]] <- seg_ref
+      }
+      sup_index <- sup_index +1
+    }
+    vals$rename_y_axis <- rename_y_axis
+    vals$deep_reference_to_plot <- to_plot
+  })
+  
   
   ############################################################################
   ############################################################################
@@ -2257,20 +2552,19 @@ server <- function(input, output, session) {
       
       
       # Store antismash bgc start amd atop values as matrix
-      if (input$ref_comparison == 'Antismash'){
-        anti_inter <- vals$anti_data %>%
+        if (input$ref_comparison == 'Antismash'){
+        anti_inter <- shiny::isolate(vals$anti_data) %>%
         dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
       } else if (input$ref_comparison == 'PRISM'){
-        anti_inter <- vals$prism_data %>%
+        anti_inter <- shiny::isolate(vals$prism_data) %>%
           dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
       } else if (input$ref_comparison == 'SEMPI'){
-        anti_inter <- vals$sempi_data %>%
+        anti_inter <- shiny::isolate(vals$sempi_data) %>%
           dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
       } 
-      
       
      
       
@@ -2286,17 +2580,16 @@ server <- function(input, output, session) {
         len_new <- 0
       }
       
-
       if (input$ref_comparison == 'Antismash'){
-        used_antismash <-  length(vals$anti_data$Cluster)-inter_bgc
+        used_antismash <-  length(shiny::isolate(vals$anti_data$Cluster))-inter_bgc
         cols <-  c("Only Antismash", "DeepBGC+Antismash", "Only DeepBGC")
         title <-  ggplot2::ggtitle("Comparison of Antismash and DeepBGC annotations at given score threshold")
       } else if (input$ref_comparison == 'PRISM'){
-        used_antismash <-  length(vals$prism_data$Cluster)-inter_bgc
+        used_antismash <-  length(shiny::isolate(vals$prism_data$Cluster))-inter_bgc
         cols <- c("Only PRISM", "DeepBGC+PRISM", "Only DeepBGC")
         title <- ggplot2::ggtitle("Comparison of PRISM and DeepBGC annotations at given score threshold")
       } else if (input$ref_comparison == 'SEMPI') {
-        used_antismash <-  length(vals$sempi_data$Cluster)-inter_bgc
+        used_antismash <-  length(shiny::isolate(vals$sempi_data$Cluster))-inter_bgc
         cols <- c("Only SEMPI", "DeepBGC+SEMPI", "Only DeepBGC")
         title <- ggplot2::ggtitle("Comparison of SEMPI and DeepBGC annotations at given score threshold")
       }
@@ -2546,297 +2839,15 @@ server <- function(input, output, session) {
   # Render interactive plot, which shows bgcs of antismash, intercepted with chosen app. Also all app bgs. On hover shows all available information
   # For antismash and PRISM data showed only ID, Start, Stop, Type
   output$deep_reference <- plotly::renderPlotly({
-    shiny::req(vals$data_upload_count >=1)
-    shiny::req(vals$need_filter == F)
-    shiny::req(vals$can_plot_deep_ref == T)
-    
-    shiny::req(vals$data_upload_count >=1)
-
-    if (is.null(vals$inters_filtered)){
-      inters <- vals$inters
-    } else {
-      inters <- vals$inters_filtered
-    }
-    # GENERATE DATA
-    index <- 1
-    for (upload in data_uploads){
-      if (vals[[upload]] == T){
-      data<- vals[[data_to_use[index]]]
-      assign(paste0(soft_names[index], "_data"),  correct_width(data, soft_namings[index]))
-      }
-      index <- index +1
-    }
-
-    
-    lett <- rev(LETTERS)[1:9]
-    simple_seg <- function(df, letter, software, soft_name ,soft_namings, inter=T){
-      if (inter== T){
-        data <- df[df$Cluster %in% inters[[soft_namings]][[soft_name]]$from, ]
-      } else{
-        data <- df
-      }
-
-      seg_df <-  data.frame(x=as.numeric(data$Start),
-                         y=rep(letter, length(data$Cluster)),
-                         xend=as.numeric(  data$Stop),
-                         yend=rep(letter, length(data$Cluster)),
-                         Type = as.factor(data$Type),
-                         Type2 = as.factor(data$Type2),
-                         Software = rep(software, length(data$Cluster)),
-                         ID = data$Cluster,
-                         Start = data$Start,
-                         Stop = data$Stop)
-      return(seg_df)
-      }
-    
-    geom_anti <- function(data){
-      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
-                                  ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
-    }
-    geom_prism <- function(data){
-      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
-    }
-    geom_deep <- function(data){
-      ggplot2::geom_segment(data=data,ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                                               ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
-                                                               deepbgc_score = deepbgc_score,activity = activity ),size =3)
-      }
-    geom_rre <- function(data){
-      if (vals$rre_more == T){
-      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
-                                                           ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
-                                                           P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
-                                                           Probability = Probability),size = 3)
-      } else {
-        ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
-                                    ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value
-                                    ),size = 3)
-      }
-      }
-    geom_sempi <- function(data){
-
-      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
-                                  ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
-    }
-    geom_prism_supp <- function(data){
-      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, ID = ID,
-                                  Start = Start, Stop = Stop, Type = Type, Name = Name, Full_name = Full_name,
-                                  Score = Score), size = 3)
-    }
-    geom_arts <- function(data){
-      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type, Hit = Hit, 
-                                  Core = Core, E_value = E_value, Bitscore = Bitscore, Count = Count, Model = Model), size = 3)
-    }
-    geom_gecco <- function(data){
-      ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
-                                  ID = ID, Start = Start, Stop = Stop, Type = Type, Num_proteins= Num_proteins,
-                                  Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3)
-    }
-    
-    tooltip = c("Software", "ID", "Start", "Stop", "Type","num_domains",  "deepbgc_score", "activity","Score","E_value",
-                "P_value", "RRE_start","RRE_stop", "Probability", "Name", "Full_name",  "Hit", "Core", "Count", "Bitscore", "Model",
-                "Num_domains", "Num_proteins", "Average_p", "Max_p")
-
-    
-    add_sempi <- function(seg_df, soft_namings, df, inter = T){
-      
-      return(seg_df)
-    }
-    
-    add_arts <- function(seg_df, soft_namings, df, inter=T){
-      if (inter == T){
-        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$arts$from, ]
-      }else{
-        subset_df <- df
-      }
-      seg_df$Hit = subset_df$Hit
-      seg_df$xend = as.numeric(subset_df$Stop)
-      seg_df$Core = subset_df$Core
-      seg_df$Count = subset_df$Count
-      seg_df$E_value = subset_df$Evalue
-      seg_df$Bitscore = subset_df$Bitscore
-      seg_df$Model = subset_df$Model
-      return(seg_df)
-    }
-    add_prism_supp <- function(seg_df, soft_namings, df, inter=T){
-      if (inter == T){
-        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$prism_supp$from, ]
-      }else{
-        subset_df <- df
-      }
-      seg_df$xend <-  as.numeric(subset_df$Stop)
-      seg_df$Score = subset_df$Score
-      seg_df$Name = subset_df$Name
-      seg_df$Full_name = subset_df$Full_name
-      return(seg_df)
-    }
-    add_deep <- function(seg_df, soft_namings, df, inter=T){
-      if (inter == T){
-        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$deep$from, ]
-      }else{
-        subset_df <- df
-      }
-      seg_df$num_domains = subset_df$num_domains
-      seg_df$deepbgc_score = subset_df$deepbgc_score
-      seg_df$activity = subset_df$product_activity
-      return(seg_df)
-    }
-    add_rre <- function(seg_df, soft_namings, df, inter=T){
-      if (inter == T){
-        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$rre$from, ]
-      }else{
-        subset_df <- df
-      }
-      if (vals$rre_more == T){
-        seg_df$xend=as.numeric(subset_df$Stop)
-        seg_df$Score = subset_df$Score
-        seg_df$Stop = subset_df$Stop
-        seg_df$E_value = subset_df$E.value
-        seg_df$P_value = subset_df$P.value
-        seg_df$RRE_start = subset_df$RRE.start
-        seg_df$RRE_stop = subset_df$RRE.end
-        seg_df$Probability = subset_df$Probability
-      } else {
-        seg_df$xend=subset_df$Stop
-        seg_df$E_value = subset_df$E.value
-      }
-      
-     return(seg_df)
-    }
-    add_gecco <- function(seg_df, soft_namings, df, inter=T){
-      if (inter == T){
-        subset_df <- df[df$Cluster %in% inters[[soft_namings]]$gecco$from, ]
-      }else{
-        subset_df <- df
-      }
-      seg_df$Num_proteins = subset_df$num_prot
-      seg_df$Num_domains = subset_df$num_domains
-      seg_df$Average_p = subset_df$average_p
-      seg_df$Max_p = subset_df$max_p
-      return(seg_df)
-    }
-    
-    add_more_annot <- function(seg_df, plot, soft_names, index){
-      if (dim(seg_df)[1] > 0){
-        if (soft_names[index] == "anti"){
-          plot <- plot + geom_anti(seg_df)
-        } else if (soft_names[index] == "sempi") {
-          plot <- plot + geom_sempi(seg_df)
-        }
-        else if (soft_names[index] == "prism") {
-          plot <- plot + geom_prism(seg_df)
-        }
-        else if (soft_names[index] == "prism_supp") {
-          plot <- plot + geom_prism_supp(seg_df)
-        }
-        else if (soft_names[index] == "arts") {
-          plot <- plot + geom_arts(seg_df)
-        }
-        else if (soft_names[index] == "deep") {
-          plot <- plot + geom_deep(seg_df)
-        }
-        else if (soft_names[index] == "rre") {
-          plot <- plot + geom_rre(seg_df)
-        } else if (soft_names[index] == "gecco") {
-          plot <- plot+geom_gecco(seg_df)
-        }
-        return(plot)
-      } else{
-         return(plot)
-      }
-    }
-    
-    define_spec_seg_df <- function(soft_names, index,seg_df, soft_major, df , inter=T){
-      if (inter == F){
-        soft_major <- "Not applicable"
-      }
-      if ((soft_names[index] == "prism_supp") & (soft_names[index] != soft_major)){
-        seg_df <-  add_prism_supp(seg_df, soft_major, df, inter)
-      } else if ((soft_names[index] == "arts")& (soft_names[index] != soft_major)){
-        seg_df <- add_arts(seg_df, soft_major, df, inter)
-      } else if ((soft_names[index] == "deep")& (soft_names[index] != soft_major)){
-        seg_df <- add_deep(seg_df, soft_major, df, inter)
-      } else if ((soft_names[index] == "gecco")& (soft_names[index] != soft_major)){
-        seg_df <- add_gecco(seg_df, soft_major, df, inter)
-      } else if ((soft_names[index] == "rre")& (soft_names[index] != soft_major)){
-        seg_df <- add_rre(seg_df, soft_major, df, inter)
-      }else if ((soft_names[index] == "sempi")& (soft_names[index] != soft_major)){
-        seg_df <- add_sempi(seg_df, soft_major, df, inter)
-      }
-      return(seg_df)
-    }
-    
-# MAKE COMPUTATIONS
-      sup_index <- 1
-      soft_lttrs <- lett
-      rename_y_axis <- vals$rename_y_axis
-      rename_y_axis <- lapply(1:(length( soft_lttrs)-1), function(x){
-        soft_lttrs[x]=soft_namings[x]
-      })
-      names(rename_y_axis) <- soft_lttrs[-length(soft_lttrs)]
-      for (upload in data_uploads){
-        soft_lttr <- soft_lttrs[1]
-        soft_lttrs <- soft_lttrs[-1]
-        if (vals[[upload]] == T){
-          soft_major <- soft_names[sup_index]
-          seg_ref_g <- simple_seg(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), "Z", soft_namings[sup_index], soft_names[sup_index],soft_major, inter = F)
-          seg_ref_g <- define_spec_seg_df(soft_names, sup_index,seg_ref_g, soft_major, eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), inter = F)
-          seg_ref <- seg_ref_g
-          
-          if (input$ref == soft_namings[sup_index]){
-            shiny::validate(need(nrow(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))))>0,"Reference data is empty, and so, insufficient for plotting. Please select another one") )
-            plot <- ggplot2::ggplot(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), ggplot2::aes(x = vals$chr_len, y = Chr)) + 
-              eval(as.name(paste0("geom_", soft_names[sup_index])))(seg_ref)
-            soft_let <- abbr[sup_index]
-            lettrs <- lett[2:length(lett)]
-            labels_1 <- list()
-            index = 1
-            for (i in data_uploads){
-              if ((vals[[i]] == T) & (soft_names[index] != soft_major)){
-                df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-                seg_df <- simple_seg(df, lettrs[index], soft_namings[index], soft_names[index],soft_major)
-                seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df)
-                labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
-                plot <- add_more_annot(seg_df, plot, soft_names, index)
-              }
-              index = index +1
-              
-            }
-            plot <- plot +
-              ggplot2::scale_y_discrete(labels = c("Z" = input$ref, unlist(labels_1))) +
-              ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10)) +
-              ggplot2::ylab("")+
-              ggplot2::xlab("Chromosome length")+ 
-              ggplot2::theme(legend.title = ggplot2::element_blank()) +
-              ggplot2::ggtitle("Annotations' comparison to the reference")
-            to_plot <- plotly::ggplotly(plot, tooltip = tooltip)
-            to_plot <- to_plot %>% 
-              plotly::layout(legend=list(font = list(
-                family = "sans-serif",
-                size = 12,
-                color = "#000"),
-                bordercolor = "#FFFFFF",
-                borderwidth = 2,
-                title=list(text='<b> Cluster Types </b>')))
-            
-            
-          }
-          seg_ref$yend <- rep(soft_lttr, length(eval(as.name(paste(soft_names[sup_index], "_data", sep = "")))$Cluster))
-          seg_ref$y <- rep(soft_lttr, length(eval(as.name(paste(soft_names[sup_index], "_data", sep = "")))$Cluster))
-        vals[[soft_datafr[sup_index]]] <- seg_ref
-        }
-        sup_index <- sup_index +1
-      }
-      vals$rename_y_axis <- rename_y_axis
-      vals$can_plot_deep_ref_2 =T
-    to_plot
+    shiny::req(vals$deep_reference_to_plot)
+    vals$can_plot_deep_ref_2 <- T
+    vals$deep_reference_to_plot
   })
   
   output$deep_reference_2 <- plotly::renderPlotly({
     shiny::req(vals$can_plot_deep_ref_2 == T)
     vals$can_plot_deep_ref_2 == F
-    shiny::req(vals$data_upload_count >=1)
-    rename_y_axis <- vals$rename_y_axis
+    rename_y_axis <- shiny::isolate(vals$rename_y_axis)
     data <- NULL
 
     index <- 1
@@ -2928,7 +2939,7 @@ server <- function(input, output, session) {
       bordercolor = "#FFFFFF",
       borderwidth = 2,
       title=list(text='<b> Cluster Types </b>')))
-  })
+  }) #%>% shiny::debounce(200)
   
   ##----------------------------------------------------------------
   ##                      Biocircos plot tab                       -
