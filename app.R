@@ -218,7 +218,58 @@ server <- function(input, output, session) {
   coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all),]
   colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
   vals$coloring_datatable <- DT::datatable(coloring_datatable,  rownames = F, editable = "column", options = list( dom='t',ordering=F))
-
+  # Validation
+  check_if_column_exists <- function(data_names,column_name){
+    if (column_name %in% stringr::str_to_lower(data_names)){
+      data_names[stringr::str_to_lower(data_names) %in% column_name] <- stringr::str_to_title(column_name)
+      return(TRUE)
+    } else {
+      shiny::showNotification( paste0("Data have no ", column_name, " column."),type = "warning")
+      return(FALSE)
+    }
+  }
+  validate_basic_input <- function(data){
+   data_names <- names(data)
+   if (!(check_if_column_exists(data_names, 'cluster'))){
+     shiny::showNotification( paste0("Cluster columns was created on the fly."),type = "message")
+     data$Cluster <- seq(1:dim(data)[1])
+   }
+   if (!(check_if_column_exists(data_names, 'start'))){
+     return(FALSE)
+   }
+   if (!(check_if_column_exists(data_names, 'stop'))){
+     return(FALSE)
+   }
+   if (!(check_if_column_exists(data_names, 'type'))){
+     return(FALSE)
+   }
+   if (length(unique(data$Cluster)) != length(data$Cluster)){
+     shiny::showNotification( paste0("Cluster columns contains non unique values. It was regenerated"),type = "message")
+     data$Cluster <- seq(1:dim(data)[1])
+   }
+   if (( T %in% is.na(data$Start)) | (T %in% is.na(data$Stop))){
+     shiny::showNotification( paste0(" Start or Stop columns contain missing values. Please fix this and redownload dataframe"),type = "error")
+     return(FALSE)
+   }
+   if ((T %in% is.na(data$Type)) | ("" %in% data$Type)){
+     shiny::showNotification( paste0("Type column contain empty data. It was populated with 'unknown' "),type = "warning")
+     data$Type[is.na(data$Type)] <- 'unknown'
+     data$Type["" %in% data$Type] <- 'unknown'
+   }
+   if (!(is.numeric(data$Cluster))){
+     data$Cluster <- as.numeric(data$Cluster)
+   }
+   if (!(is.numeric(data$Start))){
+     data$Start <- as.numeric(data$Start)
+   }
+   if (!(is.numeric(data$Stop))){
+     data$Stop <- as.numeric(data$Stop)
+   }
+   if (!(is.character(data$Type))){
+     data$Type <- as.character(data$Type)
+   }
+   return(list(TRUE, data))
+  }
   # Variables, that holds data uploads boolean (so if data is present or not)
   data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
                     "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
@@ -502,6 +553,13 @@ server <- function(input, output, session) {
   # Reading functions:
   read_antismash <- function(data){
     anti_data <- data
+    res_validation <- validate_basic_input(anti_data)
+    if (!(res_validation[[1]])){
+      anti_data <- NULL
+      return(NULL)
+    } else{
+      anti_data <- res_validation[[2]]
+    }
     # Add chromosome column
     anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
     # Type magic
@@ -588,8 +646,16 @@ server <- function(input, output, session) {
       vals$prism_supp <- processed_data[[2]]
       vals$prism_supp_data <- processed_data[[2]]
       vals$prism_json = T 
+    } else {
+      prism_data <- data
     }
-    
+    res_validation <- validate_basic_input(prism_data)
+    if (!(res_validation[[1]])){
+      prism_data <- NULL
+      return(NULL)
+    } else{
+      prism_data <- res_validation[[2]]
+    }
     vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
     vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PRISM-Supp")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
@@ -629,6 +695,13 @@ server <- function(input, output, session) {
   }
   read_sempi <- function(data){
     sempi_data <- data
+    res_validation <- validate_basic_input(sempi_data)
+    if (!(res_validation[[1]])){
+      sempi_data <- NULL
+      return(NULL)
+    } else{
+      sempi_data <- res_validation[[2]]
+    }
     sempi_data['Type2'] <- stringr::str_trim(tolower(sempi_data$Type))
     vals$sempi_type <- sempi_data$Type2
     vals$sempi_data <- sempi_data
