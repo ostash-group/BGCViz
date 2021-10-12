@@ -219,9 +219,12 @@ server <- function(input, output, session) {
   colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
   vals$coloring_datatable <- DT::datatable(coloring_datatable,  rownames = F, editable = "column", options = list( dom='t',ordering=F))
   # Validation
+  
   check_if_column_exists <- function(data_names,column_name){
     if (column_name %in% stringr::str_to_lower(data_names)){
-      data_names[stringr::str_to_lower(data_names) %in% column_name] <- stringr::str_to_title(column_name)
+      if (F %in% grepl('rre', column_name)){
+        data_names[stringr::str_to_lower(data_names) %in% column_name] <- stringr::str_to_title(column_name)
+      }
       return(TRUE)
     } else {
       shiny::showNotification( paste0("Data have no ", column_name, " column."),type = "warning")
@@ -269,6 +272,49 @@ server <- function(input, output, session) {
      data$Type <- as.character(data$Type)
    }
    return(list(TRUE, data))
+  }
+  validate_rre_input <- function(data){
+    data_names <- names(data)
+    if (!(check_if_column_exists(data_names, 'gene.name'))){
+      return(FALSE)
+    }
+    if (F %in% grepl("__", data$Gene.name)){
+      shiny::showNotification( paste0("Gene.name column contain no '__' delimiter. Please refer to the documentation on how to prepare RRE-Finder data"),type = "error")
+      return(FALSE)
+    }
+    if (!(check_if_column_exists(data_names, 'e.value'))){
+      return(FALSE)
+    } else {
+      data$E.value <- as.numeric(data$E.value)
+    }
+    if (!is.null(data$Probability)){
+      if (!(check_if_column_exists(data_names, 'score'))){
+        return(FALSE)
+      } else{
+        data$Score <- as.numeric(data$Score)
+      }
+      if (!(check_if_column_exists(data_names, 'p.value'))){
+        return(FALSE)
+      } else {
+        data$P.value <- as.numeric(data$P.value)
+      }
+      if (!(check_if_column_exists(data_names, 'rre.start'))){
+        return(FALSE)
+      } else {
+        data$RRE.start <- as.numeric(data$RRE.start)
+      }
+      if (!(check_if_column_exists(data_names, 'rre.end'))){
+        return(FALSE)
+      } else {
+        data$RRE.end <- as.numeric(data$RRE.end)
+      }
+      if (!(check_if_column_exists(data_names, 'probability'))){
+        return(FALSE)
+      } else {
+        data$Probability <- as.numeric(data$Probability)
+      }
+    }
+    return(list(TRUE, data))
   }
   # Variables, that holds data uploads boolean (so if data is present or not)
   data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
@@ -904,6 +950,13 @@ server <- function(input, output, session) {
     }
   }
   read_rre <- function(data){
+    res_validation <- validate_rre_input(data)
+    if (!(res_validation[[1]])){
+      data <- NULL
+      return(NULL)
+    } else{
+      data <- res_validation[[2]]
+    }
     # Clean RRE data. Extract coordinates and Locus tag with double underscore delimiter (__)
     vals$rre_data <- data %>%
       tidyr::separate(Gene.name, c("Sequence","Coordinates","Locus_tag"),sep = "__") %>%
