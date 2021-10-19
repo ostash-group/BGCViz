@@ -10,150 +10,400 @@
 #
 library(magrittr)
 # Define UI 
-ui <- shiny::fluidPage(
-
-  # Application title
-  shiny::titlePanel("BGCViz"),
-  
-  # Sidebar
-  shinyjs::useShinyjs(),
-  shiny::sidebarLayout(
-    shiny::sidebarPanel(
-      # Define sidebar logic. Make it fixed and not overflow
-      id = "tPanel",style = "overflow-y:scroll; max-height: 90vh; position:fixed; width:inherit;",
-      # Data upload
-      shiny::h3("Data upload and necesary input:"),
-      shiny::checkboxInput("hide_uploads", "Hide upload fields"),
-      shiny::h5(id = "anti_header_upload","ANTISMASH:"),
-      shiny::fileInput("anti_data",
-                "Upload Antismash data", accept = list(".csv", ".json")),
-      shiny::actionButton("anti_sco", "Use Antismash example data from S.coelicolor"),
-      shiny::h5(id = "prism_header_upload","PRISM:"),
-      shiny::fileInput("prism_data",
-                "Upload PRISM data", accept = list(".csv", ".json")),
-      shiny::actionButton("prism_sco", "Use PRISM example data from S.coelicolor"),
-      shiny::h5(id = "sempi_header_upload","SEMPI:"),
-      shiny::fileInput("sempi_data",
-                "Upload SEMPI 2.0 data", accept = ".csv"),
-      shiny::actionButton("sempi_sco", "Use SEMPI example data from S.coelicolor"),
-      shiny::h5(id = "deep_header_upload","DEEPBGC:"),
-      shiny::fileInput("deep_data",
-                "Upload DeepBGC data", accept = ".tsv"),
-      shiny::actionButton("deep_sco", "Use DeepBGC example data from S.coelicolor"),
-      shiny::h5(id = "gecco_header_upload","GECCO:"),
-      shiny::fileInput("gecco_data",
-                "Upload Gecco data", accept = ".tsv"),
-      shiny::actionButton("gecco_sco", "Use Gecco example data from S.coelicolor"),
-      shiny::h5(id = "rre_header_upload","RRE-FINDER:"),
-      shiny::fileInput("rre_data",
-                "Upload RRE-Finder data"),
-      shiny::actionButton("rre_sco", "Use RRE-Finder example data from S.coelicolor"),
-      shiny::h5(id = "arts_header_upload","ARTS:"),
-      shiny::fileInput("known_data",
-                "Upload ARTS knownhits data", accept = ".csv"),
-      shiny::fileInput("dup_data",
-                "Upload ARTS duptable data", accept = ".csv"),
-      shiny::actionButton("arts_sco", "Use ARTS example data from S.coelicolor"),
-      # Numeric input of chromosome length of analyzed sequence
-      shiny::numericInput("chr_len", "Please type chr len of an organism", value = 10000000),
-      shiny::h3("Data manipulation options"),
-      shiny::checkboxInput("hide_anti", "Hide data manipulation fields"),
-      shiny::h5(id = "anti_header","Antismash data options:"),
-      shiny::checkboxInput("anti_hybrid", "Visualize AntiSMASH BGC with several types as 'Hybrid'"),
-      shiny::h5(id = "prism_header","PRISM data options:"),
-      shiny::checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
-      shiny::checkboxInput("prism_supp", "Visualize PRISM resistance and regulatory genes"),
-      shiny::h5(id = "sempi_header","SEMPI data options:"),
-      shiny::checkboxInput("sempi_hybrid", "Visualize SEMPI BGC with several types as 'Hybrid'"),
-      shiny::h5(id = "arts_header","ARTS data options:"),
-      shiny::selectInput("dup_choice", "Choose duplicated core gene to plot only it", choices = c("All"),
-                  selected = "All"),
-      shiny::h3(id = "genes_on_chr","Genes on chromosome plot controls:"),
-      shiny::checkboxInput("hide_genes_on_chr", "Hide 'Genes on chromosome plot' fields"),
-      shiny::selectInput("ref", "Choose reference data", choices = c(""),
-                  selected = ""),
-      shiny::h3(id = "summarize","Summarize options:"),
-      shiny::checkboxInput("hide_summarize", "Hide summarize options"),
-      shiny::selectInput("group_by", "Group data by", choices = c(""),  selected = ''),
-      shiny::checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
-      shiny::h3("Improve visualization:"),
-      shiny::checkboxInput("hide_viz", "Hide improve visualization options"),
-      shiny::fileInput("rename_data",
-               "Upload renaming and coloring scheme", accept = ".csv"),
-      shiny::actionButton("rename", "Rename"),
-      shiny::actionButton("reset_name", "Reset"),
-      shiny::checkboxInput("rre_width", "Add thickness to RRE results visualization"),
-      shiny::checkboxInput("prism_supp_data_input_width", "Add thickness to PRISM resistance + regulatory genes results visualization"),
-      shiny::checkboxInput("arts_width", "Add thickness to ARTS results visualization"),
-      shiny::checkboxInput("sempi_width", "Add thickness to SEMPI results visualization"),
-      shiny::checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
-      shiny::checkboxInput("label_color", "Make links in biocircos colorful, based on the class"),
-      shiny::selectInput("label_color_class", "Choose the mode to color the links", choices = c("Hierarchical-based" = "H",
-                                                                                           "Purity-based" = "P",
-                                                                                           "Reference column-based" = "R"
-                                                                                         ),
-                  selected = 'H'),
-      shiny::selectInput("ref_col_biocircos", "Choose reference column to color the links", choices = c(""), selected = ''),
-      shiny::h3(id="data_comparison_header_gecco","Comparison with Gecco plots:"),
-      shiny::checkboxInput("hide_data_comparison_gecco", "Hide Gecco data comparison options"),
-      shiny::selectInput("ref_comparison_gecco", "Choose data for comparison with Gecco", choices = c(""),selected = ''),
-      shiny::selectInput("score_type_gecco", "Choose score type to set threshold", choices = c("Average p-value" = "avg_p",
-                                                                                  "Cluster_type score" = "Cluster_Type"),
+ui <- shinydashboard::dashboardPage(
+  shinydashboard::dashboardHeader(title = "BGCViz"),
+  shinydashboard::dashboardSidebar(
+    shinydashboard::sidebarMenu(
+      tags$div(
+        id="menu_items",
+        div(id = "id6",shinydashboard::menuItem("Upload data", tabName = "uploaddata_sidemenu", icon = icon("th"))),
+        div(id = "id7",shinydashboard::menuItem("Global options", tabName = "options_sidemenu", icon = icon("th"))),
+        div(id = "id1",shinydashboard::menuItemOutput("deep_sidemenu_out")),
+        div(id = "id2",shinydashboard::menuItemOutput("gecco_sidemenu_out")),
+        div(id = "id3",shinydashboard::menuItemOutput("anno_sidemenu_out")),
+        div(id = "id4",shinydashboard::menuItemOutput("biocircos_sidemenu_out")),
+        div(id = "id5",shinydashboard::menuItemOutput("summarize_sidemenu_out"))
+      )),
+    sortable::sortable_js("menu_items")
+  ),
+  shinydashboard::dashboardBody(
+    shinyjs::useShinyjs(),
+    shinydashboard::tabItems(
+      shinydashboard::tabItem( tabName = "deep_sidemenu",
+                               shiny::fluidRow(
+                                 tags$div(
+                                   id = "deep_data1",
+                                   div(id = "id1",
+                                       shinyjqui::jqui_resizable(shinydashboard::box(
+                                         title = "DeepBGC comparison",
+                                         collapsible = TRUE,
+                                         height = "500px",
+                                         shiny::plotOutput("deep_barplot")
+                                       ))),
+                                   div(id = "id2", 
+                                       shinyjqui::jqui_resizable(shinydashboard::box(
+                                         title = "DeepBGC rate",
+                                         collapsible = TRUE,
+                                         plotly::plotlyOutput("deep_rate")
+                                       ))))),
+                               shiny::fluidRow(
+                                 tags$div( id = "deep_data2",
+                                           div(id = "id1",
+                                               shinyjqui::jqui_resizable(shinydashboard::box( 
+                                                 id = "test",
+                                                 title = "DeepBGC comparison controls",
+                                                 collapsible = TRUE,
+                                                 shiny::selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c(""), selected = ''),
+                                                 # Score to use for thresholds
+                                                 shiny::selectInput("score_type", "Choose score type to set threshold", choices = c("Activity score" = "Activity",
+                                                                                                                                    "Cluster_type score" = "Cluster_Type",
+                                                                                                                                    "DeepBGC score" = "DeepBGC"),
+                                                                    selected = "Activity score"),
+                                                 # Chose step for barplot (as a threshold to draw a bar)
+                                                 shiny::sliderInput("plot_step", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
+                                                 shiny::sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 99, value = 0),
+                                               )))
+                                 )),
+                               sortable::sortable_js("deep_data1", options = sortable::sortable_options(swap = TRUE, group = "deep_data")),
+                               sortable::sortable_js("deep_data2", options = sortable::sortable_options(swap = TRUE, group = "deep_data"))
+      ),
+      shinydashboard::tabItem(
+        tabName = "gecco_sidemenu",
+        shiny::fluidRow(
+          tags$div(
+            id = "gecco_data1",
+            div(
+              id = "id1",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "GECCO comparison",
+                collapsible = TRUE,
+                height = "500px",
+                shiny::plotOutput("gecco_barplot")
+              ))
+            ),
+            div(
+              id = "id2",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "GECCO rate",
+                collapsible = TRUE,
+                plotly::plotlyOutput("gecco_rate")
+              ))
+            ),
+          )
+        ),
+        shiny::fluidRow(
+          tags$div(
+            id = "gecco_data2",
+            div(
+              id = "id1",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "GECCO comparison controls",
+                collapsible = TRUE,
+                shiny::selectInput("ref_comparison_gecco", "Choose data for comparison with Gecco", choices = c(""),selected = ''),
+                shiny::selectInput("score_type_gecco", "Choose score type to set threshold", choices = c(
+                  "Average p-value" = "avg_p",
+                  "Cluster_type score" = "Cluster_Type"),
                   selected = "avg_p"),
-      shiny::sliderInput("plot_step_gecco", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
-      shiny::sliderInput("plot_start_gecco", "Chose plot start point(barplot)", min = 0, max = 99, value = 0),
-      shiny::h3(id="data_filter_header_gecco","Gecco data filtering:"),
-      checkboxInput("hide_data_filter_gecco", "Hide Gecco data filtering options"),
-      shiny::sliderInput("score_average_gecco", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
-      shiny::sliderInput("score_cluster_gecco", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
-      shiny::sliderInput("domains_filter_gecco", "Domain number threshold for Gecco data", min = 0, max = 100, value = 1),
-      shiny::sliderInput("prot_filter_gecco", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1),
-      shiny::h3(id="data_comparison_header","Comparison with DeepBGC plots:"),
-      shiny::checkboxInput("hide_data_comparison", "Hide DeepBGC data comparison options"),
-      shiny::selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c(""), selected = ''),
-      # Score to use for thresholds
-      shiny::selectInput("score_type", "Choose score type to set threshold", choices = c("Activity score" = "Activity",
-                                                                                  "Cluster_type score" = "Cluster_Type",
-                                                                                  "DeepBGC score" = "DeepBGC"),
-                  selected = "Activity score"),
-      # Chose step for barplot (as a threshold to draw a bar)
-      shiny::sliderInput("plot_step", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
-      shiny::sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 99, value = 0),
-      
-      # DeepBGC data filtering 
-      shiny::h3(id="data_filter_header","DeepBGC data filtering:"),
-      shiny::checkboxInput("hide_data_filter", "Hide DeepBGC data filtering options"),
-      # Different score filtering. Remain >= of set threshold
-      shiny::sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-      shiny::sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-      shiny::sliderInput("score_c", "Cluster_type score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-      # Domains, biodomains and proteins dplyr::filter. Remain >= of set threshold
-      shiny::sliderInput("domains_filter", "Domain number threshold for DeepBGC data", min = 0, max = 100, value = 5),
-      shiny::sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
-      shiny::sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
-      shiny::sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50),
-     
-      # Donwload currently used datasets
-      shiny::downloadButton("download","Download currently used datasets (as for Biocircos plot)" )
-      
-    ),
-    
-    # Show plots
-    shiny::mainPanel(
-      # Define tabs and their correcponding plots
-      shiny::tabsetPanel(
-        shiny::tabPanel(title = "Compare data with DeepBGC", value = 1 ,shiny::plotOutput("deep_barplot",height = "500px"), plotly::plotlyOutput("deep_rate")),
-        shiny::tabPanel(title = "Compare data with Gecco", value = 5 ,shiny::plotOutput("gecco_barplot",height = "500px"), plotly::plotlyOutput("gecco_rate")),
-        shiny::tabPanel(title = "Annotation visualization and comparison", value = 4,plotly::plotlyOutput("deep_reference_2", height = "500px"), 
-                 plotly::plotlyOutput("deep_reference", height = "500px")),
-        shiny::tabPanel(title = "Biocircos plot", value = 2, BioCircos::BioCircosOutput("biocircos", height = "1000px"), DT::dataTableOutput("biocircos_legend")),
-        shiny::tabPanel(title = "Summarize interception", value = 3,plotly::plotlyOutput("barplot_rank", height = "600px"),shiny::tableOutput("group_table")),
-        type = "tabs", id = "main"
+                shiny::sliderInput("plot_step_gecco", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
+                shiny::sliderInput("plot_start_gecco", "Chose plot start point(barplot)", min = 0, max = 99, value = 0),
+              ))
+            )
+          )
+        ),
+        sortable::sortable_js("gecco_data1", options = sortable::sortable_options(swap = TRUE, group = "gecco_data")),
+        sortable::sortable_js("gecco_data2", options = sortable::sortable_options(swap = TRUE, group = "gecco_data"))
+      ),
+      shinydashboard::tabItem(
+        tabName = "anno_sidemenu",
+        shiny::fluidRow(
+          tags$div(
+            id="anno_data1",
+            div(
+              id="id1",
+              shinydashboard::box(
+                title = "Annotations reference",
+                collapsible = TRUE,
+                shinyjqui::jqui_resizable(plotly::plotlyOutput("deep_reference_2"))
+              )
+            ),
+            div(
+              id="id2",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "Annotation comparison to the reference",
+                collapsible = TRUE,
+                height = "500px",
+                plotly::plotlyOutput("deep_reference")
+              ))
+            )
+          )
+        ),
+        shiny::fluidRow(
+          tags$div(
+            id = "anno_data2",
+            div(
+              id="id1",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "Annotation to the reference comparison plot controls",
+                collapsible = TRUE,
+                shiny::selectInput("ref", "Choose reference data", choices = c(""),
+                                   selected = "")
+              ))
+            )
+          )
+        ),
+        sortable::sortable_js("anno_data1", options = sortable::sortable_options(swap = TRUE, group = "anno_data")),
+        sortable::sortable_js("anno_data2", options = sortable::sortable_options(swap = TRUE, group = "anno_data"))
+      ),
+      shinydashboard::tabItem(
+        tabName = "biocircos_sidemenu",
+        shiny::fluidRow(
+          tags$div(
+            id = "biocircos_data1",
+            div(
+              id = "id1",
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
+                title = "Biocircos plot",
+                collapsible = TRUE,
+                width = 12,
+                height = "700px",
+                shiny::checkboxInput("ShowBiocircosColoring", "Show Biocircos coloring scheme"),
+                BioCircos::BioCircosOutput("biocircos")
+              ))
+            )
+          )
+        ),
+        shiny::fluidRow(
+          tags$div(
+            id = "biocircos_data2",
+            div(
+              id = "id1",
+              shiny::uiOutput("biocircos_coloring")
+            ),
+            div(
+              id="id2",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "Biocircos options",
+                collapsible = T,
+                shiny::checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
+                shiny::checkboxInput("label_color", "Make links in biocircos colorful, based on the class"),
+                shiny::selectInput("label_color_class", "Choose the mode to color the links", choices = c("Hierarchical-based" = "H",
+                                                                                                          "Purity-based" = "P",
+                                                                                                          "Reference column-based" = "R"
+                ),
+                selected = 'H'),
+                shiny::selectInput("ref_col_biocircos", "Choose reference column to color the links", choices = c(""), selected = '')
+              ))
+            )
+          )
+        ),
+        sortable::sortable_js("biocircos_data1", options = sortable::sortable_options(swap = TRUE, group = "biocircos_data")),
+        sortable::sortable_js("biocircos_data2", options = sortable::sortable_options(swap = TRUE, group = "biocircos_data"))
+      ),
+      shinydashboard::tabItem(
+        tabName = "summarize_sidemenu",
+        shiny::fluidRow(
+          tags$div(
+            id="summarize_data1",
+            div(
+              id="id1",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "Ranking barplot",
+                collapsible = TRUE,
+                height = "600px",
+                plotly::plotlyOutput("barplot_rank")
+              ))
+            ),
+            div(
+              id="id2",
+              shinyjqui::jqui_resizable( shinydashboard::box(
+                title = "Group table",
+                collapsible = TRUE,
+                height = "600px",
+                shiny::checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
+                shiny::selectInput("group_by", "Group data by", choices = c(""),  selected = ''),
+                shiny::tableOutput("group_table")
+              ))
+            )
+          )
+        ),
+        sortable::sortable_js("summarize_data1", options = sortable::sortable_options(swap = TRUE))
+      ),
+      shinydashboard::tabItem(
+        tabName = "uploaddata_sidemenu",
+        shiny::fluidRow(
+          tags$div(
+            id="upload_data1",
+            div(
+              id = "id1",
+              shinydashboard::box(
+                title = "Upload Antismash data",
+                collapsible = TRUE,
+                shiny::fileInput("anti_data",
+                                 "Upload Antismash data", accept = list(".csv", ".json"))
+              )
+            ),
+            div(
+              id = "id2",
+              shinydashboard::box(
+                title = "Upload PRISM data",
+                collapsible = TRUE,
+                shiny::fileInput("prism_data",
+                                 "Upload PRISM data", accept = list(".csv", ".json"))
+              )
+            ),
+            div(
+              id = "id3",
+              shinydashboard::box(
+                title = "Upload SEMPI 2.0 data",
+                collapsible = TRUE,
+                shiny::fileInput("sempi_data",
+                                 "Upload SEMPI 2.0 data", accept = ".csv")
+              )
+            ),
+            div(
+              id = "id4",
+              shinydashboard::box(
+                title = "Upload DeepBGC data",
+                collapsible = TRUE,
+                shiny::fileInput("deep_data",
+                                 "Upload DeepBGC data", accept = ".tsv")
+              )
+            )
+          )
+        ),
+        shiny::fluidRow(
+          tags$div(
+            id="upload_data2",
+            div(
+              id = "id1",
+              shinydashboard::box(
+                title = "Upload Gecco data",
+                collapsible = TRUE,
+                shiny::fileInput("gecco_data",
+                                 "Upload Gecco data", accept = ".tsv")
+              )
+            ),
+            div(
+              id = "id2",
+              shinydashboard::box(
+                title = "Upload RRE-Finder data",
+                collapsible = TRUE,
+                shiny::fileInput("rre_data",
+                                 "Upload RRE-Finder data")
+              )
+            ),
+            div(
+              id = "id3",
+              shinydashboard::box(
+                title = "Upload ARTS data",
+                collapsible = TRUE,
+                shiny::fileInput("known_data",
+                                 "Upload ARTS knownhits data", accept = ".csv"),
+                shiny::fileInput("dup_data",
+                                 "Upload ARTS duptable data", accept = ".csv")
+              )
+            ),
+            div(
+              id = "id4",
+              shinydashboard::box(
+                title = "Use Example data",
+                collapsible = TRUE,
+                shiny::actionButton("anti_sco", "Use Antismash example data from S.coelicolor"),
+                shiny::actionButton("prism_sco", "Use PRISM example data from S.coelicolor"),
+                shiny::actionButton("sempi_sco", "Use SEMPI example data from S.coelicolor"),
+                shiny::actionButton("deep_sco", "Use DeepBGC example data from S.coelicolor"),
+                shiny::actionButton("gecco_sco", "Use Gecco example data from S.coelicolor"),
+                shiny::actionButton("rre_sco", "Use RRE-Finder example data from S.coelicolor"),
+                shiny::actionButton("arts_sco", "Use ARTS example data from S.coelicolor"),
+                shiny::numericInput("chr_len", "Please type chr len of an organism", value = 10000000)
+              )
+            )
+          )
+        ),
+        sortable::sortable_js("upload_data1", options = sortable::sortable_options(swap = TRUE, group = "upload_data")),
+        sortable::sortable_js("upload_data2", options = sortable::sortable_options(swap = TRUE, group = "upload_data"))
+      ),
+      shinydashboard::tabItem(
+        tabName = "options_sidemenu",
+        shiny::fluidRow(
+          tags$div(
+            id="options_data1",
+            div(
+              id = "id1",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "Rename",
+                collapsible = TRUE,
+                shiny::checkboxInput("anti_hybrid", "Visualize AntiSMASH BGC with several types as 'Hybrid'"),
+                shiny::checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
+                shiny::checkboxInput("sempi_hybrid", "Visualize SEMPI BGC with several types as 'Hybrid'"),
+                shiny::fileInput("rename_data",
+                                 "Upload renaming and coloring scheme", accept = ".csv"),
+                shiny::actionButton("rename", "Rename"),
+                shiny::actionButton("reset_name", "Reset")
+              ))
+            ),
+            div(
+              id = "id2",
+              shinyjqui::jqui_resizable( shinydashboard::box(
+                title = "DeepBGC filtering",
+                collapsible = TRUE,
+                shiny::sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+                shiny::sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+                shiny::sliderInput("score_c", "Cluster_type score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+                # Domains, biodomains and proteins dplyr::filter. Remain >= of set threshold
+                shiny::sliderInput("domains_filter", "Domain number threshold for DeepBGC data", min = 0, max = 100, value = 5),
+                shiny::sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
+                shiny::sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
+                shiny::sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
+              ))
+            ),
+            div(
+              id = "id3",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "GECCO filtering",
+                collapsible = TRUE,
+                shiny::sliderInput("score_average_gecco", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
+                shiny::sliderInput("score_cluster_gecco", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
+                shiny::sliderInput("domains_filter_gecco", "Domain number threshold for Gecco data", min = 0, max = 100, value = 1),
+                shiny::sliderInput("prot_filter_gecco", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1)
+              ))
+            ),
+            div(
+              id = "id4",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "Prism supplement + ARTS options",
+                collapsible = TRUE,
+                shiny::checkboxInput("prism_supp", "Visualize PRISM resistance and regulatory genes"),
+                shiny::selectInput("dup_choice", "Choose duplicated core gene to plot only it", choices = c("All"),
+                                   selected = "All")
+              ))
+            ),
+            div(
+              id = "id5",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "Improve global visualization",
+                collapsible = TRUE,
+                shiny::checkboxInput("rre_width", "Add thickness to RRE results visualization"),
+                shiny::checkboxInput("prism_supp_data_input_width", "Add thickness to PRISM resistance + regulatory genes results visualization"),
+                shiny::checkboxInput("arts_width", "Add thickness to ARTS results visualization"),
+                shiny::checkboxInput("sempi_width", "Add thickness to SEMPI results visualization")
+              ))
+            ),
+            div(
+              id = "id6",
+              shinyjqui::jqui_resizable(shinydashboard::box(
+                title = "Download data",
+                collapsible = TRUE,
+                shiny::downloadButton("download","Download currently used datasets (as for Biocircos plot)" )
+              ))
+            )
+          )
+        ),
+        sortable::sortable_js("options_data1", options = sortable::sortable_options(swap = TRUE))
       )
-  )
+    )
   )
 )
-
 
 # Define server logic
 server <- function(input, output, session) {
@@ -161,13 +411,13 @@ server <- function(input, output, session) {
   ##        Some lists of reactive values to listen later         -
   ##---------------------------------------------------------------
   check_to_rename <- shiny::reactive({list(input$sempi_data, input$anti_data, input$prism_data,
-                                    input$sempi_sco,input$anti_sco, input$prism_sco)})
+                                           input$sempi_sco,input$anti_sco, input$prism_sco)})
   biocircos_listen <- shiny::reactive({
     list( input$biocircos_color,vals$need_filter, input$label_color, input$label_color_class, 
           input$ref_col_biocircos, vals$inters_filtered,  input$prism_supp_data_input_width, vals$prism_supp_data_input,
           input$arts_width, input$sempi_width, input$rre_width, input$rename, input$reset_name,  vals$coloring_datatable
           
-          )
+    )
   })
   inputData <- shiny::reactive({
     list( vals$sempi_data_input, vals$rre_data_input,  vals$anti_data_input, vals$prism_data_input,
@@ -189,24 +439,24 @@ server <- function(input, output, session) {
            input$prot_filter_gecco
     )
   }) %>% shiny::debounce(500)
-
+  
   # Some dataframes that are used through the app + some vectors of untercepted values
   vals <- shiny::reactiveValues(deep_data = NULL, anti_data = NULL, rre_data=NULL, prism_data=NULL, chr_len = NULL, fullness_deep = NULL,
-                         biocircos_deep = NULL, deep_data_input = FALSE,tracklist = NULL, chromosomes = NULL, fullness_gecco = NULL,
-                         anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
-                         seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
-                         data_upload_count = 0, anti_type=NULL, prism_type=NULL, sempi_data = NULL, sempi_data_input= FALSE,
-                         sempi_type = NULL, biocircos_color = NULL, rename_data = NULL, group_by_data = NULL, 
-                         rre_interact = NULL, anti_interact = NULL, prism_interact = NULL, deep_interact = NULL,  
-                         sempi_interact = NULL, df_a = NULL, df_d = NULL, df_p = NULL, df_r = NULL, prism_supp = NULL,
-                         prism_json = FALSE, df_s = NULL, prism_supp_interact = NULL, known_data = NULL, dup_data = NULL,
-                         known_data_input = F, dup_data_input = F, arts_data=NULL, arts_data_input = F, seg_df_ref_ar = NULL,
-                         df_ps = NULL, arts_interact = NULL, rre_more = FALSE, gecco_data = NULL, gecco_data_input = FALSE,
-                         gecco_data_filtered = NULL, seg_df_ref_g = NULL, prism_supp_data_input = F, computed  = NULL,
-                         need_filter = F, filter_data = F, choices = list(ref=NULL, group_by=NULL, ref_col_biocircos=NULL, ref_comparison_gecco=NULL, ref_comparison = NULL),
-                         renamed = NULL, renaming_notification = list(), rename_y_axis = list(), can_plot_deep_ref_2 = F, can_plot_deep_ref = F,
-                         can_plot_biocircos = F, can_plot_barplot_rank = F, can_plot_group_table = F
-                         )
+                                biocircos_deep = NULL, deep_data_input = FALSE,tracklist = NULL, chromosomes = NULL, fullness_gecco = NULL,
+                                anti_data_input = FALSE,rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
+                                seg_df_ref_d = NULL,seg_df_ref_r = NULL,seg_df_ref_p = NULL, deep_data_chromo = NULL, 
+                                data_upload_count = 0, anti_type=NULL, prism_type=NULL, sempi_data = NULL, sempi_data_input= FALSE,
+                                sempi_type = NULL, biocircos_color = NULL, rename_data = NULL, group_by_data = NULL, 
+                                rre_interact = NULL, anti_interact = NULL, prism_interact = NULL, deep_interact = NULL,  
+                                sempi_interact = NULL, df_a = NULL, df_d = NULL, df_p = NULL, df_r = NULL, prism_supp = NULL,
+                                prism_json = FALSE, df_s = NULL, prism_supp_interact = NULL, known_data = NULL, dup_data = NULL,
+                                known_data_input = F, dup_data_input = F, arts_data=NULL, arts_data_input = F, seg_df_ref_ar = NULL,
+                                df_ps = NULL, arts_interact = NULL, rre_more = FALSE, gecco_data = NULL, gecco_data_input = FALSE,
+                                gecco_data_filtered = NULL, seg_df_ref_g = NULL, prism_supp_data_input = F, computed  = NULL,
+                                need_filter = F, filter_data = F, choices = list(ref=NULL, group_by=NULL, ref_col_biocircos=NULL, ref_comparison_gecco=NULL, ref_comparison = NULL),
+                                renamed = NULL, renaming_notification = list(), rename_y_axis = list(), can_plot_deep_ref_2 = F, can_plot_deep_ref = F,
+                                can_plot_biocircos = F, can_plot_barplot_rank = F, can_plot_group_table = F
+  )
   
   vals$computed <- list(
     anti=F,deep=F, gecco=F, arts=F, prism=F, sempi=F, prism_supp=F, rre=F
@@ -219,7 +469,6 @@ server <- function(input, output, session) {
   colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
   vals$coloring_datatable <- DT::datatable(coloring_datatable,  rownames = F, editable = "column", options = list( dom='t',ordering=F))
   # Validation
-  
   check_if_column_exists <- function(data_names,column_name){
     if (column_name %in% stringr::str_to_lower(data_names)){
       if (F %in% grepl('rre', column_name)){
@@ -232,46 +481,46 @@ server <- function(input, output, session) {
     }
   }
   validate_basic_input <- function(data){
-   data_names <- names(data)
-   if (!(check_if_column_exists(data_names, 'cluster'))){
-     shiny::showNotification( paste0("Cluster columns was created on the fly."),type = "message")
-     data$Cluster <- seq(1:dim(data)[1])
-   }
-   if (!(check_if_column_exists(data_names, 'start'))){
-     return(FALSE)
-   }
-   if (!(check_if_column_exists(data_names, 'stop'))){
-     return(FALSE)
-   }
-   if (!(check_if_column_exists(data_names, 'type'))){
-     return(FALSE)
-   }
-   if (length(unique(data$Cluster)) != length(data$Cluster)){
-     shiny::showNotification( paste0("Cluster columns contains non unique values. It was regenerated"),type = "message")
-     data$Cluster <- seq(1:dim(data)[1])
-   }
-   if (( T %in% is.na(data$Start)) | (T %in% is.na(data$Stop))){
-     shiny::showNotification( paste0(" Start or Stop columns contain missing values. Please fix this and redownload dataframe"),type = "error")
-     return(FALSE)
-   }
-   if ((T %in% is.na(data$Type)) | ("" %in% data$Type)){
-     shiny::showNotification( paste0("Type column contain empty data. It was populated with 'unknown' "),type = "warning")
-     data$Type[is.na(data$Type)] <- 'unknown'
-     data$Type["" %in% data$Type] <- 'unknown'
-   }
-   if (!(is.numeric(data$Cluster))){
-     data$Cluster <- as.numeric(data$Cluster)
-   }
-   if (!(is.numeric(data$Start))){
-     data$Start <- as.numeric(data$Start)
-   }
-   if (!(is.numeric(data$Stop))){
-     data$Stop <- as.numeric(data$Stop)
-   }
-   if (!(is.character(data$Type))){
-     data$Type <- as.character(data$Type)
-   }
-   return(list(TRUE, data))
+    data_names <- names(data)
+    if (!(check_if_column_exists(data_names, 'cluster'))){
+      shiny::showNotification( paste0("Cluster columns was created on the fly."),type = "message")
+      data$Cluster <- seq(1:dim(data)[1])
+    }
+    if (!(check_if_column_exists(data_names, 'start'))){
+      return(FALSE)
+    }
+    if (!(check_if_column_exists(data_names, 'stop'))){
+      return(FALSE)
+    }
+    if (!(check_if_column_exists(data_names, 'type'))){
+      return(FALSE)
+    }
+    if (length(unique(data$Cluster)) != length(data$Cluster)){
+      shiny::showNotification( paste0("Cluster columns contains non unique values. It was regenerated"),type = "message")
+      data$Cluster <- seq(1:dim(data)[1])
+    }
+    if (( T %in% is.na(data$Start)) | (T %in% is.na(data$Stop))){
+      shiny::showNotification( paste0(" Start or Stop columns contain missing values. Please fix this and redownload dataframe"),type = "error")
+      return(FALSE)
+    }
+    if ((T %in% is.na(data$Type)) | ("" %in% data$Type)){
+      shiny::showNotification( paste0("Type column contain empty data. It was populated with 'unknown' "),type = "warning")
+      data$Type[is.na(data$Type)] <- 'unknown'
+      data$Type["" %in% data$Type] <- 'unknown'
+    }
+    if (!(is.numeric(data$Cluster))){
+      data$Cluster <- as.numeric(data$Cluster)
+    }
+    if (!(is.numeric(data$Start))){
+      data$Start <- as.numeric(data$Start)
+    }
+    if (!(is.numeric(data$Stop))){
+      data$Stop <- as.numeric(data$Stop)
+    }
+    if (!(is.character(data$Type))){
+      data$Type <- as.character(data$Type)
+    }
+    return(list(TRUE, data))
   }
   validate_rre_input <- function(data){
     data_names <- names(data)
@@ -414,7 +663,7 @@ server <- function(input, output, session) {
     
     
     prism_data <-  data.frame(Cluster=as.numeric(seq(1:length(start))), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
-
+    
     regul_genes_orfs <- sapply(data$prism_results$regulatory_genes, function(x){
       x$orf
     })
@@ -493,7 +742,7 @@ server <- function(input, output, session) {
     score_c <- apply(vals$deep_data %>% dplyr::select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
     deep_data_chromo <- vals$deep_data %>%
       dplyr::mutate(score = apply(vals$deep_data %>%
-                             dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
+                                    dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
     # Cluster_type column. Here extract colnames, and assign max value to a new column
     deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
     # If max score is under_threshold, print "under_threshold"
@@ -503,8 +752,8 @@ server <- function(input, output, session) {
     biocircos_deep <- deep_data_chromo%>%
       dplyr::mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
       dplyr::filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , 
-             score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
-             num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
+                    score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
+                    num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
     biocircos_deep['Start'] <- biocircos_deep$nucl_start
     biocircos_deep['Stop'] <- biocircos_deep$nucl_end
     biocircos_deep['Type'] <- biocircos_deep$product_class
@@ -519,11 +768,11 @@ server <- function(input, output, session) {
     # Store master prism data in local variable
     gecco_data <- vals$gecco_data %>%
       dplyr::mutate(score = apply(vals$gecco_data %>%
-                             dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) %>%
+                                    dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) %>%
       dplyr::mutate(Cluster_type = ifelse(score>as.numeric(input$score_cluster_gecco)/100, Type2, "under_threshold")) %>%
       dplyr::mutate( Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
       dplyr::filter(score_a >= as.numeric(input$score_average_gecco )/ 100, score_c >=as.numeric(input$score_cluster_gecco)/100 ,
-             num_domains >= input$domains_filter_gecco, num_prot>=input$prot_filter_gecco)
+                    num_domains >= input$domains_filter_gecco, num_prot>=input$prot_filter_gecco)
     return(gecco_data)
   }
   # Renaming the vector for inut$rename event
@@ -535,7 +784,7 @@ server <- function(input, output, session) {
           renamed <- as.character(renamed_dataframe$Group[renamed_dataframe$Code == y])
           if( (length(renamed) >1) & (!( as.character(y) %in% names(vals$renaming_notification)))){
             shiny::showNotification(paste("The ", as.character(y), " type have multiple renaming options: ", paste(renamed, collapse = ", ")), 
-                             type = "warning", duration = NULL)
+                                    type = "warning", duration = NULL)
             shiny::showNotification(paste("The  ", renamed[[1]], " was chosen."), type = "warning", duration=NULL)
             vals$renaming_notification[[as.character(y)]] <- renamed[[1]] 
           }
@@ -1064,54 +1313,54 @@ server <- function(input, output, session) {
     if (input$anti_data$type=="text/csv"){
       anti_data <- read.csv(input$anti_data$datapath)
     }else{
-       data <- rjson::fromJSON(file = input$anti_data$datapath)
-        types <- sapply(data$records, function(y){
-          lapply(y$features, function(x){
-            if (unlist(x$type == 'region')){
-              tolower(x$qualifiers$product)
-            }
-          })
-        })
-        
-        types <-  Filter(Negate(is.null), types)
-
-        types <- sapply(types, function(x){
-          if (length(unlist(x))>1){
-            tmp <- stringr::str_trim(paste0(unlist(x), collapse = '', sep = " "))
-            gsub(" ", "__", tmp)
-          }else{
-            x
+      data <- rjson::fromJSON(file = input$anti_data$datapath)
+      types <- sapply(data$records, function(y){
+        lapply(y$features, function(x){
+          if (unlist(x$type == 'region')){
+            tolower(x$qualifiers$product)
           }
         })
-        
-        location <- sapply(data$records, function(y){
-          unlist(sapply(y$features, function(x){
-            if (unlist(x$type == 'region')){
-              unlist(x$location)
-            }
-          })
-          )
+      })
+      
+      types <-  Filter(Negate(is.null), types)
+      
+      types <- sapply(types, function(x){
+        if (length(unlist(x))>1){
+          tmp <- stringr::str_trim(paste0(unlist(x), collapse = '', sep = " "))
+          gsub(" ", "__", tmp)
+        }else{
+          x
+        }
+      })
+      
+      location <- sapply(data$records, function(y){
+        unlist(sapply(y$features, function(x){
+          if (unlist(x$type == 'region')){
+            unlist(x$location)
+          }
         })
-        
-        
-        location <- gsub("\\[", "", location)
-        location <- gsub("\\]", "", location)
-        location <- data.frame(location)
-        colnames(location) <- "split"
-        anti_data <- location %>%
-          tidyr::separate(split, c("Start", "Stop")) %>%
-          dplyr::transmute(ID = rownames(location), Start, Stop)
-        
-        anti_data <- cbind(anti_data, types)
-        colnames(anti_data) <- c("Cluster", "Start", "Stop", "Type")
-        anti_data$Cluster <- as.numeric(anti_data$Cluster)
-        anti_data$Start <- as.numeric(anti_data$Start)
-        anti_data$Stop <- as.numeric(anti_data$Stop)
-
+        )
+      })
+      
+      
+      location <- gsub("\\[", "", location)
+      location <- gsub("\\]", "", location)
+      location <- data.frame(location)
+      colnames(location) <- "split"
+      anti_data <- location %>%
+        tidyr::separate(split, c("Start", "Stop")) %>%
+        dplyr::transmute(ID = rownames(location), Start, Stop)
+      
+      anti_data <- cbind(anti_data, types)
+      colnames(anti_data) <- c("Cluster", "Start", "Stop", "Type")
+      anti_data$Cluster <- as.numeric(anti_data$Cluster)
+      anti_data$Start <- as.numeric(anti_data$Start)
+      anti_data$Stop <- as.numeric(anti_data$Stop)
+      
     }
-
+    
     read_antismash(anti_data)
-
+    
   })
   
   shiny::observeEvent(input$sempi_data,{
@@ -1135,7 +1384,7 @@ server <- function(input, output, session) {
     disable_event_logic()
     
     data <- read.delim(input$known_data$datapath)
-   read_arts_knownhits(data)
+    read_arts_knownhits(data)
   })
   
   shiny::observeEvent(input$dup_data, {
@@ -1161,8 +1410,8 @@ server <- function(input, output, session) {
   
   shiny::observeEvent(input$deep_data, {
     
-     data <- read.delim(input$deep_data$datapath)
-     read_deep(data)
+    data <- read.delim(input$deep_data$datapath)
+    read_deep(data)
   })
   
   shiny::observeEvent(input$rre_data, {
@@ -1205,9 +1454,7 @@ server <- function(input, output, session) {
   shiny::observeEvent(vals$rre_data_input, {
     
     if (vals$rre_data_input == T){
-      if (input$hide_viz == F){
-        shinyjs::showElement(selector = "#rre_width")
-      }
+      shinyjs::showElement(selector = "#rre_width")
     } else{
       shinyjs::hideElement(selector = "#rre_width")
     }
@@ -1217,12 +1464,8 @@ server <- function(input, output, session) {
   shiny::observeEvent(vals$anti_data_input, {
     
     if (vals$anti_data_input == T){
-      if (input$hide_anti == F){
-        shinyjs::showElement(selector = "#anti_header")
-        shinyjs::showElement(selector = "#anti_hybrid")
-      }
+      shinyjs::showElement(selector = "#anti_hybrid")
     } else{
-      shinyjs::hideElement(selector = "#anti_header")
       shinyjs::hideElement(selector = "#anti_hybrid")
     }
   })
@@ -1232,19 +1475,13 @@ server <- function(input, output, session) {
   # And if hide_viz == F, and prism_json, then 
   # show width
   shiny::observeEvent(vals$prism_data_input, {
-    
     if (vals$prism_data_input == T){
-      if (input$hide_anti == F){
-        shinyjs::showElement(selector = "#prism_header")
-        shinyjs::showElement(selector = "#prism_hybrid")
-        if (vals$prism_json == T){
-          shinyjs::showElement(selector = "#prism_supp")
-        }
+      shinyjs::showElement(selector = "#prism_hybrid")
+      if (vals$prism_json == T){
+        shinyjs::showElement(selector = "#prism_supp")
       }
-      if (input$hide_viz == F){
-        if (vals$prism_json == T){
-          shinyjs::showElement(selector = "#prism_supp_data_input_width")
-        }
+      if (vals$prism_json == T){
+        shinyjs::showElement(selector = "#prism_supp_data_input_width")
       }
     } else{
       shinyjs::hideElement(selector = "#prism_header")
@@ -1257,15 +1494,9 @@ server <- function(input, output, session) {
   shiny::observeEvent(vals$sempi_data_input, {
     
     if (vals$sempi_data_input == T){
-      if (input$hide_anti == F){
-        shinyjs::showElement(selector = "#sempi_header")
-        shinyjs::showElement(selector = "#sempi_hybrid")
-      }
-      if (input$hide_viz == F){
-        shinyjs::showElement(selector = "#sempi_width")
-      }
+      shinyjs::showElement(selector = "#sempi_hybrid")
+      shinyjs::showElement(selector = "#sempi_width")
     } else{
-      shinyjs::hideElement(selector = "#sempi_header")
       shinyjs::hideElement(selector = "#sempi_hybrid")
       shinyjs::hideElement(selector = "#sempi_width")
     }
@@ -1274,7 +1505,6 @@ server <- function(input, output, session) {
   shiny::observeEvent(vals$deep_data_input,{
     
     if (vals$deep_data_input == T){
-      shinyjs::showElement(selector = "#hide_data_filter")
       shinyjs::showElement(selector = "#score_a")
       shinyjs::showElement(selector = "#score_d")
       shinyjs::showElement(selector = "#score_c")
@@ -1282,9 +1512,7 @@ server <- function(input, output, session) {
       shinyjs::showElement(selector = "#biodomain_filter")
       shinyjs::showElement(selector = "#gene_filter")
       shinyjs::showElement(selector = "#cluster_type")
-      shinyjs::showElement(selector = "#data_filter_header")
     } else{
-      shinyjs::hideElement(selector = "#hide_data_filter")
       shinyjs::hideElement(selector = "#score_a")
       shinyjs::hideElement(selector = "#score_d")
       shinyjs::hideElement(selector = "#score_c")
@@ -1292,22 +1520,17 @@ server <- function(input, output, session) {
       shinyjs::hideElement(selector = "#biodomain_filter")
       shinyjs::hideElement(selector = "#gene_filter")
       shinyjs::hideElement(selector = "#cluster_type")
-      shinyjs::hideElement(selector = "#data_filter_header")
     }
   })
   # Show GECCO data options, if data is uploaded
   shiny::observeEvent(vals$gecco_data_input,{
     
     if (vals$gecco_data_input == T){
-      shinyjs::showElement(selector = "#data_filter_header_gecco")
-      shinyjs::showElement(selector = "#hide_data_filter_gecco")
       shinyjs::showElement(selector = "#score_average_gecco")
       shinyjs::showElement(selector = "#score_cluster_gecco")
       shinyjs::showElement(selector = "#domains_filter_gecco")
       shinyjs::showElement(selector = "#prot_filter_gecco")
     } else{
-      shinyjs::hideElement(selector = "#data_filter_header_gecco")
-      shinyjs::hideElement(selector = "#hide_data_filter_gecco")
       shinyjs::hideElement(selector = "#score_average_gecco")
       shinyjs::hideElement(selector = "#score_cluster_gecco")
       shinyjs::hideElement(selector = "#domains_filter_gecco")
@@ -1318,15 +1541,9 @@ server <- function(input, output, session) {
   shiny::observeEvent(vals$arts_data_input,{
     
     if (vals$arts_data_input == T){
-      if (input$hide_anti == F){
-        shinyjs::showElement(selector = "#arts_header")
-        shinyjs::showElement(selector = "#dup_choice")
-      }
-      if (input$hide_viz == F){
-        shinyjs::showElement(selector = "#arts_width")
-      }
+      shinyjs::showElement(selector = "#dup_choice")
+      shinyjs::showElement(selector = "#arts_width")
     } else {
-      shinyjs::hideElement(selector = "#arts_header")
       shinyjs::hideElement(selector = "#dup_choice")
       shinyjs::hideElement(selector = "#arts_width")
     }
@@ -1336,83 +1553,49 @@ server <- function(input, output, session) {
   ##---------------------------------------------------------------
   # Count data uploads, to show tabs and corresponding 
   # options 
-  shiny::observeEvent(vals$data_upload_count, {
-    
-    if (vals$data_upload_count <2){
-      shiny::hideTab("main", "2")
-      shiny::hideTab("main", "3")
-      
-    }else if (vals$data_upload_count >=2){
-      if (input$hide_summarize == F) {
-        shinyjs::showElement(selector = "#summarize")
-        shinyjs::showElement(selector = "#group_by")
-        shinyjs::showElement(selector = "#count_all")
-      }
-      if (input$hide_viz == F){
-        shinyjs::showElement(selector = "#biocircos_color")
-        shinyjs::showElement(selector = "#label_color")
-        shinyjs::showElement(selector = "#label_color_class")
-      }
-      shiny::showTab("main", "2")
-      shiny::showTab("main", "3")
-      if ((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )){
-        shiny::showTab("main", "5")
-        shinyjs::showElement(selector = "#data_comparison_header_gecco")
-        shinyjs::showElement(selector = "#hide_data_comparison_gecco")
-        shinyjs::showElement(selector = "#ref_comparison_gecco")
-        shinyjs::showElement(selector = "#score_type_gecco")
-        shinyjs::showElement(selector = "#plot_step_gecco")
-        shinyjs::showElement(selector = "#plot_start_gecco")
-      } else {
-        shiny::hideTab("main", "5")
-        shinyjs::hideElement(selector = "#data_comparison_header_gecco")
-        shinyjs::hideElement(selector = "#hide_data_comparison_gecco")
-        shinyjs::hideElement(selector = "#ref_comparison_gecco")
-        shinyjs::hideElement(selector = "#score_type_gecco")
-        shinyjs::hideElement(selector = "#plot_step_gecco")
-        shinyjs::hideElement(selector = "#plot_start_gecco")
-        if ((vals$gecco_data_input == T) & (vals$data_upload_count >1)){
-          shiny::showNotification(paste("It seems that you would like to compare the GECCO data to the reference (in a new tab)? Please upload Antismash, SEMPI or PRISM datasets to do that."), type = "message", duration=10)
-        }
-      }
+  
+  output$deep_sidemenu_out <- shinydashboard::renderMenu({
+    if (vals$data_upload_count >=2){
       if ((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )) {
-        shiny::showTab("main", "1")
-        shinyjs::showElement(selector = "#data_comparison_header")
-        shinyjs::showElement(selector = "#ref_comparison")
-        shinyjs::showElement(selector = "#hide_data_comparison")
-        shinyjs::showElement(selector = "#score_type")
-        shinyjs::showElement(selector = "#plot_step")
-        shinyjs::showElement(selector = "#plot_start")
-      } else {
-        shiny::hideTab("main", "1")
-        shinyjs::hideElement(selector = "#data_comparison_header")
-        shinyjs::hideElement(selector = "#ref_comparison")
-        shinyjs::hideElement(selector = "#score_type")
-        shinyjs::hideElement(selector = "#hide_data_comparison")
-        shinyjs::hideElement(selector = "#plot_step")
-        shinyjs::hideElement(selector = "#plot_start")
-        if ((vals$deep_data_input == T) & (vals$data_upload_count >1)){
-          shiny::showNotification(paste("It seems that you would like to compare the DeepBGC data to the reference (in a new tab)? Please upload Antismash, SEMPI or PRISM datasets to do that."), type = "message", duration=10)
-        }
+        shinydashboard::menuItem("Compare data with DeepBGC", tabName = "deep_sidemenu", icon = icon("dashboard"))
       }
-    }
-    if (vals$data_upload_count <1){
-      shiny::hideTab("main", "4")
-      shiny::hideTab(inputId = "main", target = "5")
-      shiny::hideTab(inputId = "main", target = "1")
-      shinyjs::hideElement(selector = "#genes_on_chr")
-      shinyjs::hideElement(selector = "#hide_genes_on_chr")
-      shinyjs::hideElement(selector = "#ref")
-    }else{
-      shiny::showTab("main", "4")
-      if (input$hide_genes_on_chr == F){
-        shinyjs::showElement(selector = "#genes_on_chr")
-        shinyjs::showElement(selector = "#hide_genes_on_chr")
-        shinyjs::showElement(selector = "#ref")
-      }
-      
     }
   })
+  output$gecco_sidemenu_out <- shinydashboard::renderMenu({
+    if (vals$data_upload_count >=2){
+      if ((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )){
+        shinydashboard::menuItem("Compare data with GECCO", tabName = "gecco_sidemenu", icon = icon("th"))
+        shinyjs::showElement(selector = "#ref_comparison_gecco")
+      }
+    }
+    
+  })
+  output$anno_sidemenu_out <- shinydashboard::renderMenu({
+    if (vals$data_upload_count >=1){
+      shinydashboard::menuItem("Annotation visualization and comparison", tabName = "anno_sidemenu", icon = icon("th"))
+    }
+  })
+  output$biocircos_sidemenu_out <- shinydashboard::renderMenu({
+    if (vals$data_upload_count >=2){
+      shinydashboard::menuItem("Biocircos plot", tabName = "biocircos_sidemenu", icon = icon("th"))
+    }
+  })
+  output$summarize_sidemenu_out <- shinydashboard::renderMenu({
+    if (vals$data_upload_count >=2){
+      shinydashboard::menuItem("Summarize interception", tabName = "summarize_sidemenu", icon = icon("th"))
+    }
+  })
+  output$biocircos_coloring <- renderUI({
+    if (input$ShowBiocircosColoring == T){
+      shinydashboardPlus::box(
+        title = "Biocircos coloring scheme",
+        closable = TRUE,
+        collapsible = TRUE,
+        DT::dataTableOutput("biocircos_legend")
+      )
+    }
+  })
+  
   # Logic show/hide selectinput in Link coloring in
   # Biocircos
   shiny::observeEvent(input$label_color_class, {
@@ -1446,7 +1629,7 @@ server <- function(input, output, session) {
       vals$anti_data$Type2 <- vals$anti_type
     }
     
-    })
+  })
   shiny::observeEvent(input$prism_hybrid,ignoreInit=T, {
     
     hybrid_col <- function(data){
@@ -1511,13 +1694,13 @@ server <- function(input, output, session) {
       prism_data <- read.csv("prism_data.csv")
       vals$prism_type <- rename_vector(prism_data, rename_data)
       prism_data['Type2'] <-  vals$prism_type
-       vals$prism_data <- prism_data
+      vals$prism_data <- prism_data
     }
-      shinyjs::showElement(selector = "#reset_name")
-      shinyjs::hideElement(selector = "#rename")
+    shinyjs::showElement(selector = "#reset_name")
+    shinyjs::hideElement(selector = "#rename")
     vals$renamed <- T
     shiny::showNotification(paste("Please note: SEMPI, PRISM and Antismash input data will be renamed on upload"), type = "warning", duration=10)
-      })
+  })
   # When the new data is uploaded and renamed
   # is T, then rename data on upload
   shiny::observeEvent(check_to_rename(), {
@@ -1564,8 +1747,8 @@ server <- function(input, output, session) {
       shiny::showNotification(paste("SEMPI cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration=10)
       shiny::updateCheckboxInput(inputId = "sempi_hybrid", value = F)
     }
-      shinyjs::showElement(selector = "#rename")
-      shinyjs::hideElement(selector = "#reset_name")
+    shinyjs::showElement(selector = "#rename")
+    shinyjs::hideElement(selector = "#reset_name")
     vals$renamed <- F
   })
   # Read the uploaded renaming scheme csv
@@ -1578,295 +1761,9 @@ server <- function(input, output, session) {
     colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
     vals$coloring_datatable <- DT::datatable(coloring_datatable,  rownames = F, editable = "column")
   })
-  # What to do, if hide uploads scheme is triggered
-  shiny::observeEvent(input$hide_uploads, {
-    
-    if (input$hide_uploads == T){
-      shinyjs::hideElement(selector = "#anti_data")
-      shinyjs::hideElement(selector = "#anti_header_upload")
-      shinyjs::hideElement(selector = "#prism_header_upload")
-      shinyjs::hideElement(selector = "#prism_data")
-      shinyjs::hideElement(selector = "#sempi_header_upload")
-      shinyjs::hideElement(selector = "#sempi_data")
-      shinyjs::hideElement(selector = "#deep_header_upload")
-      shinyjs::hideElement(selector = "#deep_data")
-      shinyjs::hideElement(selector = "#gecco_header_upload")
-      shinyjs::hideElement(selector = "#gecco_data")
-      shinyjs::hideElement(selector = "#rre_header_upload")
-      shinyjs::hideElement(selector = "#rre_data")
-      shinyjs::hideElement(selector = "#chr_len")
-      shinyjs::hideElement(selector = "#arts_header_upload")
-      shinyjs::hideElement(selector = "#known_data")
-      shinyjs::hideElement(selector = "#dup_data")
-      shinyjs::hideElement(selector = "#anti_sco")
-      shinyjs::hideElement(selector = "#prism_sco")
-      shinyjs::hideElement(selector = "#arts_sco")
-      shinyjs::hideElement(selector = "#rre_sco")
-      shinyjs::hideElement(selector = "#sempi_sco")
-      shinyjs::hideElement(selector = "#deep_sco")
-      shinyjs::hideElement(selector = "#gecco_sco")
-    }else {
-      shinyjs::showElement(selector = "#anti_data")
-      shinyjs::showElement(selector = "#anti_header_upload")
-      shinyjs::showElement(selector = "#prism_header_upload")
-      shinyjs::showElement(selector = "#prism_data")
-      shinyjs::showElement(selector = "#sempi_header_upload")
-      shinyjs::showElement(selector = "#sempi_data")
-      shinyjs::showElement(selector = "#deep_header_upload")
-      shinyjs::showElement(selector = "#deep_data")
-      shinyjs::showElement(selector = "#gecco_header_upload")
-      shinyjs::showElement(selector = "#gecco_data")
-      shinyjs::showElement(selector = "#rre_header_upload")
-      shinyjs::showElement(selector = "#rre_data")
-      shinyjs::showElement(selector = "#chr_len")
-      shinyjs::showElement(selector = "#arts_header_upload")
-      shinyjs::showElement(selector = "#known_data")
-      shinyjs::showElement(selector = "#dup_data")
-      shinyjs::showElement(selector = "#anti_sco")
-      shinyjs::showElement(selector = "#prism_sco")
-      shinyjs::showElement(selector = "#arts_sco")
-      shinyjs::showElement(selector = "#rre_sco")
-      shinyjs::showElement(selector = "#sempi_sco")
-      shinyjs::showElement(selector = "#deep_sco")
-      shinyjs::showElement(selector = "#gecco_sco")
-  }
-    })
-  # What to do, if hide data options scheme is triggered
-  shiny::observeEvent(input$hide_anti, {
-    
-    if (input$hide_anti== T){
-      shinyjs::hideElement(selector = "#anti_header")
-      shinyjs::hideElement(selector = "#anti_hybrid")
-      shinyjs::hideElement(selector = "#sempi_header")
-      shinyjs::hideElement(selector = "#sempi_hybrid")
-      shinyjs::hideElement(selector = "#prism_header")
-      shinyjs::hideElement(selector = "#prism_hybrid")
-      shinyjs::hideElement(selector = "#prism_supp")
-      shinyjs::hideElement(selector = "#arts_header")
-      shinyjs::hideElement(selector = "#dup_choice")
-    }else{
-      if (vals$anti_data_input == T){
-        shinyjs::showElement(selector = "#anti_header")
-        shinyjs::showElement(selector = "#anti_hybrid")
-      } else{
-        shinyjs::hideElement(selector = "#anti_header")
-        shinyjs::hideElement(selector = "#anti_hybrid")
-      }
-      if (vals$prism_data_input == T){
-      shinyjs::showElement(selector = "#prism_header")
-      shinyjs::showElement(selector = "#prism_hybrid")
-      if (vals$prism_json == T){
-        shinyjs::showElement(selector = "#prism_supp")
-      }
-      } else {
-        shinyjs::hideElement(selector = "#prism_header")
-        shinyjs::hideElement(selector = "#prism_hybrid")
-        shinyjs::hideElement(selector = "#prism_supp")
-      }
-      if (vals$sempi_data_input == T){
-      shinyjs::showElement(selector = "#sempi_header")
-      shinyjs::showElement(selector = "#sempi_hybrid")
-      } else {
-        shinyjs::hideElement(selector = "#sempi_header")
-        shinyjs::hideElement(selector = "#sempi_hybrid")
-      }
-      if (vals$arts_data_input == T){
-        shinyjs::showElement(selector = "#arts_header")
-        shinyjs::showElement(selector = "#dup_choice")
-      } else{
-        shinyjs::hideElement(selector = "#arts_header")
-        shinyjs::hideElement(selector = "#dup_choice")
-      }
-    }
-  })
-  # What to do, if hide annotation plot options scheme is triggered
-  shiny::observeEvent(input$hide_genes_on_chr, {
-    
-    if (input$hide_genes_on_chr == T){
-      shinyjs::hideElement(selector = "#ref")
-    } else {
-      if (vals$data_upload_count > 0){
-        shinyjs::showElement(selector = "#ref")
-      } else {
-        shinyjs::hideElement(selector = "#genes_on_chr")
-        shinyjs::hideElement(selector = "#ref")
-      }
-    }
-  })
-  # What to do, if hide summarize tab options scheme is triggered
-  shiny::observeEvent(input$hide_summarize, {
-    
-    if (input$hide_summarize == T){
-      shinyjs::hideElement(selector = "#group_by")
-      shinyjs::hideElement(selector = "#count_all")
-    } else {
-      if (vals$data_upload_count > 1){
-        shinyjs::showElement(selector = "#group_by")
-        shinyjs::showElement(selector = "#count_all")
-      } else {
-        shinyjs::hideElement(selector = "#summarize")
-        shinyjs::hideElement(selector = "#group_by")
-        shinyjs::hideElement(selector = "#count_all")
-      }
-      
-    }
-  })
-  # What to do, if hide improve visualization scheme is triggered
-  shiny::observeEvent(input$hide_viz, {
-    
-    if (input$hide_viz == T){
-      shinyjs::hideElement(selector = "#rename_data")
-      shinyjs::hideElement(selector = "#rename")
-      shinyjs::hideElement(selector = "#reset_name")
-      shinyjs::hideElement(selector = "#rre_width")
-      shinyjs::hideElement(selector = "#biocircos_color")
-      shinyjs::hideElement(selector = "#label_color")
-      shinyjs::hideElement(selector = "#label_color_class")
-      shinyjs::hideElement(selector = "#ref_col_biocircos")
-      shinyjs::hideElement(selector = "#arts_header")
-      shinyjs::hideElement(selector = "#arts_width")
-      shinyjs::hideElement(selector = "#sempi_width")
-      shinyjs::hideElement(selector = "#prism_supp_data_input_width")
-    } else{
-      shinyjs::showElement(selector = "#rename_data")
-      shinyjs::showElement(selector = "#rename")
-      shinyjs::showElement(selector = "#reset_name")
-      if (vals$rre_data_input == T){
-        shinyjs::showElement(selector = "#rre_width")
-      } else {
-        shinyjs::hideElement(selector = "#rre_width")
-      }
-      if (vals$sempi_data_input == T){
-        shinyjs::showElement(selector = "#sempi_width")
-      } else {
-        shinyjs::hideElement(selector = "#sempi_width")
-      }
-      if (vals$prism_json == T){
-        shinyjs::showElement(selector = "#prism_supp_data_input_width")
-      }
-      else {
-        shinyjs::hideElement(selector = "#prism_supp_data_input_width")
-      }
-      if (vals$data_upload_count > 1){
-        shinyjs::showElement(selector = "#biocircos_color")
-        shinyjs::showElement(selector = "#label_color")
-        shinyjs::showElement(selector = "#label_color_class")
-      } else {
-        shinyjs::hideElement(selector = "#biocircos_color")
-        shinyjs::hideElement(selector = "#label_color")
-        shinyjs::hideElement(selector = "#label_color_class")
-      }
-      if (input$label_color_class == "R"){
-        shinyjs::showElement(selector = "#ref_col_biocircos")
-      } else {
-        shinyjs::hideElement(selector = "#ref_col_biocircos")
-      }
-      if (vals$arts_data_input == T){
-        shinyjs::showElement(selector = "#arts_header")
-        shinyjs::showElement(selector = "#arts_width")
-      } else {
-        shinyjs::hideElement(selector = "#arts_header")
-        shinyjs::hideElement(selector = "#arts_width")
-      }
-      
-    }
-  })
+  
+  
   # What to do, if hide DeepBGC comparison options scheme is triggered
-  shiny::observeEvent(input$hide_data_comparison, {
-    
-    if ((input$hide_data_comparison == T)){
-      shinyjs::hideElement(selector = "#ref_comparison")
-      shinyjs::hideElement(selector = "#score_type")
-      shinyjs::hideElement(selector = "#plot_step")
-      shinyjs::hideElement(selector = "#plot_start")
-    } else if (vals$deep_data_input == T) {
-      shinyjs::showElement(selector = "#data_comparison_header")
-      shinyjs::showElement(selector = "#hide_data_comparison")
-      shinyjs::showElement(selector = "#ref_comparison")
-      shinyjs::showElement(selector = "#score_type")
-      shinyjs::showElement(selector = "#plot_step")
-      shinyjs::showElement(selector = "#plot_start")
-    } else {
-      shinyjs::hideElement(selector = "#data_comparison_header")
-      shinyjs::hideElement(selector = "#hide_data_comparison")
-      shinyjs::hideElement(selector = "#ref_comparison")
-      shinyjs::hideElement(selector = "#score_type")
-      shinyjs::hideElement(selector = "#plot_step")
-      shinyjs::hideElement(selector = "#plot_start")
-    }
-  })
-  # What to do, if hide DeepBGC filtering options scheme is triggered
-  shiny::observeEvent(input$hide_data_filter, {
-    
-    if ((input$hide_data_filter == T)){
-      shinyjs::hideElement(selector = "#score_a")
-      shinyjs::hideElement(selector = "#score_d")
-      shinyjs::hideElement(selector = "#score_c")
-      shinyjs::hideElement(selector = "#domains_filter")
-      shinyjs::hideElement(selector = "#biodomain_filter")
-      shinyjs::hideElement(selector = "#gene_filter")
-      shinyjs::hideElement(selector = "#cluster_type")
-    } else if  (vals$deep_data_input == T){
-      shinyjs::showElement(selector = "#score_a")
-      shinyjs::showElement(selector = "#score_d")
-      shinyjs::showElement(selector = "#score_c")
-      shinyjs::showElement(selector = "#domains_filter")
-      shinyjs::showElement(selector = "#biodomain_filter")
-      shinyjs::showElement(selector = "#gene_filter")
-      shinyjs::showElement(selector = "#cluster_type")
-    } else {
-      shinyjs::hideElement(selector = "#score_a")
-      shinyjs::hideElement(selector = "#score_d")
-      shinyjs::hideElement(selector = "#score_c")
-      shinyjs::hideElement(selector = "#domains_filter")
-      shinyjs::hideElement(selector = "#biodomain_filter")
-      shinyjs::hideElement(selector = "#gene_filter")
-      shinyjs::hideElement(selector = "#cluster_type")
-    }
-  })
-  # What to do, if hide GECCO comparison options scheme is triggered
-  shiny::observeEvent(input$hide_data_comparison_gecco, {
-    if ((input$hide_data_comparison_gecco == T)){
-      shinyjs::hideElement(selector = "#ref_comparison_gecco")
-      shinyjs::hideElement(selector = "#score_type_gecco")
-      shinyjs::hideElement(selector = "#plot_step_gecco")
-      shinyjs::hideElement(selector = "#plot_start_gecco")
-    } else if ((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )) {
-      shinyjs::showElement(selector = "#data_comparison_header_gecco")
-      shinyjs::showElement(selector = "#hide_data_comparison_gecco")
-      shinyjs::showElement(selector = "#ref_comparison_gecco")
-      shinyjs::showElement(selector = "#score_type_gecco")
-      shinyjs::showElement(selector = "#plot_step_gecco")
-      shinyjs::showElement(selector = "#plot_start_gecco")
-    } else {
-      shinyjs::hideElement(selector = "#data_comparison_header_gecco")
-      shinyjs::hideElement(selector = "#hide_data_comparison_gecco")
-      shinyjs::hideElement(selector = "#ref_comparison_gecco")
-      shinyjs::hideElement(selector = "#score_type_gecco")
-      shinyjs::hideElement(selector = "#plot_step_gecco")
-      shinyjs::hideElement(selector = "#plot_start_gecco")
-    }
-  })
-  # What to do, if hide GECCO filtering options scheme is triggered
-  shiny::observeEvent(input$hide_data_filter_gecco, {
-    
-    if ((input$hide_data_filter_gecco == T)){
-      shinyjs::hideElement(selector = "#score_average_gecco")
-      shinyjs::hideElement(selector = "#score_cluster_gecco")
-      shinyjs::hideElement(selector = "#domains_filter_gecco")
-      shinyjs::hideElement(selector = "#prot_filter_gecco")
-    } else if  (vals$gecco_data_input == T){
-      shinyjs::showElement(selector = "#score_average_gecco")
-      shinyjs::showElement(selector = "#score_cluster_gecco")
-      shinyjs::showElement(selector = "#domains_filter_gecco")
-      shinyjs::showElement(selector = "#prot_filter_gecco")
-    } else {
-      shinyjs::hideElement(selector = "#score_average_gecco")
-      shinyjs::hideElement(selector = "#score_cluster_gecco")
-      shinyjs::hideElement(selector = "#domains_filter_gecco")
-      shinyjs::hideElement(selector = "#prot_filter_gecco")
-    }
-  })
   
   
   ############################################################################
@@ -1960,7 +1857,7 @@ server <- function(input, output, session) {
         dplyr::select(Start,Stop)
       gecco_inter$seqnames <- "chr"
     }
-
+    
     get_inter <- function(inter1, inter2){
       query <- GenomicRanges::makeGRangesFromDataFrame(inter2)
       subject <- GenomicRanges::makeGRangesFromDataFrame(inter1)
@@ -1988,30 +1885,30 @@ server <- function(input, output, session) {
           }
           
         }
-      index_2 = index_2 +1
+        index_2 = index_2 +1
       }
       if (vals[[i]] == TRUE){
         vals$computed[[j]] <- TRUE
       }
       index = index +1 
     }
-
-   vals$inters <- inters
-   if ((vals$deep_data_input == F) & (vals$gecco_data_input == F) &(vals$arts_data_input==F)){
-     vals$inters_filtered <- inters 
-     enable_event_logic()
-   } else{
-     vals$need_filter <- T
-     vals$filter_data <- T
-   }
-  
+    
+    vals$inters <- inters
+    if ((vals$deep_data_input == F) & (vals$gecco_data_input == F) &(vals$arts_data_input==F)){
+      vals$inters_filtered <- inters 
+      enable_event_logic()
+    } else{
+      vals$need_filter <- T
+      vals$filter_data <- T
+    }
+    
   })
   # dplyr::filter ARTS, DeepBGC, GECCO interception data
   # and general dataframes to plot, if data filtering 
   # options are triggered
   shiny::observeEvent({dynamicInput()
     to_debounce()
-    }, ignoreInit = T, priority = 4 ,{
+  }, ignoreInit = T, priority = 4 ,{
     shiny::req(vals$data_upload_count>=1)
     inters <- vals$inters
     if (vals$deep_data_input == TRUE){
@@ -2152,9 +2049,9 @@ server <- function(input, output, session) {
     
     rename_data <- vals$rename_data
     coloring_datatable <- vals$coloring_datatable
-
+    
     index <- 1
-   # browser()
+    # browser()
     for (upload in data_uploads){
       if (vals[[upload]] == T){
         # Store data in local variable
@@ -2176,7 +2073,7 @@ server <- function(input, output, session) {
     }
     # Add to tracklist. Then it can be populated with links
     tracklist <- BioCircos::BioCircosArcTrack('myArcTrack', arcs_chromosomes, arcs_begin, arcs_end, 
-                                   minRadius = 0.90, maxRadius = 0.97, labels = arc_labels,colors = arc_col )
+                                              minRadius = 0.90, maxRadius = 0.97, labels = arc_labels,colors = arc_col )
     # Function to get interception between two matrices. Returns a list of two elements - IDs from first matrix and 
     # from second one. IDs are duplicated, if intercepted more than one time
     
@@ -2318,7 +2215,7 @@ server <- function(input, output, session) {
       }
       index <- index +1 
     }
-   
+    
     
     
     
@@ -2331,15 +2228,15 @@ server <- function(input, output, session) {
       for (i in seq(1:dim(group_colors)[1])){
         subset <- unname( which(label_color %in% group_colors$x[i]))
         tracklist = tracklist + BioCircos::BioCircosLinkTrack(as.character(i), chromosomes_start[subset], link_pos_start[subset], 
-                                                   link_pos_start_1[subset], chromosomes_end[subset], link_pos_end[subset], 
-                                                   link_pos_end_2[subset], maxRadius = 0.85, labels = link_labels[subset],
-                                                   displayLabel = FALSE, color = group_colors$x[i])
+                                                              link_pos_start_1[subset], chromosomes_end[subset], link_pos_end[subset], 
+                                                              link_pos_end_2[subset], maxRadius = 0.85, labels = link_labels[subset],
+                                                              displayLabel = FALSE, color = group_colors$x[i])
       }
     } else if ((input$label_color == F) & (length(chromosomes_start) > 0)){
       tracklist = tracklist + BioCircos::BioCircosLinkTrack('myLinkTrack_master', chromosomes_start, link_pos_start, 
-                                                 link_pos_start_1, chromosomes_end, link_pos_end, 
-                                                 link_pos_end_2, maxRadius = 0.85, labels = link_labels,
-                                                displayLabel = FALSE, color = coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'])
+                                                            link_pos_start_1, chromosomes_end, link_pos_end, 
+                                                            link_pos_end_2, maxRadius = 0.85, labels = link_labels,
+                                                            displayLabel = FALSE, color = coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == 'base'])
     } else{
       shiny::showNotification(paste("No interceptions are being made in the Biocircos plot. Please provide data with clusters that do have intercepting borders"), type = "warning", duration=NULL)
     }
@@ -2642,7 +2539,7 @@ server <- function(input, output, session) {
   ###                                                                      ###
   ############################################################################
   ############################################################################
-
+  
   ##----------------------------------------------------------------
   ##                    DeepBGC Comparison tab                     -
   ##----------------------------------------------------------------
@@ -2668,7 +2565,7 @@ server <- function(input, output, session) {
     deep_inter_1$score <- deep_inter_1[[score]]
     # Loop over thresholds with given step. Get the interception of antismash data with DeepBGC one at given x axis thresholds with additionsl ones
     for (dataframe_1 in seq(input$plot_start, 99, input$plot_step)){
-
+      
       deep_inter <- deep_inter_1 %>%
         dplyr::filter(score>=dataframe_1/100) %>%
         dplyr::select(Start, Stop) 
@@ -2678,9 +2575,9 @@ server <- function(input, output, session) {
       
       
       # Store antismash bgc start amd atop values as matrix
-        if (input$ref_comparison == 'Antismash'){
+      if (input$ref_comparison == 'Antismash'){
         anti_inter <- shiny::isolate(vals$anti_data) %>%
-        dplyr::select(Start, Stop) 
+          dplyr::select(Start, Stop) 
         anti_inter$seqnames <- "chr"
       } else if (input$ref_comparison == 'PRISM'){
         anti_inter <- shiny::isolate(vals$prism_data) %>%
@@ -2692,7 +2589,7 @@ server <- function(input, output, session) {
         anti_inter$seqnames <- "chr"
       } 
       
-     
+      
       
       # Get the interception of two matrices
       if (length(deep_inter$Start) > 0) {
@@ -2719,7 +2616,7 @@ server <- function(input, output, session) {
         cols <- c("Only SEMPI", "DeepBGC+SEMPI", "Only DeepBGC")
         title <- ggplot2::ggtitle("Comparison of SEMPI and DeepBGC annotations at given score threshold")
       }
-
+      
       # Combine all vectors into one dataframe
       fullnes_of_annotation_1 <- data.frame(c(rep(c(as.character(dataframe_1)),3 )), 
                                             cols, c(used_antismash, inter_bgc, len_new))
@@ -2766,40 +2663,40 @@ server <- function(input, output, session) {
       test <- test %>%
         # Calculate rates. Novelty is nummber of clusters annotated only by deepbgc/ all clusters annotated by antismash + (antismash + deepbgc)
         dplyr::mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+Antismash` + test$`Only Antismash`), 
-               #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
-               Annotation_rate = test$`DeepBGC+Antismash`/length(data$Cluster), 
-               # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
-               Skip_rate = test$`Only Antismash`/length(data$Cluster))
+                      #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+                      Annotation_rate = test$`DeepBGC+Antismash`/length(data$Cluster), 
+                      # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+                      Skip_rate = test$`Only Antismash`/length(data$Cluster))
     } else if (input$ref_comparison == 'PRISM'){
       data <- vals$prism_data
       title <- ggplot2::ggtitle("Rates of DeepBGC/PRISM data annotation")
       test <- test %>%
         dplyr::mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+PRISM` + test$`Only PRISM`), 
-               #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
-               Annotation_rate = test$`DeepBGC+PRISM`/length(data$Cluster), 
-               # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
-               Skip_rate = test$`Only PRISM`/length(data$Cluster))
+                      #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+                      Annotation_rate = test$`DeepBGC+PRISM`/length(data$Cluster), 
+                      # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+                      Skip_rate = test$`Only PRISM`/length(data$Cluster))
     } else if (input$ref_comparison == 'SEMPI'){
       data <- vals$sempi_data
       title <- ggplot2::ggtitle("Rates of DeepBGC/SEMPI data annotation")
       test <- test %>%
         dplyr::mutate(Novelty_rate = test$`Only DeepBGC`/(test$`DeepBGC+SEMPI` + test$`Only SEMPI`), 
-               #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
-               Annotation_rate = test$`DeepBGC+SEMPI`/length(data$Cluster), 
-               # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
-               Skip_rate = test$`Only SEMPI`/length(data$Cluster))
+                      #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+                      Annotation_rate = test$`DeepBGC+SEMPI`/length(data$Cluster), 
+                      # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+                      Skip_rate = test$`Only SEMPI`/length(data$Cluster))
     }
     
     # Calculate rates and plot interactive plot with plotly
     plotly::ggplotly(test %>%
-               tidyr::pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
-               ggplot2::ggplot(ggplot2::aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
-               ggplot2::geom_line(ggplot2::aes(color=Rates)) +
-               ggplot2::geom_point(ggplot2::aes(shape=Rates), alpha = .4, size = 3) +
-               title +
-               ggplot2::ylab("Rate") +
-               ggplot2::xlab(paste(input$score_type,"Score threshold")),
-             tooltip = c("Rate"))
+                       tidyr::pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
+                       ggplot2::ggplot(ggplot2::aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
+                       ggplot2::geom_line(ggplot2::aes(color=Rates)) +
+                       ggplot2::geom_point(ggplot2::aes(shape=Rates), alpha = .4, size = 3) +
+                       title +
+                       ggplot2::ylab("Rate") +
+                       ggplot2::xlab(paste(input$score_type,"Score threshold")),
+                     tooltip = c("Rate"))
   })
   ##----------------------------------------------------------------
   ##                      GECCO Comparison tab                     -
@@ -2824,7 +2721,7 @@ server <- function(input, output, session) {
     
     # Loop over thresholds with given step. Get the interception of antismash data with DeepBGC one at given x axis thresholds with additionsl ones
     for (dataframe_1 in seq(input$plot_start_gecco, 99, input$plot_step_gecco)){
-
+      
       # dplyr::filter dataframe. Get only rows, which >= of a given thresholds. dplyr::select only start and stop of those rows as a matrix
       gecco_inter <- gecco_inter_1 %>%
         dplyr::filter(score>=dataframe_1/100) %>%
@@ -2923,40 +2820,40 @@ server <- function(input, output, session) {
       test <- test %>%
         # Calculate rates. Novelty is nummber of clusters annotated only by deepbgc/ all clusters annotated by antismash + (antismash + deepbgc)
         dplyr::mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+Antismash` + test$`Only Antismash`), 
-               #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
-               Annotation_rate = test$`GECCO+Antismash`/length(data$Cluster), 
-               # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
-               Skip_rate = test$`Only Antismash`/length(data$Cluster))
+                      #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+                      Annotation_rate = test$`GECCO+Antismash`/length(data$Cluster), 
+                      # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+                      Skip_rate = test$`Only Antismash`/length(data$Cluster))
     } else if (input$ref_comparison_gecco == 'PRISM'){
       data <- vals$prism_data
       title <- ggplot2::ggtitle("Rates of GECCO/PRISM data annotation")
       test <- test %>%
         dplyr::mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+PRISM` + test$`Only PRISM`), 
-               #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
-               Annotation_rate = test$`GECCO+PRISM`/length(data$Cluster), 
-               # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
-               Skip_rate = test$`Only PRISM`/length(data$Cluster))
+                      #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+                      Annotation_rate = test$`GECCO+PRISM`/length(data$Cluster), 
+                      # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+                      Skip_rate = test$`Only PRISM`/length(data$Cluster))
     } else if (input$ref_comparison_gecco == 'SEMPI'){
       data <- vals$sempi_data
       title <- ggplot2::ggtitle("Rates of GECCO/SEMPI data annotation")
       test <- test %>%
         dplyr::mutate(Novelty_rate = test$`Only GECCO`/(test$`GECCO+SEMPI` + test$`Only SEMPI`), 
-               #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
-               Annotation_rate = test$`GECCO+SEMPI`/length(data$Cluster), 
-               # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
-               Skip_rate = test$`Only SEMPI`/length(data$Cluster))
+                      #Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+                      Annotation_rate = test$`GECCO+SEMPI`/length(data$Cluster), 
+                      # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+                      Skip_rate = test$`Only SEMPI`/length(data$Cluster))
     }
     
     # Calculate rates and plot interactive plot with plotly
     plotly::ggplotly(test %>%
-               tidyr::pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
-               ggplot2::ggplot(ggplot2::aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
-               ggplot2::geom_line(ggplot2::aes(color=Rates)) +
-               ggplot2::geom_point(ggplot2::aes(shape=Rates), alpha = .4, size = 3) +
-               title +
-               ggplot2::ylab("Rate") +
-               ggplot2::xlab(paste(input$score_type,"Score threshold")),
-             tooltip = c("Rate"))
+                       tidyr::pivot_longer(cols = c(Novelty_rate, Annotation_rate, Skip_rate), names_to = 'Rates', values_to = 'Rates_data') %>%
+                       ggplot2::ggplot(ggplot2::aes(x=as.numeric(Score), y=as.numeric(Rates_data), Rate = as.numeric(Rates_data))) +
+                       ggplot2::geom_line(ggplot2::aes(color=Rates)) +
+                       ggplot2::geom_point(ggplot2::aes(shape=Rates), alpha = .4, size = 3) +
+                       title +
+                       ggplot2::ylab("Rate") +
+                       ggplot2::xlab(paste(input$score_type,"Score threshold")),
+                     tooltip = c("Rate"))
   })
   ##---------------------------------------------------------------
   ##              Annotation on chromosome plots' tab             -
@@ -2975,7 +2872,7 @@ server <- function(input, output, session) {
     vals$can_plot_deep_ref_2 == F
     rename_y_axis <- shiny::isolate(vals$rename_y_axis)
     data <- NULL
-
+    
     index <- 1
     for (upload in data_uploads){
       if (is.null(data)){
@@ -2997,66 +2894,66 @@ server <- function(input, output, session) {
     if (vals$anti_data_input == TRUE){
       plot <- plot + 
         ggplot2::geom_segment(data=vals$seg_df_ref_a, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
-                                                 ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+                                                                   ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
     }
     if (vals$deep_data_input == TRUE){
       if (dim(vals$seg_df_ref_d)[1] >0) {
-      plot <- plot +
-        ggplot2::geom_segment(data=vals$seg_df_ref_d,ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
-                                      ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
-                                      deepbgc_score = deepbgc_score,activity = activity ),size =3)
+        plot <- plot +
+          ggplot2::geom_segment(data=vals$seg_df_ref_d,ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
+                                                                    ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
+                                                                    deepbgc_score = deepbgc_score,activity = activity ),size =3)
       }
     }
     if (vals$rre_data_input == TRUE){
       if (vals$rre_more == T){
-      plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_r, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Score = Score, Software = Software,
-                                                    ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
-                                                    P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
-                                                    Probability = Probability),size = 3)
+        plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_r, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Score = Score, Software = Software,
+                                                                                  ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
+                                                                                  P_value = P_value, RRE_start = RRE_start,RRE_stop = RRE_stop, 
+                                                                                  Probability = Probability),size = 3)
       } else {
         plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_r, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2,  Software = Software,
-                                                                ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value),size = 3)
+                                                                                  ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value),size = 3)
       }
     }
     if (vals$prism_data_input == TRUE){
       plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_p, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
-                                                    ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+                                                                                ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
       
       
     }
     if (vals$sempi_data_input == TRUE){
       plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_s, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
-                                                              ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+                                                                                ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
       
       
     }
     if (input$prism_supp == TRUE){
       plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_p_s, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, ID = ID,
-                                                            Start = Start, Stop = Stop, Type = Type, Name = Name, Full_name = Full_name,
-                                                            Score = Score), size = 3)
+                                                                                  Start = Start, Stop = Stop, Type = Type, Name = Name, Full_name = Full_name,
+                                                                                  Score = Score), size = 3)
     }
     if (vals$arts_data_input == TRUE){
       plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_ar, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
-                                                                ID = ID, Start = Start, Stop = Stop, Type = Type, Hit = Hit,
-                                                                Core = Core, E_value = E_value, Bitscore = Bitscore, Count = Count,
-                                                                Model = Model), size = 3)
+                                                                                 ID = ID, Start = Start, Stop = Stop, Type = Type, Hit = Hit,
+                                                                                 Core = Core, E_value = E_value, Bitscore = Bitscore, Count = Count,
+                                                                                 Model = Model), size = 3)
     }
     if (vals$gecco_data_input == TRUE){
       if (dim(vals$seg_df_ref_g)[1] >0) {
-      plot <- plot + ggplot2::geom_segment(data =  vals$seg_df_ref_g, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
-                                                                 ID = ID, Start = Start, Stop = Stop, Type = Type, Num_proteins= Num_proteins,
-                                                                 Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3) 
-    }
+        plot <- plot + ggplot2::geom_segment(data =  vals$seg_df_ref_g, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
+                                                                                     ID = ID, Start = Start, Stop = Stop, Type = Type, Num_proteins= Num_proteins,
+                                                                                     Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3) 
+      }
     }
     to_plot <- plotly::ggplotly(plot +
-                          ggplot2::scale_y_discrete(labels = rename_y_axis) +
-                          ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10)) +
-                          ggplot2::ylab("")+
-                          ggplot2::xlab("Chromosome length")+
-                          ggplot2::theme(legend.title = ggplot2::element_blank()) +
-                          ggplot2::ggtitle("All annotations"), 
-                        # What actually to visualize in tooltip
-                        tooltip = tooltip
+                                  ggplot2::scale_y_discrete(labels = rename_y_axis) +
+                                  ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10)) +
+                                  ggplot2::ylab("")+
+                                  ggplot2::xlab("Chromosome length")+
+                                  ggplot2::theme(legend.title = ggplot2::element_blank()) +
+                                  ggplot2::ggtitle("All annotations"), 
+                                # What actually to visualize in tooltip
+                                tooltip = tooltip
     )
     to_plot %>% plotly::layout(legend=list(font = list(
       family = "sans-serif",
@@ -3089,7 +2986,7 @@ server <- function(input, output, session) {
     
     
   })
-
+  
   # Updating values in Datatable on edit
   shiny::observeEvent(input$biocircos_legend_cell_edit, {
     if (input$biocircos_legend_cell_edit$col[1] == 0){
@@ -3117,7 +3014,7 @@ server <- function(input, output, session) {
     prism_supp_count <- NULL
     arts_count <- NULL
     gecco_count <- NULL
-
+    
     if (is.null(vals$inters_filtered)){
       inters <- vals$inters
     } else {
@@ -3127,7 +3024,7 @@ server <- function(input, output, session) {
     ranking_data <- NULL
     for (upload in data_uploads){
       if (vals[[upload]] == T){
-         counts_var <-plyr::count(as.factor(unlist(sapply(inters[[soft_names[index]]], function(x){x$to}))))
+        counts_var <-plyr::count(as.factor(unlist(sapply(inters[[soft_names[index]]], function(x){x$to}))))
         # Check if ID is in dataframe and if it is - extract all information about to the local dataframe  
         anot_var <- vals[[data_to_use[index]]][vals[[data_to_use[index]]]$Cluster %in% as.numeric(levels(counts_var$x)),]
         # Add prefices to the ID to plot for a barplot.  
@@ -3149,18 +3046,18 @@ server <- function(input, output, session) {
       index <- index +1
     }
     
- 
+    
     # Fix column names in the master dataframe
     colnames(ranking_data) <- c("Cluster", "Count", "Label", "Type", "Start", "Stop")
     # Plot
     plotly::ggplotly(ggplot2::ggplot(ranking_data, ggplot2::aes(x = Cluster, y = Count, Type = Type, Start = Start, Stop = Stop)) +
-               ggplot2::geom_bar(stat = "identity", ggplot2::aes(fill = Label)) +
-               ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1, size = 10),
-                     axis.text.y = ggplot2::element_text(size = 14)) +
-               ggplot2::ggtitle("Number of times cluster is annotated with other tool"),
-             tooltip=c("Type", "Start", "Stop")  
-             )
-
+                       ggplot2::geom_bar(stat = "identity", ggplot2::aes(fill = Label)) +
+                       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 60, hjust = 1, size = 10),
+                                      axis.text.y = ggplot2::element_text(size = 14)) +
+                       ggplot2::ggtitle("Number of times cluster is annotated with other tool"),
+                     tooltip=c("Type", "Start", "Stop")  
+    )
+    
     
   })
   
@@ -3168,7 +3065,7 @@ server <- function(input, output, session) {
   output$group_table <- shiny::renderTable({
     shiny::req(vals$data_upload_count >1)
     shiny::req(vals$need_filter == F)
-      shiny::req(vals$can_plot_group_table == T)
+    shiny::req(vals$can_plot_group_table == T)
     
     refine_unique <- function(data){
       n <- tail(data, n=1)
@@ -3199,7 +3096,7 @@ server <- function(input, output, session) {
       selected_dataframe <- data_to_use[match(input$group_by, soft_namings)]
       df_test <- data.frame(matrix(ncol = length(abbr), nrow = length(vals[[selected_dataframe]]$Cluster)))
       colnames(df_test) <- abbr
-      df_test[[input$group_by]]<- vals[[selected_dataframe]]$Cluster
+      df_test[[abbr[match(input$group_by, soft_namings)]]]<- vals[[selected_dataframe]]$Cluster
       df_test[nrow(df_test)+1,] <- NA
     }
     for (i in seq(1:length(data_uploads))){
@@ -3221,12 +3118,12 @@ server <- function(input, output, session) {
         }
         excluded_names <- abbr[abbr != as.name(abbr[i])]
         data <- df_test %>% dplyr::group_by_if(colnames(df_test)==abbr[i]) %>% dplyr::summarise(a = paste(eval(as.name(excluded_names[1])), collapse=","),
-                                                                                      b=paste(eval(as.name(excluded_names[2])), collapse=","),
-                                                                                      c=paste(eval(as.name(excluded_names[3])), collapse=","),
-                                                                                      d=paste(eval(as.name(excluded_names[4])), collapse=","),
-                                                                                      e=paste(eval(as.name(excluded_names[5])), collapse=","),
-                                                                                      f=paste(eval(as.name(excluded_names[6])), collapse=","),
-                                                                                      g=paste(eval(as.name(excluded_names[7])), collapse=","))
+                                                                                                b=paste(eval(as.name(excluded_names[2])), collapse=","),
+                                                                                                c=paste(eval(as.name(excluded_names[3])), collapse=","),
+                                                                                                d=paste(eval(as.name(excluded_names[4])), collapse=","),
+                                                                                                e=paste(eval(as.name(excluded_names[5])), collapse=","),
+                                                                                                f=paste(eval(as.name(excluded_names[6])), collapse=","),
+                                                                                                g=paste(eval(as.name(excluded_names[7])), collapse=","))
         colnames(data) <- c(abbr[i], excluded_names)
         for (p in abbr){
           data[[p]] <- gsub('NA,|,NA', '', data[[p]])
@@ -3284,7 +3181,6 @@ server <- function(input, output, session) {
     #create the zip file from flst vector
     zip(file,  flst) },
   contentType = "application/zip" )
-  
 }
 
 # Run the application 
