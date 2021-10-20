@@ -347,30 +347,12 @@ ui <- shinydashboard::dashboardPage(
             ),
             div(
               id = "id2",
-              shinyjqui::jqui_resizable( shinydashboard::box(
-                title = "DeepBGC filtering",
-                collapsible = TRUE,
-                shiny::sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-                shiny::sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-                shiny::sliderInput("score_c", "Cluster_type score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-                # Domains, biodomains and proteins dplyr::filter. Remain >= of set threshold
-                shiny::sliderInput("domains_filter", "Domain number threshold for DeepBGC data", min = 0, max = 100, value = 5),
-                shiny::sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
-                shiny::sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
-                shiny::sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
-              ))
+              shinyjqui::jqui_resizable(shiny::uiOutput("deep_filter_box"))
             ),
             
             div(
               id = "id3",
-              shinyjqui::jqui_resizable(shinydashboard::box(
-                title = "GECCO filtering",
-                collapsible = TRUE,
-                shiny::sliderInput("score_average_gecco", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
-                shiny::sliderInput("score_cluster_gecco", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
-                shiny::sliderInput("domains_filter_gecco", "Domain number threshold for Gecco data", min = 0, max = 100, value = 1),
-                shiny::sliderInput("prot_filter_gecco", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1)
-              ))
+              shinyjqui::jqui_resizable(shiny::uiOutput("gecco_filter_box"))
             ),
             div(
               id = "id4",
@@ -744,20 +726,38 @@ server <- function(input, output, session) {
     score_a <- apply(vals$deep_data %>% dplyr::select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
     score_d <- apply(vals$deep_data %>% dplyr::select(c("deepbgc_score")),1, function(x) max(x))
     score_c <- apply(vals$deep_data %>% dplyr::select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
-    deep_data_chromo <- vals$deep_data %>%
-      dplyr::mutate(score = apply(vals$deep_data %>%
-                                    dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
-    # Cluster_type column. Here extract colnames, and assign max value to a new column
-    deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
-    # If max score is under_threshold, print "under_threshold"
-    deep_data_chromo <- deep_data_chromo%>%
-      dplyr::mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "under_threshold"))
-    #Finally store deepbgc data in plotting variable. Do final scores processing 
-    biocircos_deep <- deep_data_chromo%>%
-      dplyr::mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
-      dplyr::filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , 
-                    score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
-                    num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
+    if (is.null(input$cluster_type)){
+      deep_data_chromo <- vals$deep_data %>%
+        dplyr::mutate(score = apply(vals$deep_data %>%
+                                      dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
+      # Cluster_type column. Here extract colnames, and assign max value to a new column
+      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
+      # If max score is under_threshold, print "under_threshold"
+      deep_data_chromo <- deep_data_chromo%>%
+        dplyr::mutate(Cluster_type = ifelse(score>50/100, Cluster_type, "under_threshold"))
+      #Finally store deepbgc data in plotting variable. Do final scores processing 
+      biocircos_deep <- deep_data_chromo%>%
+        dplyr::mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
+        dplyr::filter(score_a >= 50/ 100, score_c >=50/100 , 
+                      score_d >= 50/100,  num_domains >= 5,
+                      num_bio_domains>=1, num_proteins>=1)
+    } else {
+      deep_data_chromo <- vals$deep_data %>%
+        dplyr::mutate(score = apply(vals$deep_data %>%
+                                      dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
+      # Cluster_type column. Here extract colnames, and assign max value to a new column
+      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
+      # If max score is under_threshold, print "under_threshold"
+      deep_data_chromo <- deep_data_chromo%>%
+        dplyr::mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "under_threshold"))
+      #Finally store deepbgc data in plotting variable. Do final scores processing 
+      biocircos_deep <- deep_data_chromo%>%
+        dplyr::mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
+        dplyr::filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , 
+                      score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
+                      num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
+    }
+    
     biocircos_deep['Start'] <- biocircos_deep$nucl_start
     biocircos_deep['Stop'] <- biocircos_deep$nucl_end
     biocircos_deep['Type'] <- biocircos_deep$product_class
@@ -769,14 +769,23 @@ server <- function(input, output, session) {
   filter_gecco <- function(){
     score_a_gecco <- apply(vals$gecco_data %>% dplyr::select(c("average_p")),1, function(x) max(x))
     score_c_gecco <- apply(vals$gecco_data %>% dplyr::select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
-    # Store master prism data in local variable
-    gecco_data <- vals$gecco_data %>%
-      dplyr::mutate(score = apply(vals$gecco_data %>%
-                                    dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) %>%
-      dplyr::mutate(Cluster_type = ifelse(score>as.numeric(input$score_cluster_gecco)/100, Type2, "under_threshold")) %>%
-      dplyr::mutate( Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
-      dplyr::filter(score_a >= as.numeric(input$score_average_gecco )/ 100, score_c >=as.numeric(input$score_cluster_gecco)/100 ,
-                    num_domains >= input$domains_filter_gecco, num_prot>=input$prot_filter_gecco)
+    if (is.null(input$score_cluster_gecco)){
+      gecco_data <- vals$gecco_data %>%
+        dplyr::mutate(score = apply(vals$gecco_data %>%
+                                      dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) %>%
+        dplyr::mutate(Cluster_type = ifelse(score>50/100, Type2, "under_threshold")) %>%
+        dplyr::mutate( Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
+        dplyr::filter(score_a >= 50/ 100, score_c >=50/100 ,
+                      num_domains >= 1, num_prot>=1)
+    } else{
+      gecco_data <- vals$gecco_data %>%
+        dplyr::mutate(score = apply(vals$gecco_data %>%
+                                      dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) %>%
+        dplyr::mutate(Cluster_type = ifelse(score>as.numeric(input$score_cluster_gecco)/100, Type2, "under_threshold")) %>%
+        dplyr::mutate( Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
+        dplyr::filter(score_a >= as.numeric(input$score_average_gecco )/ 100, score_c >=as.numeric(input$score_cluster_gecco)/100 ,
+                      num_domains >= input$domains_filter_gecco, num_prot>=input$prot_filter_gecco)
+    }
     return(gecco_data)
   }
   # Renaming the vector for inut$rename event
@@ -1505,42 +1514,6 @@ server <- function(input, output, session) {
       shinyjs::hideElement(selector = "#sempi_width")
     }
   })
-  # Show DeepBGC options if data is available
-  shiny::observeEvent(vals$deep_data_input,{
-    
-    if (vals$deep_data_input == T){
-      shinyjs::showElement(selector = "#score_a")
-      shinyjs::showElement(selector = "#score_d")
-      shinyjs::showElement(selector = "#score_c")
-      shinyjs::showElement(selector = "#domains_filter")
-      shinyjs::showElement(selector = "#biodomain_filter")
-      shinyjs::showElement(selector = "#gene_filter")
-      shinyjs::showElement(selector = "#cluster_type")
-    } else{
-      shinyjs::hideElement(selector = "#score_a")
-      shinyjs::hideElement(selector = "#score_d")
-      shinyjs::hideElement(selector = "#score_c")
-      shinyjs::hideElement(selector = "#domains_filter")
-      shinyjs::hideElement(selector = "#biodomain_filter")
-      shinyjs::hideElement(selector = "#gene_filter")
-      shinyjs::hideElement(selector = "#cluster_type")
-    }
-  })
-  # Show GECCO data options, if data is uploaded
-  shiny::observeEvent(vals$gecco_data_input,{
-    
-    if (vals$gecco_data_input == T){
-      shinyjs::showElement(selector = "#score_average_gecco")
-      shinyjs::showElement(selector = "#score_cluster_gecco")
-      shinyjs::showElement(selector = "#domains_filter_gecco")
-      shinyjs::showElement(selector = "#prot_filter_gecco")
-    } else{
-      shinyjs::hideElement(selector = "#score_average_gecco")
-      shinyjs::hideElement(selector = "#score_cluster_gecco")
-      shinyjs::hideElement(selector = "#domains_filter_gecco")
-      shinyjs::hideElement(selector = "#prot_filter_gecco")
-    }
-  })
   # Ahow ARTS data options, if data is available
   shiny::observeEvent(vals$arts_data_input,{
     
@@ -1590,13 +1563,41 @@ server <- function(input, output, session) {
       shinydashboard::menuItem("Summarize interception", tabName = "summarize_sidemenu", icon = icon("th"))
     }
   })
-  output$biocircos_coloring <- renderUI({
+  output$biocircos_coloring <- shiny::renderUI({
     if (input$ShowBiocircosColoring == T){
       shinydashboardPlus::box(
         title = "Biocircos coloring scheme",
         closable = TRUE,
         collapsible = TRUE,
         DT::dataTableOutput("biocircos_legend")
+      )
+    }
+  })
+  output$deep_filter_box <- shiny::renderUI({
+    if (vals$deep_data_input == T){
+    shinydashboard::box(
+      title = "DeepBGC filtering",
+      collapsible = TRUE,
+      shiny::sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+      shiny::sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+      shiny::sliderInput("score_c", "Cluster_type score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+      # Domains, biodomains and proteins dplyr::filter. Remain >= of set threshold
+      shiny::sliderInput("domains_filter", "Domain number threshold for DeepBGC data", min = 0, max = 100, value = 5),
+      shiny::sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
+      shiny::sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
+      shiny::sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
+    )
+    }
+  })
+  output$gecco_filter_box <- shiny::renderUI({
+    if (vals$gecco_data_input == T){
+      shinydashboard::box(
+        title = "GECCO filtering",
+        collapsible = TRUE,
+        shiny::sliderInput("score_average_gecco", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
+        shiny::sliderInput("score_cluster_gecco", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
+        shiny::sliderInput("domains_filter_gecco", "Domain number threshold for Gecco data", min = 0, max = 100, value = 1),
+        shiny::sliderInput("prot_filter_gecco", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1)
       )
     }
   })
