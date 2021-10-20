@@ -37,14 +37,15 @@ ui <- shinydashboard::dashboardPage(
                                        shinyjqui::jqui_resizable(shinydashboard::box(
                                          title = "DeepBGC comparison",
                                          collapsible = TRUE,
-                                         height = "500px",
-                                         shiny::plotOutput("deep_barplot")
+                                         height = "100%",
+                                         shiny::plotOutput("deep_barplot", height = "500px",)
                                        ))),
                                    div(id = "id2", 
                                        shinyjqui::jqui_resizable(shinydashboard::box(
                                          title = "DeepBGC rate",
                                          collapsible = TRUE,
-                                         plotly::plotlyOutput("deep_rate")
+                                         height = "100%",
+                                         plotly::plotlyOutput("deep_rate", height = "500px",)
                                        ))))),
                                shiny::fluidRow(
                                  tags$div( id = "deep_data2",
@@ -77,8 +78,8 @@ ui <- shinydashboard::dashboardPage(
               shinyjqui::jqui_resizable(shinydashboard::box(
                 title = "GECCO comparison",
                 collapsible = TRUE,
-                height = "500px",
-                shiny::plotOutput("gecco_barplot")
+                height = "100%",
+                shiny::plotOutput("gecco_barplot", height = "500px")
               ))
             ),
             div(
@@ -86,7 +87,8 @@ ui <- shinydashboard::dashboardPage(
               shinyjqui::jqui_resizable(shinydashboard::box(
                 title = "GECCO rate",
                 collapsible = TRUE,
-                plotly::plotlyOutput("gecco_rate")
+                height = "100%",
+                plotly::plotlyOutput("gecco_rate", height = "500px",)
               ))
             ),
           )
@@ -122,7 +124,6 @@ ui <- shinydashboard::dashboardPage(
               id="anno_div_1",
               shinyjqui::jqui_resizable(shinydashboard::box(
                 title = "Annotations reference",
-                id = "anno_box_1",
                 height = "100%",
                 collapsible = TRUE,
                 plotly::plotlyOutput("deep_reference_2")
@@ -163,13 +164,13 @@ ui <- shinydashboard::dashboardPage(
             id = "biocircos_data1",
             div(
               id = "id1",
-              shinyjqui::jqui_resizable(shinydashboardPlus::box(
+              shinydashboardPlus::box(
                 title = "Biocircos plot",
                 collapsible = TRUE,
                 width = 12,
                 shiny::checkboxInput("ShowBiocircosColoring", "Show Biocircos coloring scheme"),
                 BioCircos::BioCircosOutput("biocircos", height = "900px")
-              ))
+              )
             )
           )
         ),
@@ -182,7 +183,7 @@ ui <- shinydashboard::dashboardPage(
             ),
             div(
               id="id2",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinydashboard::box(
                 title = "Biocircos options",
                 collapsible = T,
                 shiny::checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
@@ -193,7 +194,7 @@ ui <- shinydashboard::dashboardPage(
                 ),
                 selected = 'H'),
                 shiny::selectInput("ref_col_biocircos", "Choose reference column to color the links", choices = c(""), selected = '')
-              ))
+              )
             )
           )
         ),
@@ -210,6 +211,7 @@ ui <- shinydashboard::dashboardPage(
               shinyjqui::jqui_resizable(shinydashboard::box(
                 title = "Ranking barplot",
                 collapsible = TRUE,
+                height = "100%",
                 plotly::plotlyOutput("barplot_rank", height = "600px")
               ))
             ),
@@ -219,6 +221,7 @@ ui <- shinydashboard::dashboardPage(
                 title = "Group table",
                 collapsible = TRUE,
                 style='overflow-x: scroll;height:700px;overflow-y: scroll;',
+                height = "100%",
                 shiny::checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
                 shiny::selectInput("group_by", "Group data by", choices = c(""),  selected = ''),
                 shiny::tableOutput("group_table")
