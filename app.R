@@ -16,8 +16,8 @@ ui <- shinydashboard::dashboardPage(
     shinydashboard::sidebarMenu(
       tags$div(
         id="menu_items",
-        div(id = "id6",shinydashboard::menuItem("Upload data", tabName = "uploaddata_sidemenu", icon = icon("th"))),
-        div(id = "id7",shinydashboard::menuItem("Global options", tabName = "options_sidemenu", icon = icon("th"))),
+        div(id = "id6",shinydashboard::menuItem("Upload data", tabName = "uploaddata_sidemenu", icon = icon("fas fa-upload"))),
+        div(id = "id7",shinydashboard::menuItem("Global options", tabName = "options_sidemenu", icon = icon("fas fa-cogs"))),
         div(id = "id1",shinydashboard::menuItemOutput("deep_sidemenu_out")),
         div(id = "id2",shinydashboard::menuItemOutput("gecco_sidemenu_out")),
         div(id = "id3",shinydashboard::menuItemOutput("anno_sidemenu_out")),
@@ -1534,7 +1534,7 @@ server <- function(input, output, session) {
   output$deep_sidemenu_out <- shinydashboard::renderMenu({
     if (vals$data_upload_count >=2){
       if ((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )) {
-        shinydashboard::menuItem("Compare data with DeepBGC", tabName = "deep_sidemenu", icon = icon("dashboard")
+        shinydashboard::menuItem("Compare data with DeepBGC", tabName = "deep_sidemenu", icon = icon("fab fa-dyalog")
         )
         
       }
