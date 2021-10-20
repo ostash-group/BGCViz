@@ -119,21 +119,23 @@ ui <- shinydashboard::dashboardPage(
           tags$div(
             id="anno_data1",
             div(
-              id="id1",
-              shinydashboard::box(
+              id="anno_div_1",
+              shinyjqui::jqui_resizable(shinydashboard::box(
                 title = "Annotations reference",
+                id = "anno_box_1",
+                height = "100%",
                 collapsible = TRUE,
-                shinyjqui::jqui_resizable(plotly::plotlyOutput("deep_reference_2"))
-              )
+                plotly::plotlyOutput("deep_reference_2")
+              ))
             ),
             div(
               id="id2",
               shinyjqui::jqui_resizable(shinydashboard::box(
                 title = "Annotation comparison to the reference",
                 collapsible = TRUE,
-                height = "500px",
+                height = "100%",
                 plotly::plotlyOutput("deep_reference")
-              ))
+              )),
             )
           )
         ),
@@ -165,9 +167,8 @@ ui <- shinydashboard::dashboardPage(
                 title = "Biocircos plot",
                 collapsible = TRUE,
                 width = 12,
-                height = "700px",
                 shiny::checkboxInput("ShowBiocircosColoring", "Show Biocircos coloring scheme"),
-                BioCircos::BioCircosOutput("biocircos")
+                BioCircos::BioCircosOutput("biocircos", height = "900px")
               ))
             )
           )
@@ -209,8 +210,7 @@ ui <- shinydashboard::dashboardPage(
               shinyjqui::jqui_resizable(shinydashboard::box(
                 title = "Ranking barplot",
                 collapsible = TRUE,
-                height = "600px",
-                plotly::plotlyOutput("barplot_rank")
+                plotly::plotlyOutput("barplot_rank", height = "600px")
               ))
             ),
             div(
@@ -218,7 +218,7 @@ ui <- shinydashboard::dashboardPage(
               shinyjqui::jqui_resizable( shinydashboard::box(
                 title = "Group table",
                 collapsible = TRUE,
-                height = "600px",
+                style='overflow-x: scroll;height:700px;overflow-y: scroll;',
                 shiny::checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
                 shiny::selectInput("group_by", "Group data by", choices = c(""),  selected = ''),
                 shiny::tableOutput("group_table")
@@ -357,6 +357,7 @@ ui <- shinydashboard::dashboardPage(
                 shiny::sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
               ))
             ),
+            
             div(
               id = "id3",
               shinyjqui::jqui_resizable(shinydashboard::box(
@@ -1557,7 +1558,9 @@ server <- function(input, output, session) {
   output$deep_sidemenu_out <- shinydashboard::renderMenu({
     if (vals$data_upload_count >=2){
       if ((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )) {
-        shinydashboard::menuItem("Compare data with DeepBGC", tabName = "deep_sidemenu", icon = icon("dashboard"))
+        shinydashboard::menuItem("Compare data with DeepBGC", tabName = "deep_sidemenu", icon = icon("dashboard")
+        )
+        
       }
     }
   })
@@ -1565,7 +1568,6 @@ server <- function(input, output, session) {
     if (vals$data_upload_count >=2){
       if ((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )){
         shinydashboard::menuItem("Compare data with GECCO", tabName = "gecco_sidemenu", icon = icon("th"))
-        shinyjs::showElement(selector = "#ref_comparison_gecco")
       }
     }
     
@@ -2961,7 +2963,8 @@ server <- function(input, output, session) {
       color = "#000"),
       bordercolor = "#FFFFFF",
       borderwidth = 2,
-      title=list(text='<b> Cluster Types </b>')))
+      title=list(text='<b> Cluster Types </b>')),
+      autosize=TRUE)
   }) #%>% shiny::debounce(200)
   
   ##----------------------------------------------------------------
