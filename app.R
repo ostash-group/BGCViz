@@ -9,6 +9,8 @@
 # in one genome
 #
 library(magrittr)
+
+options(spinner.type=6)
 # Define UI 
 ui <- shinydashboard::dashboardPage(
   shinydashboard::dashboardHeader(title = "BGCViz"),
@@ -28,6 +30,19 @@ ui <- shinydashboard::dashboardPage(
   ),
   shinydashboard::dashboardBody(
     shinyjs::useShinyjs(),
+    shinydisconnect::disconnectMessage(
+      text = "An error occurred. Please refresh the page and try again. Also, if error persists, then you are welcome to create an issue at https://github.com/ostash-group/BGCViz/issues (:",
+      refresh = "Refresh",
+      background = "#FFFFFF",
+      colour = "#444444",
+      refreshColour = "#337AB7",
+      overlayColour = "#000000",
+      overlayOpacity = 0.6,
+      width = 450,
+      top = 50,
+      size = 22,
+      css = ""
+    ),
     shinydashboard::tabItems(
       shinydashboard::tabItem( tabName = "deep_sidemenu",
                                shiny::fluidRow(
@@ -38,14 +53,16 @@ ui <- shinydashboard::dashboardPage(
                                          title = "DeepBGC comparison",
                                          collapsible = TRUE,
                                          height = "100%",
-                                         shiny::plotOutput("deep_barplot", height = "500px",)
+                                         shiny::plotOutput("deep_barplot", height = "500px",) %>%
+                                           shinycssloaders::withSpinner()
                                        ))),
                                    div(id = "id2", 
                                        shinyjqui::jqui_resizable(shinydashboard::box(
                                          title = "DeepBGC rate",
                                          collapsible = TRUE,
                                          height = "100%",
-                                         plotly::plotlyOutput("deep_rate", height = "500px",)
+                                         plotly::plotlyOutput("deep_rate", height = "500px",) %>%
+                                           shinycssloaders::withSpinner()
                                        ))))),
                                shiny::fluidRow(
                                  tags$div( id = "deep_data2",
@@ -79,7 +96,8 @@ ui <- shinydashboard::dashboardPage(
                 title = "GECCO comparison",
                 collapsible = TRUE,
                 height = "100%",
-                shiny::plotOutput("gecco_barplot", height = "500px")
+                shiny::plotOutput("gecco_barplot", height = "500px") %>%
+                  shinycssloaders::withSpinner()
               ))
             ),
             div(
@@ -88,7 +106,8 @@ ui <- shinydashboard::dashboardPage(
                 title = "GECCO rate",
                 collapsible = TRUE,
                 height = "100%",
-                plotly::plotlyOutput("gecco_rate", height = "500px",)
+                plotly::plotlyOutput("gecco_rate", height = "500px",)%>%
+                  shinycssloaders::withSpinner()
               ))
             ),
           )
@@ -126,7 +145,8 @@ ui <- shinydashboard::dashboardPage(
                 title = "Annotations reference",
                 height = "100%",
                 collapsible = TRUE,
-                plotly::plotlyOutput("deep_reference_2")
+                plotly::plotlyOutput("deep_reference_2")  %>%
+                  shinycssloaders::withSpinner()
               ))
             ),
             div(
@@ -135,7 +155,8 @@ ui <- shinydashboard::dashboardPage(
                 title = "Annotation comparison to the reference",
                 collapsible = TRUE,
                 height = "100%",
-                plotly::plotlyOutput("deep_reference")
+                plotly::plotlyOutput("deep_reference")  %>%
+                  shinycssloaders::withSpinner()
               )),
             )
           )
@@ -169,7 +190,8 @@ ui <- shinydashboard::dashboardPage(
                 collapsible = TRUE,
                 width = 12,
                 shiny::checkboxInput("ShowBiocircosColoring", "Show Biocircos coloring scheme"),
-                BioCircos::BioCircosOutput("biocircos", height = "900px")
+                BioCircos::BioCircosOutput("biocircos", height = "900px")%>%
+                  shinycssloaders::withSpinner()
               )
             )
           )
@@ -212,7 +234,8 @@ ui <- shinydashboard::dashboardPage(
                 title = "Ranking barplot",
                 collapsible = TRUE,
                 height = "100%",
-                plotly::plotlyOutput("barplot_rank", height = "600px")
+                plotly::plotlyOutput("barplot_rank", height = "600px")%>%
+                  shinycssloaders::withSpinner()
               ))
             ),
             div(
@@ -224,7 +247,8 @@ ui <- shinydashboard::dashboardPage(
                 height = "100%",
                 shiny::checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
                 shiny::selectInput("group_by", "Group data by", choices = c(""),  selected = ''),
-                shiny::tableOutput("group_table")
+                shiny::tableOutput("group_table")%>%
+                  shinycssloaders::withSpinner()
               ))
             )
           )
@@ -457,12 +481,9 @@ server <- function(input, output, session) {
   # Validation
   check_if_column_exists <- function(data_names,column_name){
     if (column_name %in% stringr::str_to_lower(data_names)){
-      if (F %in% grepl('rre', column_name)){
-        data_names[stringr::str_to_lower(data_names) %in% column_name] <- stringr::str_to_title(column_name)
-      }
       return(TRUE)
     } else {
-      shiny::showNotification( paste0("Data have no ", column_name, " column."),type = "warning")
+      shiny::showNotification( paste0(column_name, " column does not exist. Data was not integrated into analysis. Please recheck your data and try one more time"),type = "warning")
       return(FALSE)
     }
   }
@@ -514,7 +535,6 @@ server <- function(input, output, session) {
       return(FALSE)
     }
     if (F %in% grepl("__", data$Gene.name)){
-      shiny::showNotification( paste0("Gene.name column contain no '__' delimiter. Please refer to the documentation on how to prepare RRE-Finder data"),type = "error")
       return(FALSE)
     }
     if (!(check_if_column_exists(data_names, 'e.value'))){
@@ -547,6 +567,33 @@ server <- function(input, output, session) {
         return(FALSE)
       } else {
         data$Probability <- as.numeric(data$Probability)
+      }
+    }
+    return(list(TRUE, data))
+  }
+  validate_deep_input <- function(data){
+    data_names <- names(data)
+    col_names <- c("nucl_start", "nucl_end","num_proteins", "num_domains", "num_bio_domains","deepbgc_score","antibacterial",
+                   "cytotoxic","inhibitor","antifungal","alkaloid","nrp","other","polyketide","ripp","saccharide","terpene",
+                   "bgc_candidate_id", "sequence_id")
+    num_columns <- c("nucl_start", "nucl_end","num_proteins", "num_domains", "num_bio_domains","deepbgc_score","antibacterial",
+                     "cytotoxic","inhibitor","antifungal","alkaloid","nrp","other","polyketide","ripp","saccharide","terpene")
+    if (!('cluster' %in% stringr::str_to_lower(data_names))){
+      data$Cluster <- seq(1:dim(data)[1])
+    }
+    for (column_name in col_names){
+      if (!(check_if_column_exists(data_names, column_name))){
+        return(FALSE)
+      }
+      if ( T %in% is.na(data[[column_name]])){
+        return(FALSE)
+      }
+      if ( "" %in% data[[column_name]]){
+        return(FALSE)
+      }
+      if (column_name %in% num_columns){
+        names(data)[stringi::stri_trans_tolower(names(data)) == column_name] <- column_name
+        data[[column_name]] <- as.numeric(data[[column_name]])
       }
     }
     return(list(TRUE, data))
@@ -1177,11 +1224,17 @@ server <- function(input, output, session) {
     } 
   }
   read_deep <- function(data){
-    drop_cols <- c("Alkaloid", "NRP","Other","Polyketide","RiPP","Saccharide","Terpene")
+    res_validation <- validate_deep_input(data)
+    if (!(res_validation[[1]])){
+      deep_data <- NULL
+      return(NULL)
+    } else{
+      deep_data <- res_validation[[2]]
+    }
+    drop_cols <- c("nrp","polyketide")
     # Read data
-    deep_data <- data %>%
-      dplyr::mutate(pks=Polyketide, other = Other, nrps = NRP, alkaloid = Alkaloid, 
-                    terpene = Terpene, saccharide = Saccharide, ripp = RiPP) %>%
+    deep_data <- deep_data %>%
+      dplyr::mutate(pks=polyketide, nrps = nrp ) %>%
       dplyr::select(-dplyr::one_of(drop_cols))
     # Add chromosome info column
     vals$deep_data <- deep_data
@@ -1271,7 +1324,6 @@ server <- function(input, output, session) {
   })
   
   shiny::observeEvent(input$gecco_sco,{
-    
     gecco_data <- read.delim("example_data/sco_gecco.tsv")
     read_gecco(gecco_data)
     
@@ -1286,7 +1338,6 @@ server <- function(input, output, session) {
   })
   
   shiny::observeEvent(input$sempi_sco,{
-    
     sempi_data <- read.csv("example_data/sco_sempi.csv")
     read_sempi(sempi_data)
     
@@ -1543,24 +1594,24 @@ server <- function(input, output, session) {
   output$gecco_sidemenu_out <- shinydashboard::renderMenu({
     if (vals$data_upload_count >=2){
       if ((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )){
-        shinydashboard::menuItem("Compare data with GECCO", tabName = "gecco_sidemenu", icon = icon("th"))
+        shinydashboard::menuItem("Compare data with GECCO", tabName = "gecco_sidemenu", icon = icon("fas fa-dragon"))
       }
     }
     
   })
   output$anno_sidemenu_out <- shinydashboard::renderMenu({
     if (vals$data_upload_count >=1){
-      shinydashboard::menuItem("Annotation visualization and comparison", tabName = "anno_sidemenu", icon = icon("th"))
+      shinydashboard::menuItem("Annotation visualization and comparison", tabName = "anno_sidemenu", icon = icon("fas fa-project-diagram"))
     }
   })
   output$biocircos_sidemenu_out <- shinydashboard::renderMenu({
     if (vals$data_upload_count >=2){
-      shinydashboard::menuItem("Biocircos plot", tabName = "biocircos_sidemenu", icon = icon("th"))
+      shinydashboard::menuItem("Biocircos plot", tabName = "biocircos_sidemenu", icon = icon("fas fa-circle-notch"))
     }
   })
   output$summarize_sidemenu_out <- shinydashboard::renderMenu({
     if (vals$data_upload_count >=2){
-      shinydashboard::menuItem("Summarize interception", tabName = "summarize_sidemenu", icon = icon("th"))
+      shinydashboard::menuItem("Summarize interception", tabName = "summarize_sidemenu", icon = icon("fas fa-chart-bar"))
     }
   })
   output$biocircos_coloring <- shiny::renderUI({
@@ -1569,7 +1620,8 @@ server <- function(input, output, session) {
         title = "Biocircos coloring scheme",
         closable = TRUE,
         collapsible = TRUE,
-        DT::dataTableOutput("biocircos_legend")
+        DT::dataTableOutput("biocircos_legend") %>%
+          shinycssloaders::withSpinner()
       )
     }
   })
