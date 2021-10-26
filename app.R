@@ -1587,7 +1587,7 @@ server <- function(input, output, session) {
       if ((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )) {
         shinydashboard::menuItem("Compare data with DeepBGC", tabName = "deep_sidemenu", icon = shiny::icon("dyalog"),
                                  shinydashboard::menuItem("Compare with DeepBGC plots", tabName = "deep_sidemenu", icon = shiny::icon("chart-pie")),
-                                 shinydashboard::menuItem("Filtering options", tabName = "deep_filter",
+                                 shinydashboard::menuItem("Filtering options", tabName = "deep_filter", icon = shiny::icon("filter"),
                                                           shiny::uiOutput("deep_filter_UI_sidemenu")
                                  )
         )
@@ -1598,7 +1598,11 @@ server <- function(input, output, session) {
   output$gecco_sidemenu_out <- shinydashboard::renderMenu({
     if (vals$data_upload_count >=2){
       if ((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )){
-        shinydashboard::menuItem("Compare data with GECCO", tabName = "gecco_sidemenu", icon = icon("fas fa-dragon"))
+        shinydashboard::menuItem("Compare data with GECCO", tabName = "gecco", icon = icon("fas fa-dragon"),
+                                 shinydashboard::menuItem("Compare with GECCO plots", tabName = "gecco_sidemenu", icon = shiny::icon("chart-pie")),
+                                 shinydashboard::menuItem("Filtering options", tabName = "gecco_filter", icon = shiny::icon("filter"),
+                                                          shiny::uiOutput("gecco_filter_UI_sidemenu")
+                                 ))
       }
     }
     
@@ -1643,10 +1647,7 @@ server <- function(input, output, session) {
       shinydashboard::box(
         title = "GECCO filtering",
         collapsible = TRUE,
-        shiny::sliderInput("score_average_gecco", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
-        shiny::sliderInput("score_cluster_gecco", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
-        shiny::sliderInput("domains_filter_gecco", "Domain number threshold for Gecco data", min = 0, max = 100, value = 1),
-        shiny::sliderInput("prot_filter_gecco", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1)
+        shiny::uiOutput("gecco_filter_UI")
       )
     }
   })
@@ -1672,6 +1673,22 @@ server <- function(input, output, session) {
       shiny::sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
       shiny::sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
       shiny::sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
+    )
+  })
+  output$gecco_filter_UI_sidemenu <- shiny::renderUI({
+    shiny::tagList(
+      shiny::sliderInput("score_average_gecco_sidemenu", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
+      shiny::sliderInput("score_cluster_gecco_sidemenu", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
+      shiny::sliderInput("domains_filter_gecco_sidemenu", "Domain number threshold for Gecco data", min = 0, max = 100, value = 1),
+      shiny::sliderInput("prot_filter_gecco_sidemenu", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1)
+    )
+  })
+  output$gecco_filter_UI <- shiny::renderUI({
+    shiny::tagList(
+      shiny::sliderInput("score_average_gecco", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
+      shiny::sliderInput("score_cluster_gecco", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
+      shiny::sliderInput("domains_filter_gecco", "Domain number threshold for Gecco data", min = 0, max = 100, value = 1),
+      shiny::sliderInput("prot_filter_gecco", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1)
     )
   })
   
@@ -1720,6 +1737,31 @@ server <- function(input, output, session) {
     shiny::updateSliderInput(session, "cluster_type", NULL, input$cluster_type_sidemenu)
   })
   
+  
+  observeEvent(input$score_average_gecco,{
+    shiny::updateSliderInput(session, "score_average_gecco_sidemenu", NULL, input$score_average_gecco)
+  })
+  observeEvent(input$score_cluster_gecco,{
+    shiny::updateSliderInput(session, "score_cluster_gecco_sidemenu", NULL, input$score_cluster_gecco)
+  })
+  observeEvent(input$domains_filter_gecco,{
+    shiny::updateSliderInput(session, "domains_filter_gecco_sidemenu", NULL, input$domains_filter_gecco)
+  })
+  observeEvent(input$prot_filter_gecco,{
+    shiny::updateSliderInput(session, "prot_filter_gecco_sidemenu", NULL, input$prot_filter_gecco)
+  })
+  observeEvent(input$score_average_gecco_sidemenu,{
+    shiny::updateSliderInput(session, "score_average_gecco", NULL, input$score_average_gecco_sidemenu)
+  })
+  observeEvent(input$score_cluster_gecco_sidemenu,{
+    shiny::updateSliderInput(session, "score_cluster_gecco", NULL, input$score_cluster_gecco_sidemenu)
+  })
+  observeEvent(input$domains_filter_gecco_sidemenu,{
+    shiny::updateSliderInput(session, "domains_filter_gecco", NULL, input$domains_filter_gecco_sidemenu)
+  })
+  observeEvent(input$prot_filter_gecco_sidemenu,{
+    shiny::updateSliderInput(session, "prot_filter_gecco", NULL, input$prot_filter_gecco_sidemenu)
+  })
   
   
   
