@@ -1585,8 +1585,8 @@ server <- function(input, output, session) {
   output$deep_sidemenu_out <- shinydashboard::renderMenu({
     if (vals$data_upload_count >=2){
       if ((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )) {
-        shinydashboard::menuItem("Compare data with DeepBGC", tabName = "deep", icon = icon("fab fa-dyalog"),
-                                 shinydashboard::menuItem("Compare with DeepBGC plots", tabName = "deep_sidemenu", icon = icon("far fa-chart-pie-alt")),
+        shinydashboard::menuItem("Compare data with DeepBGC", tabName = "deep_sidemenu", icon = shiny::icon("dyalog"),
+                                 shinydashboard::menuItem("Compare with DeepBGC plots", tabName = "deep_sidemenu", icon = shiny::icon("chart-pie")),
                                  shinydashboard::menuItem("Filtering options", tabName = "deep_filter",
                                                           shiny::uiOutput("deep_filter_UI_sidemenu")
                                  )
