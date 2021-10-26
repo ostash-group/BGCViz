@@ -15,20 +15,23 @@ options(spinner.type=6)
 ui <- shinydashboard::dashboardPage(
   shinydashboard::dashboardHeader(title = "BGCViz"),
   shinydashboard::dashboardSidebar(
+    width = 350,
     shinydashboard::sidebarMenu(
-      tags$div(
         id="menu_items",
-        div(id = "id6",shinydashboard::menuItem("Upload data", tabName = "uploaddata_sidemenu", icon = icon("fas fa-upload"))),
-        div(id = "id7",shinydashboard::menuItem("Global options", tabName = "options_sidemenu", icon = icon("fas fa-cogs"))),
-        div(id = "id1",shinydashboard::menuItemOutput("deep_sidemenu_out")),
-        div(id = "id2",shinydashboard::menuItemOutput("gecco_sidemenu_out")),
-        div(id = "id3",shinydashboard::menuItemOutput("anno_sidemenu_out")),
-        div(id = "id4",shinydashboard::menuItemOutput("biocircos_sidemenu_out")),
-        div(id = "id5",shinydashboard::menuItemOutput("summarize_sidemenu_out"))
-      )),
-    sortable::sortable_js("menu_items")
+        style = "white-space: normal;",
+        shinydashboard::menuItem("Upload data", tabName = "uploaddata_sidemenu", icon = icon("fas fa-upload")),
+        shinydashboard::menuItem("Global options", tabName = "options_sidemenu", icon = icon("fas fa-cogs")),
+        shinydashboard::menuItemOutput("deep_sidemenu_out"),
+        shinydashboard::menuItemOutput("gecco_sidemenu_out"),
+        shinydashboard::menuItemOutput("anno_sidemenu_out"),
+        shinydashboard::menuItemOutput("biocircos_sidemenu_out"),
+        shinydashboard::menuItemOutput("summarize_sidemenu_out")
+      )
   ),
   shinydashboard::dashboardBody(
+    tags$head( 
+      tags$style(HTML(".main-sidebar { font-size: 15px; }")) #change the font size to 20
+    ),
     shinyjs::useShinyjs(),
     shinydisconnect::disconnectMessage(
       text = "An error occurred. Please refresh the page and try again. Also, if error persists, then you are welcome to create an issue at https://github.com/ostash-group/BGCViz/issues (:",
