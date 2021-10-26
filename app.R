@@ -9,7 +9,7 @@
 # in one genome
 #
 library(magrittr)
-
+#options(repos = BiocManager::repositories())
 options(spinner.type=6)
 # Define UI 
 ui <- shinydashboard::dashboardPage(
@@ -1585,7 +1585,11 @@ server <- function(input, output, session) {
   output$deep_sidemenu_out <- shinydashboard::renderMenu({
     if (vals$data_upload_count >=2){
       if ((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) )) {
-        shinydashboard::menuItem("Compare data with DeepBGC", tabName = "deep_sidemenu", icon = icon("fab fa-dyalog")
+        shinydashboard::menuItem("Compare data with DeepBGC", tabName = "deep", icon = icon("fab fa-dyalog"),
+                                 shinydashboard::menuItem("Compare with DeepBGC plots", tabName = "deep_sidemenu", icon = icon("far fa-chart-pie-alt")),
+                                 shinydashboard::menuItem("Filtering options", tabName = "deep_filter",
+                                                          shiny::uiOutput("deep_filter_UI_sidemenu")
+                                 )
         )
         
       }
@@ -1630,14 +1634,7 @@ server <- function(input, output, session) {
     shinydashboard::box(
       title = "DeepBGC filtering",
       collapsible = TRUE,
-      shiny::sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-      shiny::sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-      shiny::sliderInput("score_c", "Cluster_type score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-      # Domains, biodomains and proteins dplyr::filter. Remain >= of set threshold
-      shiny::sliderInput("domains_filter", "Domain number threshold for DeepBGC data", min = 0, max = 100, value = 5),
-      shiny::sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
-      shiny::sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
-      shiny::sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
+      shiny::uiOutput("deep_filter_UI")
     )
     }
   })
@@ -1653,6 +1650,79 @@ server <- function(input, output, session) {
       )
     }
   })
+  output$deep_filter_UI_sidemenu <- shiny::renderUI({
+  shiny::tagList(
+    shiny::sliderInput("score_a_sidemenu", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+    shiny::sliderInput("score_d_sidemenu", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+    shiny::sliderInput("score_c_sidemenu", "Cluster_type score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+    # Domains, biodomains and proteins dplyr::filter. Remain >= of set threshold
+    shiny::sliderInput("domains_filter_sidemenu", "Domain number threshold for DeepBGC data", min = 0, max = 100, value = 5),
+    shiny::sliderInput("biodomain_filter_sidemenu", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
+    shiny::sliderInput("gene_filter_sidemenu", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
+    shiny::sliderInput("cluster_type_sidemenu","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
+    )
+  })
+  output$deep_filter_UI <- shiny::renderUI({
+    shiny::tagList(
+      shiny::sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+      shiny::sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+      shiny::sliderInput("score_c", "Cluster_type score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+      # Domains, biodomains and proteins dplyr::filter. Remain >= of set threshold
+      shiny::sliderInput("domains_filter", "Domain number threshold for DeepBGC data", min = 0, max = 100, value = 5),
+      shiny::sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
+      shiny::sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
+      shiny::sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
+    )
+  })
+  
+  
+  observeEvent(input$score_a,{
+    
+      shiny::updateSliderInput(session, "score_a_sidemenu", NULL, input$score_a)
+   })
+  observeEvent(input$score_d,{
+    shiny::updateSliderInput(session, "score_d_sidemenu", NULL, input$score_d)
+  })
+  observeEvent(input$score_c,{
+    shiny::updateSliderInput(session, "score_c_sidemenu", NULL, input$score_c)
+  })
+  observeEvent(input$domains_filter,{
+    shiny::updateSliderInput(session, "domains_filter_sidemenu", NULL, input$domains_filter)
+  })
+  observeEvent(input$biodomain_filter,{
+    shiny::updateSliderInput(session, "biodomain_filter_sidemenu", NULL, input$biodomain_filter)
+  })
+  observeEvent(input$gene_filter,{
+    shiny::updateSliderInput(session, "gene_filter_sidemenu", NULL, input$gene_filter)
+  })
+  observeEvent(input$cluster_type,{
+    shiny::updateSliderInput(session, "cluster_type_sidemenu", NULL, input$cluster_type)
+  })
+  observeEvent(input$score_a_sidemenu,{
+    shiny::updateSliderInput(session, "score_a", NULL, input$score_a_sidemenu)
+  })
+  observeEvent(input$score_d_sidemenu,{
+    shiny::updateSliderInput(session, "score_d", NULL, input$score_d_sidemenu)
+  })
+  observeEvent(input$score_c_sidemenu,{
+    shiny::updateSliderInput(session, "score_c", NULL, input$score_c_sidemenu)
+  })
+  observeEvent(input$domains_filter_sidemenu,{
+    shiny::updateSliderInput(session, "domains_filter", NULL, input$domains_filter_sidemenu)
+  })
+  observeEvent(input$biodomain_filter_sidemenu,{
+    shiny::updateSliderInput(session, "biodomain_filter", NULL, input$biodomain_filter_sidemenu)
+  })
+  observeEvent(input$gene_filter_sidemenu,{
+    shiny::updateSliderInput(session, "gene_filter", NULL, input$gene_filter_sidemenu)
+  })
+  observeEvent(input$cluster_type_sidemenu,{
+    shiny::updateSliderInput(session, "cluster_type", NULL, input$cluster_type_sidemenu)
+  })
+  
+  
+  
+  
   
   # Logic show/hide selectinput in Link coloring in
   # Biocircos
