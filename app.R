@@ -428,7 +428,8 @@ server <- function(input, output, session) {
   biocircos_listen <- shiny::reactive({
     list( input$biocircos_color,vals$need_filter, input$label_color, input$label_color_class, 
           input$ref_col_biocircos, vals$inters_filtered,  input$prism_supp_data_input_width, vals$prism_supp_data_input,
-          input$arts_width, input$sempi_width, input$rre_width, input$rename, input$reset_name,  vals$coloring_datatable
+          input$arts_width, input$sempi_width, input$rre_width, vals$anti_data, vals$sempi_data, vals$prism_data,
+          vals$coloring_datatable
           
     )
   })
@@ -443,7 +444,7 @@ server <- function(input, output, session) {
   }) 
   deep_reference <- shiny::reactive({
     list( vals$inters_filtered, vals$rre_more, input$ref, input$arts_width, input$sempi_width, input$rre_width,
-          input$prism_supp_data_input_width)
+          input$prism_supp_data_input_width, vals$anti_data, vals$prism_data, vals$sempi_data)
   })
   
   to_debounce <-  shiny::reactive({
@@ -512,262 +513,8 @@ server <- function(input, output, session) {
   }
   options(shiny.maxRequestSize=100*1024^2)
   # Small function to make integers zeros
-  is.integer0 <- function(x)
-  {
-    is.integer(x) && length(x) == 0L
-  }
-  # Fix the duplicates in PRISM-Supp data. Therefore 1 row for 1 orf
-  fix_duplicates <-  function(test_score, order_vec, regul_genes_orfs, test_name){
-    dupl_names <- regul_genes_orfs[duplicated(regul_genes_orfs)]
-    duplicated_values <- which(duplicated(regul_genes_orfs[order_vec]))
-    test_score <- test_score[order_vec]
-    to_add <- test_score[(which(duplicated(regul_genes_orfs[order_vec])))]
-    test_score <- test_score[-(which(duplicated(regul_genes_orfs[order_vec])))]
-    iterate_one_more_time <- c()
-    should_iterate = F
-    for (i in seq(1:length(test_name))){
-      if (length(dupl_names) == 0){
-        should_iterate = F
-        break
-      }
-      if (test_name[i]==dupl_names[1]){
-        dupl_names = dupl_names[-1]
-        test_score[i] = paste0(test_score[i], "/" ,to_add[1])
-        to_add = to_add[-1]
-        iterate_one_more_time <- c(iterate_one_more_time, i)
-      }
-    }
-    if ((length(iterate_one_more_time)>1) && (length(dupl_names) != 0)){
-      should_iterate = T
-    }
-    while (should_iterate == T) {
-      for (i in iterate_one_more_time){
-        if (test_name[i] == dupl_names[1]){
-          dupl_names = dupl_names[-1]
-          test_score[i] = paste0(test_score[i], "/" ,to_add[1])
-          to_add = to_add[-1]
-        } 
-        if (length(dupl_names)==0){
-          should_iterate = F
-          break
-        }
-      }
-    }
-    return(test_score)
-  }
-  # PRISM JSON data processing
-  process_prism_json_suppl <- function(data){
-    types <- sapply(data$prism_results$clusters, function(x){
-      tolower(x$type)
-    })
-    
-    types <- sapply(types, function(x){
-      if (length(unlist(x))>1){
-        tmp <- stringr::str_trim(paste0(unlist(x), collapse = '', sep = " "))
-        gsub(" ", "__", tmp)
-      }else{
-        x
-      }
-    })
-    
-    start <- sapply(data$prism_results$clusters, function(x){
-      x$start
-      
-    })
-    end <- sapply(data$prism_results$clusters, function(x){
-      x$end
-      
-    })
-    
-    
-    prism_data <-  data.frame(Cluster=as.numeric(seq(1:length(start))), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
-    
-    regul_genes_orfs <- sapply(data$prism_results$regulatory_genes, function(x){
-      x$orf
-    })
-    
-    names <- sapply(data$prism_results$orfs[[1]]$orfs, function(y){
-      y$name
-    })
-    coordinates <- sapply(data$prism_results$orfs[[1]]$orfs, function(y){
-      y$coordinates
-    })
-    
-    test_coords <- as.matrix(coordinates[, names %in% regul_genes_orfs ])
-    
-    
-    reg_genes <-data.frame(t(test_coords))
-    colnames(reg_genes) <- c("Start", "Stop")
-    reg_genes$Type <- 'regulatory'
-    reg_genes$Type2 <- reg_genes$Type
-    
-    test_name <- names[names %in% regul_genes_orfs]
-    ref_names <- test_name
-    order_vec <- order(match(regul_genes_orfs, test_name))
-    
-    
-    test_score <- sapply(data$prism_results$regulatory_genes, function(x){
-      x$score
-    })
-    reg_genes$Score  <- fix_duplicates(test_score , order_vec, regul_genes_orfs, ref_names)
-    test_name <- sapply(data$prism_results$regulatory_genes, function(x){
-      x$name
-    })
-    reg_genes$Name  <- fix_duplicates(test_name , order_vec, regul_genes_orfs, ref_names)
-    test_full_name<- sapply(data$prism_results$regulatory_genes, function(x){
-      x$full_name
-    })
-    reg_genes$Full_name  <- fix_duplicates(test_full_name , order_vec, regul_genes_orfs, ref_names)
-    resist_genes_orfs <- sapply(data$prism_results$resistance_genes, function(x){
-      x$orf
-    })
-    
-    test_coords_res <- as.matrix(coordinates[, names %in% resist_genes_orfs ])
-    
-    
-    res_genes <-data.frame(t(test_coords_res))
-    
-    colnames(res_genes) <- c("Start", "Stop")
-    res_genes$Type <- 'resistance'
-    res_genes$Type2 <- res_genes$Type
-    test_name <- names[names %in% resist_genes_orfs]
-    order_vec <- order(match(resist_genes_orfs, test_name))
-    
-    
-    test_score <- sapply(data$prism_results$resistance_genes, function(x){
-      x$score
-    })
-    res_genes$Score  <- fix_duplicates(test_score , order_vec, resist_genes_orfs, ref_names)
-    test_name <- sapply(data$prism_results$resistance_genes, function(x){
-      x$name
-    })
-    res_genes$Name  <- fix_duplicates(test_name , order_vec, resist_genes_orfs, ref_names)
-    test_full_name<- sapply(data$prism_results$resistance_genes, function(x){
-      x$full_name
-    })
-    res_genes$Full_name  <- fix_duplicates(test_full_name , order_vec, resist_genes_orfs, ref_names)
-    
-    final_reg <- rbind(res_genes, reg_genes) %>% dplyr::arrange(Start)
-    final_reg$ID <- seq(1:dim(final_reg)[1])
-    final_reg$Cluster <- final_reg$ID
-    rownames(final_reg) <- as.numeric(seq(1:dim(final_reg)[1]))
-    return(list(prism_data, final_reg))
-  }
-  # Filtering the DeepBGC
-  filter_deepbgc <- function(){
-    score_a <- apply(vals$deep_data %>% dplyr::select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
-    score_d <- apply(vals$deep_data %>% dplyr::select(c("deepbgc_score")),1, function(x) max(x))
-    score_c <- apply(vals$deep_data %>% dplyr::select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
-    if (is.null(input$cluster_type)){
-      deep_data_chromo <- vals$deep_data %>%
-        dplyr::mutate(score = apply(vals$deep_data %>%
-                                      dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
-      # Cluster_type column. Here extract colnames, and assign max value to a new column
-      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
-      # If max score is under_threshold, print "under_threshold"
-      deep_data_chromo <- deep_data_chromo%>%
-        dplyr::mutate(Cluster_type = ifelse(score>50/100, Cluster_type, "under_threshold"))
-      #Finally store deepbgc data in plotting variable. Do final scores processing 
-      biocircos_deep <- deep_data_chromo%>%
-        dplyr::mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
-        dplyr::filter(score_a >= 50/ 100, score_c >=50/100 , 
-                      score_d >= 50/100,  num_domains >= 5,
-                      num_bio_domains>=1, num_proteins>=1)
-    } else {
-      deep_data_chromo <- vals$deep_data %>%
-        dplyr::mutate(score = apply(vals$deep_data %>%
-                                      dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) 
-      # Cluster_type column. Here extract colnames, and assign max value to a new column
-      deep_data_chromo$Cluster_type <- colnames(deep_data_chromo %>% dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene))[apply(deep_data_chromo%>%dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, which.max) ]
-      # If max score is under_threshold, print "under_threshold"
-      deep_data_chromo <- deep_data_chromo%>%
-        dplyr::mutate(Cluster_type = ifelse(score>as.numeric(input$cluster_type)/100, Cluster_type, "under_threshold"))
-      #Finally store deepbgc data in plotting variable. Do final scores processing 
-      biocircos_deep <- deep_data_chromo%>%
-        dplyr::mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
-        dplyr::filter(score_a >= as.numeric(input$score_a )/ 100, score_c >=as.numeric(input$score_c)/100 , 
-                      score_d >= as.numeric(input$score_d)/100,  num_domains >= input$domains_filter,
-                      num_bio_domains>=input$biodomain_filter, num_proteins>=input$gene_filter)
-    }
-    
-    biocircos_deep['Start'] <- biocircos_deep$nucl_start
-    biocircos_deep['Stop'] <- biocircos_deep$nucl_end
-    biocircos_deep['Type'] <- biocircos_deep$product_class
-    biocircos_deep['Type2'] <- biocircos_deep$product_class
-    biocircos_deep['Cluster'] <- biocircos_deep$ID
-    return(biocircos_deep)
-  }
-  # Filtering GECCO
-  filter_gecco <- function(){
-    score_a_gecco <- apply(vals$gecco_data %>% dplyr::select(c("average_p")),1, function(x) max(x))
-    score_c_gecco <- apply(vals$gecco_data %>% dplyr::select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
-    if (is.null(input$score_cluster_gecco)){
-      gecco_data <- vals$gecco_data %>%
-        dplyr::mutate(score = apply(vals$gecco_data %>%
-                                      dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) %>%
-        dplyr::mutate(Cluster_type = ifelse(score>50/100, Type2, "under_threshold")) %>%
-        dplyr::mutate( Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
-        dplyr::filter(score_a >= 50/ 100, score_c >=50/100 ,
-                      num_domains >= 1, num_prot>=1)
-    } else{
-      gecco_data <- vals$gecco_data %>%
-        dplyr::mutate(score = apply(vals$gecco_data %>%
-                                      dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene),1, function(x) max(x))) %>%
-        dplyr::mutate(Cluster_type = ifelse(score>as.numeric(input$score_cluster_gecco)/100, Type2, "under_threshold")) %>%
-        dplyr::mutate( Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
-        dplyr::filter(score_a >= as.numeric(input$score_average_gecco )/ 100, score_c >=as.numeric(input$score_cluster_gecco)/100 ,
-                      num_domains >= input$domains_filter_gecco, num_prot>=input$prot_filter_gecco)
-    }
-    return(gecco_data)
-  }
-  # Renaming the vector for inut$rename event
-  rename_vector <- function(data, renamed_dataframe){
-    type <- stringr::str_split(data$Type2, "__")
-    type_2 <- sapply(type, function(x){
-      sapply(x, function(y){
-        if (y %in% renamed_dataframe$Code){
-          renamed <- as.character(renamed_dataframe$Group[renamed_dataframe$Code == y])
-          if( (length(renamed) >1) & (!( as.character(y) %in% names(vals$renaming_notification)))){
-            shiny::showNotification(paste("The ", as.character(y), " type have multiple renaming options: ", paste(renamed, collapse = ", ")), 
-                                    type = "warning", duration = NULL)
-            shiny::showNotification(paste("The  ", renamed[[1]], " was chosen."), type = "warning", duration=NULL)
-            vals$renaming_notification[[as.character(y)]] <- renamed[[1]] 
-          }
-          renamed[[1]]
-        } else {
-          y
-        }
-        
-      })
-      
-    })
-    type_3 <- sapply(type_2, function(x){
-      dupl <-  x[!duplicated(x)]
-      paste(dupl, collapse = "__")
-    })
-    type_4 <- sapply(type_3, function(y){
-      if (y %in% as.character(renamed_dataframe$Code)){
-        as.character(renamed_dataframe$Group[renamed_dataframe$Code == y])[[1]]
-      } else {
-        y
-      }
-    })
-    return(as.character(type_4))
-  }
-  # Adding the thickness to the visualization for SEMPI, 
-  # ARTS, RRE, PRISN-Supp data
-  correct_width <- function(data, label){
-    if ((label == 'SEMPI')&(input$sempi_width == T)){
-      data$Stop <- data$Stop + 30000
-    } else if ((label == 'PRISM-Supp')&(input$prism_supp_data_input_width == T)){
-      data$Stop <- data$Stop + 20000
-    } else if ((label == 'ARTS')&(input$arts_width == T)){
-      data$Stop <- data$Stop + 30000
-    } else if ((label == 'RRE-Finder')&(input$rre_width == T)){
-      data$Stop <- data$Stop + 50000
-    }
-    return(data)
-  }
+  source("src/helper_functions.R")
+  
   disable_event_logic <- function(){
     vals$can_plot_deep_ref = F
     vals$can_plot_biocircos = F
@@ -859,7 +606,7 @@ server <- function(input, output, session) {
     names(gecco_data)[names(gecco_data) == "start"] <- "Start"
     names(gecco_data)[names(gecco_data) == "end"] <-  "Stop"
     vals$gecco_data <- gecco_data
-    vals$gecco_data_filtered <- filter_gecco()
+    vals$gecco_data_filtered <- filter_gecco(vals$gecco_data,input$score_cluster_gecco,input$score_average_gecco,input$domains_filter_gecco,input$prot_filter_gecco)
     # Save file
     write.csv(vals$gecco_data, "gecco_data.csv", row.names = F)
     vals$gecco_data_input = TRUE 
@@ -1134,7 +881,7 @@ server <- function(input, output, session) {
     write.csv(vals$deep_data, "deep_data.csv", row.names = F)
     vals$deep_data_input = TRUE
     vals$data_upload_count <- vals$data_upload_count +1
-    vals$deep_data_filtered <- filter_deepbgc()
+    vals$deep_data_filtered <- filter_deepbgc(vals$deep_data,input$cluster_type,input$score_a,input$score_c,input$score_d,input$domains_filter,input$biodomain_filter,input$gene_filter)
     vals$choices$ref <- c(vals$choices$ref, "DeepBGC" = "DeepBGC")
     vals$choices$group_by <- c(vals$choices$group_by, "DeepBGC" = "DeepBGC")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "DeepBGC" = "DeepBGC")
@@ -1668,18 +1415,6 @@ server <- function(input, output, session) {
   # Tou have duplicated code
   shiny::observeEvent(input$anti_hybrid, ignoreInit=T,{
     
-    hybrid_col <- function(data){
-      data_split <- stringr::str_split(data$Type2, "__")
-      types <- sapply(data_split, function(x){
-        if (length(unlist(x))>1){
-          "hybrid"
-        } else{
-          x
-        }
-      })
-      return(types)
-    }
-    
     if (input$anti_hybrid==T){
       vals$anti_data$Type2 <- hybrid_col(vals$anti_data)
     }else {
@@ -1689,18 +1424,6 @@ server <- function(input, output, session) {
   })
   shiny::observeEvent(input$prism_hybrid,ignoreInit=T, {
     
-    hybrid_col <- function(data){
-      data_split <- stringr::str_split(data$Type2, "__")
-      types <- sapply(data_split, function(x){
-        if (length(unlist(x))>1){
-          "hybrid"
-        } else{
-          x
-        }
-      })
-      return(types)
-    }
-    
     if (input$prism_hybrid==T){
       vals$prism_data$Type2 <- hybrid_col(vals$prism_data)
     }else {
@@ -1708,20 +1431,6 @@ server <- function(input, output, session) {
     }
   })
   shiny::observeEvent(input$sempi_hybrid,  ignoreInit=T,{
-    
-    hybrid_col <- function(data){
-      data_split <- stringr::str_split(data$Type2, "__")
-      types <- sapply(data_split, function(x){
-        if (length(unlist(x))>1){
-          "hybrid"
-        } else if (unlist(x) == 'nrps-pks'){
-          "hybrid"
-        } else {
-          x
-        }
-      })
-      return(types)
-    }
     
     if (input$sempi_hybrid==T){
       vals$sempi_data$Type2 <- hybrid_col(vals$sempi_data)
@@ -1735,21 +1444,27 @@ server <- function(input, output, session) {
     rename_data <- vals$rename_data
     if (vals$anti_data_input == T){
       anti_data <- read.csv("anti_data.csv")
-      vals$anti_type <- rename_vector(anti_data, rename_data)
+      res <- rename_vector(anti_data, rename_data, vals$renaming_notification)
+      vals$anti_type <- res[[1]]
+      vals$renaming_notification <- res[[2]]
       anti_data['Type2'] <- vals$anti_type
       vals$anti_data <- anti_data
     }
     
     if (vals$sempi_data_input == T){
       sempi_data <- read.csv("sempi_data.csv")
-      vals$sempi_type <- rename_vector(sempi_data, rename_data)
+      res <- rename_vector(sempi_data, rename_data, vals$renaming_notification)
+      vals$sempi_type <- res[[1]]
+      vals$renaming_notification <- res[[2]]
       sempi_data['Type2'] <- vals$sempi_type
       vals$sempi_data <- sempi_data
     }
     
     if(vals$prism_data_input == T){
       prism_data <- read.csv("prism_data.csv")
-      vals$prism_type <- rename_vector(prism_data, rename_data)
+      res <- rename_vector(prism_data, rename_data, vals$renaming_notification)
+      vals$prism_type <- res[[1]]
+      vals$renaming_notification <- res[[2]]
       prism_data['Type2'] <-  vals$prism_type
       vals$prism_data <- prism_data
     }
@@ -1767,21 +1482,27 @@ server <- function(input, output, session) {
     rename_data <- vals$rename_data
     if (vals$anti_data_input == T){
       anti_data <- read.csv("anti_data.csv")
-      vals$anti_type <- rename_vector(anti_data, rename_data)
+      res <- rename_vector(anti_data, rename_data, vals$renaming_notification)
+      vals$anti_type <- res[[1]]
+      vals$renaming_notification <- res[[2]]
       anti_data['Type2'] <- vals$anti_type
       vals$anti_data <- anti_data
     }
     
     if (vals$sempi_data_input == T){
       sempi_data <- read.csv("sempi_data.csv")
-      vals$sempi_type <- rename_vector(sempi_data, rename_data)
+      res <- rename_vector(sempi_data, rename_data, vals$renaming_notification)
+      vals$sempi_type <- res[[1]]
+      vals$renaming_notification <- res[[2]]      
       sempi_data['Type2'] <- vals$sempi_type
       vals$sempi_data <- sempi_data
     }
     
     if(vals$prism_data_input == T){
       prism_data <- read.csv("prism_data.csv")
-      vals$prism_type <- rename_vector(prism_data, rename_data)
+      res <- rename_vector(prism_data, rename_data, vals$renaming_notification)
+      vals$prism_type <- res[[1]]
+      vals$renaming_notification <- res[[2]]      
       prism_data['Type2'] <-  vals$prism_type
       vals$prism_data <- prism_data
     }
@@ -1970,7 +1691,7 @@ server <- function(input, output, session) {
     inters <- vals$inters
     if (vals$deep_data_input == TRUE){
       if (vals$need_filter == F) {
-        biocircos_deep <- filter_deepbgc()
+        biocircos_deep <- filter_deepbgc(vals$deep_data,input$cluster_type,input$score_a,input$score_c,input$score_d,input$domains_filter,input$biodomain_filter,input$gene_filter)
         vals$deep_data_filtered <- biocircos_deep
       } else {
         biocircos_deep <-  vals$deep_data_filtered
@@ -1994,7 +1715,7 @@ server <- function(input, output, session) {
     }
     if (vals$gecco_data_input == TRUE){
       if (vals$need_filter == F) {
-        gecco_data <- filter_gecco()
+        gecco_data <- filter_gecco(vals$gecco_data,input$score_cluster_gecco,input$score_average_gecco,input$domains_filter_gecco,input$prot_filter_gecco)
         vals$gecco_data_filtered <- gecco_data 
       } else {
         gecco_data <- vals$gecco_data_filtered
@@ -2070,7 +1791,7 @@ server <- function(input, output, session) {
       # Add arcs begin positions. (Start column)
       arcs_begin <- c(arcs_begin, biocircos_anti$Start)
       # Stop position of arcs. 
-      biocircos_anti <- correct_width(biocircos_anti, name)
+      biocircos_anti <- correct_width(biocircos_anti, name,input$sempi_width,input$prism_supp_data_input_width,input$arts_width,input$rre_width)
       arcs_end <- c(arcs_end, biocircos_anti$Stop )
       # Add Arcs labels. Can add only one label...
       arc_labels <- c(arc_labels, biocircos_anti$Type)
@@ -2319,7 +2040,7 @@ server <- function(input, output, session) {
     for (upload in data_uploads){
       if (vals[[upload]] == T){
         data<- vals[[data_to_use[index]]]
-        assign(paste0(soft_names[index], "_data"),  correct_width(data, soft_namings[index]))
+        assign(paste0(soft_names[index], "_data"),  correct_width(data, soft_namings[index],input$sempi_width,input$prism_supp_data_input_width,input$arts_width,input$rre_width))
       }
       index <- index +1
     }
