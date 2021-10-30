@@ -12,21 +12,23 @@ library(magrittr)
 #options(repos = BiocManager::repositories())
 options(spinner.type=6)
 # Define UI 
-ui <- shinydashboard::dashboardPage(
-  shinydashboard::dashboardHeader(title = "BGCViz"),
-  shinydashboard::dashboardSidebar(
+ui <- shinydashboardPlus::dashboardPage(
+  shinydashboardPlus::dashboardHeader(title = "BGCViz"),
+  shinydashboardPlus::dashboardSidebar(
     width = 350,
     shinydashboard::sidebarMenu(
-        id="menu_items",
-        style = "white-space: normal;",
-        shinydashboard::menuItem("Upload data", tabName = "uploaddata_sidemenu", icon = icon("fas fa-upload")),
-        shinydashboard::menuItem("Global options", tabName = "options_sidemenu", icon = icon("fas fa-cogs")),
-        shinydashboard::menuItemOutput("deep_sidemenu_out"),
-        shinydashboard::menuItemOutput("gecco_sidemenu_out"),
-        shinydashboard::menuItemOutput("anno_sidemenu_out"),
-        shinydashboard::menuItemOutput("biocircos_sidemenu_out"),
-        shinydashboard::menuItemOutput("summarize_sidemenu_out")
-      )
+      id="menu_items",
+      style = "white-space: normal;",
+      shinydashboard::menuItem("Upload data", tabName = "uploaddata_sidemenu", icon = icon("fas fa-upload")),
+      shinydashboard::menuItem("Global options", tabName = "options_sidemenu", icon = icon("fas fa-cogs")),
+      shinydashboard::menuItemOutput("deep_sidemenu_out"),
+      shinydashboard::menuItemOutput("gecco_sidemenu_out"),
+      shinydashboard::menuItemOutput("anno_sidemenu_out"),
+      shinydashboard::menuItemOutput("biocircos_sidemenu_out"),
+      shinydashboard::menuItemOutput("summarize_sidemenu_out"),
+      shinydashboard::menuItem(tabName = "restore_boxes",
+                               actionButton("restore_box", "Restore all boxes", class = "bg-success"))
+    )
   ),
   shinydashboard::dashboardBody(
     tags$head( 
@@ -52,17 +54,20 @@ ui <- shinydashboard::dashboardPage(
                                  tags$div(
                                    id = "deep_data1",
                                    div(id = "id1",
-                                       shinyjqui::jqui_resizable(shinydashboard::box(
+                                       shinyjqui::jqui_resizable(shinydashboardPlus::box(
                                          title = "DeepBGC comparison",
-                                         collapsible = TRUE,
+                                         id = "deep_comparison_box",
+                                         collapsible = TRUE,                                        
+                                         closable = TRUE,
                                          height = "100%",
                                          shiny::plotOutput("deep_barplot", height = "500px",) %>%
                                            shinycssloaders::withSpinner()
                                        ))),
                                    div(id = "id2", 
-                                       shinyjqui::jqui_resizable(shinydashboard::box(
+                                       shinyjqui::jqui_resizable(shinydashboardPlus::box(
                                          title = "DeepBGC rate",
-                                         collapsible = TRUE,
+                                         id = "deep_rate_box",
+                                         collapsible = TRUE,                                         
                                          height = "100%",
                                          plotly::plotlyOutput("deep_rate", height = "500px",) %>%
                                            shinycssloaders::withSpinner()
@@ -70,10 +75,11 @@ ui <- shinydashboard::dashboardPage(
                                shiny::fluidRow(
                                  tags$div( id = "deep_data2",
                                            div(id = "id1",
-                                               shinyjqui::jqui_resizable(shinydashboard::box( 
-                                                 id = "test",
+                                               shinyjqui::jqui_resizable(shinydashboardPlus::box( 
                                                  title = "DeepBGC comparison controls",
-                                                 collapsible = TRUE,
+                                                 id = "deep_comparison_controls_box",
+                                                 collapsible = TRUE,                                          
+                                                 closable = TRUE,
                                                  shiny::selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c(""), selected = ''),
                                                  # Score to use for thresholds
                                                  shiny::selectInput("score_type", "Choose score type to set threshold", choices = c("Activity score" = "Activity",
@@ -82,7 +88,7 @@ ui <- shinydashboard::dashboardPage(
                                                                     selected = "Activity score"),
                                                  # Chose step for barplot (as a threshold to draw a bar)
                                                  shiny::sliderInput("plot_step", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
-                                                 shiny::sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 99, value = 0),
+                                                 shiny::sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 99, value = 0)
                                                )))
                                  )),
                                sortable::sortable_js("deep_data1", options = sortable::sortable_options(swap = TRUE, group = "deep_data")),
@@ -95,9 +101,11 @@ ui <- shinydashboard::dashboardPage(
             id = "gecco_data1",
             div(
               id = "id1",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "GECCO comparison",
-                collapsible = TRUE,
+                id = "gecco_comparison_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 height = "100%",
                 shiny::plotOutput("gecco_barplot", height = "500px") %>%
                   shinycssloaders::withSpinner()
@@ -105,9 +113,11 @@ ui <- shinydashboard::dashboardPage(
             ),
             div(
               id = "id2",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "GECCO rate",
-                collapsible = TRUE,
+                id = "gecco_rate_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 height = "100%",
                 plotly::plotlyOutput("gecco_rate", height = "500px",)%>%
                   shinycssloaders::withSpinner()
@@ -120,16 +130,18 @@ ui <- shinydashboard::dashboardPage(
             id = "gecco_data2",
             div(
               id = "id1",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "GECCO comparison controls",
-                collapsible = TRUE,
+                id = "gecco_comparison_controls_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::selectInput("ref_comparison_gecco", "Choose data for comparison with Gecco", choices = c(""),selected = ''),
                 shiny::selectInput("score_type_gecco", "Choose score type to set threshold", choices = c(
                   "Average p-value" = "avg_p",
                   "Cluster_type score" = "Cluster_Type"),
                   selected = "avg_p"),
                 shiny::sliderInput("plot_step_gecco", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
-                shiny::sliderInput("plot_start_gecco", "Chose plot start point(barplot)", min = 0, max = 99, value = 0),
+                shiny::sliderInput("plot_start_gecco", "Chose plot start point(barplot)", min = 0, max = 99, value = 0)
               ))
             )
           )
@@ -144,19 +156,23 @@ ui <- shinydashboard::dashboardPage(
             id="anno_data1",
             div(
               id="anno_div_1",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "Annotations reference",
+                id = "annotation_reference_box",
                 height = "100%",
-                collapsible = TRUE,
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 plotly::plotlyOutput("deep_reference_2")  %>%
                   shinycssloaders::withSpinner()
               ))
             ),
             div(
               id="id2",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "Annotation comparison to the reference",
-                collapsible = TRUE,
+                id = "annotation_reference_comparison_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 height = "100%",
                 plotly::plotlyOutput("deep_reference")  %>%
                   shinycssloaders::withSpinner()
@@ -169,9 +185,11 @@ ui <- shinydashboard::dashboardPage(
             id = "anno_data2",
             div(
               id="id1",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "Annotation to the reference comparison plot controls",
-                collapsible = TRUE,
+                id = "annotation_reference_comparison_controls_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::selectInput("ref", "Choose reference data", choices = c(""),
                                    selected = "")
               ))
@@ -190,7 +208,9 @@ ui <- shinydashboard::dashboardPage(
               id = "id1",
               shinydashboardPlus::box(
                 title = "Biocircos plot",
-                collapsible = TRUE,
+                id = "biocircos_plot_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 width = 12,
                 shiny::checkboxInput("ShowBiocircosColoring", "Show Biocircos coloring scheme"),
                 BioCircos::BioCircosOutput("biocircos", height = "900px")%>%
@@ -208,9 +228,11 @@ ui <- shinydashboard::dashboardPage(
             ),
             div(
               id="id2",
-              shinydashboard::box(
+              shinydashboardPlus::box(
                 title = "Biocircos options",
-                collapsible = T,
+                collapsible = TRUE,
+                closable = TRUE,
+                id = "biocircos_controls_box",
                 shiny::checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
                 shiny::checkboxInput("label_color", "Make links in biocircos colorful, based on the class"),
                 shiny::selectInput("label_color_class", "Choose the mode to color the links", choices = c("Hierarchical-based" = "H",
@@ -233,9 +255,11 @@ ui <- shinydashboard::dashboardPage(
             id="summarize_data1",
             div(
               id="id1",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "Ranking barplot",
-                collapsible = TRUE,
+                id = "ranking_barplot_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 height = "100%",
                 plotly::plotlyOutput("barplot_rank", height = "600px")%>%
                   shinycssloaders::withSpinner()
@@ -243,9 +267,11 @@ ui <- shinydashboard::dashboardPage(
             ),
             div(
               id="id2",
-              shinyjqui::jqui_resizable( shinydashboard::box(
+              shinyjqui::jqui_resizable( shinydashboardPlus::box(
                 title = "Group table",
-                collapsible = TRUE,
+                id = "group_table_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 style='overflow-x: scroll;height:700px;overflow-y: scroll;',
                 height = "100%",
                 shiny::checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
@@ -265,36 +291,44 @@ ui <- shinydashboard::dashboardPage(
             id="upload_data1",
             div(
               id = "id1",
-              shinydashboard::box(
+              shinydashboardPlus::box(
                 title = "Upload Antismash data",
-                collapsible = TRUE,
+                id = "upload_anti_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::fileInput("anti_data",
                                  "Upload Antismash data", accept = list(".csv", ".json"))
               )
             ),
             div(
               id = "id2",
-              shinydashboard::box(
+              shinydashboardPlus::box(
                 title = "Upload PRISM data",
-                collapsible = TRUE,
+                id = "upload_prism_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::fileInput("prism_data",
                                  "Upload PRISM data", accept = list(".csv", ".json"))
               )
             ),
             div(
               id = "id3",
-              shinydashboard::box(
+              shinydashboardPlus::box(
                 title = "Upload SEMPI 2.0 data",
-                collapsible = TRUE,
+                id = "upload_sempi_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::fileInput("sempi_data",
                                  "Upload SEMPI 2.0 data", accept = ".csv")
               )
             ),
             div(
               id = "id4",
-              shinydashboard::box(
+              shinydashboardPlus::box(
                 title = "Upload DeepBGC data",
-                collapsible = TRUE,
+                id = "upload_deep_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::fileInput("deep_data",
                                  "Upload DeepBGC data", accept = ".tsv")
               )
@@ -306,27 +340,33 @@ ui <- shinydashboard::dashboardPage(
             id="upload_data2",
             div(
               id = "id1",
-              shinydashboard::box(
+              shinydashboardPlus::box(
                 title = "Upload Gecco data",
-                collapsible = TRUE,
+                id = "upload_gecco_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::fileInput("gecco_data",
                                  "Upload Gecco data", accept = ".tsv")
               )
             ),
             div(
               id = "id2",
-              shinydashboard::box(
+              shinydashboardPlus::box(
                 title = "Upload RRE-Finder data",
-                collapsible = TRUE,
+                id = "upload_rre_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::fileInput("rre_data",
                                  "Upload RRE-Finder data")
               )
             ),
             div(
               id = "id3",
-              shinydashboard::box(
+              shinydashboardPlus::box(
                 title = "Upload ARTS data",
-                collapsible = TRUE,
+                id = "upload_arts_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::fileInput("known_data",
                                  "Upload ARTS knownhits data", accept = ".csv"),
                 shiny::fileInput("dup_data",
@@ -335,9 +375,11 @@ ui <- shinydashboard::dashboardPage(
             ),
             div(
               id = "id4",
-              shinydashboard::box(
+              shinydashboardPlus::box(
                 title = "Use Example data",
-                collapsible = TRUE,
+                id = "use_example_data_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::actionButton("anti_sco", "Use Antismash example data from S.coelicolor"),
                 shiny::actionButton("prism_sco", "Use PRISM example data from S.coelicolor"),
                 shiny::actionButton("sempi_sco", "Use SEMPI example data from S.coelicolor"),
@@ -360,9 +402,11 @@ ui <- shinydashboard::dashboardPage(
             id="options_data1",
             div(
               id = "id1",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "Rename",
-                collapsible = TRUE,
+                id = "rename_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::checkboxInput("anti_hybrid", "Visualize AntiSMASH BGC with several types as 'Hybrid'"),
                 shiny::checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
                 shiny::checkboxInput("sempi_hybrid", "Visualize SEMPI BGC with several types as 'Hybrid'"),
@@ -383,9 +427,11 @@ ui <- shinydashboard::dashboardPage(
             ),
             div(
               id = "id4",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "Prism supplement + ARTS options",
-                collapsible = TRUE,
+                id = "prism_supplement_arts_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::checkboxInput("prism_supp", "Visualize PRISM resistance and regulatory genes"),
                 shiny::selectInput("dup_choice", "Choose duplicated core gene to plot only it", choices = c("All"),
                                    selected = "All")
@@ -393,9 +439,11 @@ ui <- shinydashboard::dashboardPage(
             ),
             div(
               id = "id5",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "Improve global visualization",
-                collapsible = TRUE,
+                id = "improve_visualization_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::checkboxInput("rre_width", "Add thickness to RRE results visualization"),
                 shiny::checkboxInput("prism_supp_data_input_width", "Add thickness to PRISM resistance + regulatory genes results visualization"),
                 shiny::checkboxInput("arts_width", "Add thickness to ARTS results visualization"),
@@ -404,9 +452,11 @@ ui <- shinydashboard::dashboardPage(
             ),
             div(
               id = "id6",
-              shinyjqui::jqui_resizable(shinydashboard::box(
+              shinyjqui::jqui_resizable(shinydashboardPlus::box(
                 title = "Download data",
-                collapsible = TRUE,
+                id = "download_data_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
                 shiny::downloadButton("download","Download currently used datasets (as for Biocircos plot)" )
               ))
             )
@@ -417,7 +467,6 @@ ui <- shinydashboard::dashboardPage(
     )
   )
 )
-
 # Define server logic
 server <- function(input, output, session) {
   ##---------------------------------------------------------------
@@ -1261,7 +1310,7 @@ server <- function(input, output, session) {
       shinydashboardPlus::box(
         title = "Biocircos coloring scheme",
         closable = TRUE,
-        collapsible = TRUE,
+        collapsible = TRUE,                                          
         DT::dataTableOutput("biocircos_legend") %>%
           shinycssloaders::withSpinner()
       )
@@ -1269,18 +1318,22 @@ server <- function(input, output, session) {
   })
   output$deep_filter_box <- shiny::renderUI({
     if (vals$deep_data_input == T){
-    shinydashboard::box(
-      title = "DeepBGC filtering",
-      collapsible = TRUE,
-      shiny::uiOutput("deep_filter_UI")
-    )
+      shinydashboardPlus::box(
+        title = "DeepBGC filtering",
+        id = "deep_filtering_box",
+        collapsible = TRUE,                                          
+        closable = TRUE,
+        shiny::uiOutput("deep_filter_UI")
+      )
     }
   })
   output$gecco_filter_box <- shiny::renderUI({
     if (vals$gecco_data_input == T){
-      shinydashboard::box(
+      shinydashboardPlus::box(
         title = "GECCO filtering",
-        collapsible = TRUE,
+        id = "gecco_filtering_box",
+        collapsible = TRUE,                                          
+        closable = TRUE,
         shiny::uiOutput("gecco_filter_UI")
       )
     }
@@ -1397,7 +1450,18 @@ server <- function(input, output, session) {
     shiny::updateSliderInput(session, "prot_filter_gecco", NULL, input$prot_filter_gecco_sidemenu)
   })
   
-  
+  shiny::observeEvent(input$restore_box,{
+    box_ids <- c("deep_comparison_box", "deep_rate_box","deep_comparison_controls_box","gecco_comparison_box",
+                 "gecco_rate_box","gecco_comparison_controls_box","annotation_reference_box","annotation_reference_comparison_box",
+                 "annotation_reference_comparison_controls_box","biocircos_plot_box","biocircos_controls_box",
+                 "ranking_barplot_box","group_table_box","upload_anti_box","upload_prism_box",
+                 "upload_sempi_box","upload_deep_box","upload_gecco_box","upload_rre_box","upload_arts_box",
+                 "use_example_data_box","rename_box","prism_supplement_arts_box", "improve_visualization_box",
+                 "download_data_box","gecco_filtering_box","deep_filtering_box")
+    for (id in box_ids){
+      shinydashboardPlus::updateBox(id, action = "restore")
+    }
+  })
   
   
   # Logic show/hide selectinput in Link coloring in
