@@ -157,7 +157,6 @@ ui <- shinydashboardPlus::dashboardPage(
             div(
               id="anno_div_1",
               shinyjqui::jqui_resizable(
-                shinyjqui::jqui_draggable(
                   shinydashboardPlus::box(
                 title = "Annotations reference",
                 id = "annotation_reference_box",
@@ -166,12 +165,11 @@ ui <- shinydashboardPlus::dashboardPage(
                 closable = TRUE,
                 plotly::plotlyOutput("deep_reference_2")  %>%
                   shinycssloaders::withSpinner()
-              )), options = list(handles="w,e"))
+              ), options = list(handles="w,e"))
             ),
             div(
               id="id2",
               shinyjqui::jqui_resizable(
-                shinyjqui::jqui_draggable(
                 shinydashboardPlus::box(
                 title = "Annotation comparison to the reference",
                 id = "annotation_reference_comparison_box",
@@ -182,7 +180,7 @@ ui <- shinydashboardPlus::dashboardPage(
                                    selected = ""),
                 plotly::plotlyOutput("deep_reference")  %>%
                   shinycssloaders::withSpinner()
-              )), options = list(handles="w,e")),
+              ), options = list(handles="w,e")),
             )
           )
         ),
@@ -241,7 +239,6 @@ ui <- shinydashboardPlus::dashboardPage(
             div(
               id="id1",
               shinyjqui::jqui_resizable(
-                shinyjqui::jqui_draggable(
                   shinydashboardPlus::box(
                 title = "Ranking barplot",
                 id = "ranking_barplot_box",
@@ -250,12 +247,11 @@ ui <- shinydashboardPlus::dashboardPage(
                 height = "100%",
                 plotly::plotlyOutput("barplot_rank", height = "600px")%>%
                   shinycssloaders::withSpinner()
-              )),options = list(handles="w,e"))
+              ),options = list(handles="w,e"))
             ),
             div(
               id="id2",
               shinyjqui::jqui_resizable( 
-                shinyjqui::jqui_draggable(
                   shinydashboardPlus::box(
                 title = "Group table",
                 id = "group_table_box",
@@ -267,7 +263,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 shiny::selectInput("group_by", "Group data by", choices = c(""),  selected = ''),
                 shiny::tableOutput("group_table")%>%
                   shinycssloaders::withSpinner()
-              )),options = list(handles="w,e"))
+              ),options = list(handles="w,e"))
             )
           )
         ),
