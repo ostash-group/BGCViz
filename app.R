@@ -1257,6 +1257,13 @@ server <- function(input, output, session) {
       shinyjs::hideElement(selector = "#improve_visualization_box")
     }
   })
+  shiny::observeEvent(vals$data_upload_count, {
+    if ((vals$arts_data_input == T)  || (vals$prism_supp_data_input == T) ){
+      shinyjs::showElement(selector = "#prism_supplement_arts_box")
+    } else {
+      shinyjs::hideElement(selector = "#prism_supplement_arts_box")
+    }
+  })
   ##---------------------------------------------------------------
   ##              Data processing options show/hide               -
   ##---------------------------------------------------------------
