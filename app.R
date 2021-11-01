@@ -62,7 +62,7 @@ ui <- shinydashboardPlus::dashboardPage(
                                          height = "100%",
                                          shiny::plotOutput("deep_barplot", height = "500px",) %>%
                                            shinycssloaders::withSpinner()
-                                       ))),
+                                       ),options = list(handles="w,e"))),
                                    div(id = "id2", 
                                        shinyjqui::jqui_resizable(shinydashboardPlus::box(
                                          title = "DeepBGC rate",
@@ -71,7 +71,7 @@ ui <- shinydashboardPlus::dashboardPage(
                                          height = "100%",
                                          plotly::plotlyOutput("deep_rate", height = "500px",) %>%
                                            shinycssloaders::withSpinner()
-                                       ))))),
+                                       ),options = list(handles="w,e"))))),
                                shiny::fluidRow(
                                  tags$div( id = "deep_data2",
                                            div(id = "id1",
@@ -89,7 +89,7 @@ ui <- shinydashboardPlus::dashboardPage(
                                                  # Chose step for barplot (as a threshold to draw a bar)
                                                  shiny::sliderInput("plot_step", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
                                                  shiny::sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 99, value = 0)
-                                               )))
+                                               ),options = list(handles="w,e")))
                                  )),
                                sortable::sortable_js("deep_data1", options = sortable::sortable_options(swap = TRUE, group = "deep_data")),
                                sortable::sortable_js("deep_data2", options = sortable::sortable_options(swap = TRUE, group = "deep_data"))
@@ -109,7 +109,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 height = "100%",
                 shiny::plotOutput("gecco_barplot", height = "500px") %>%
                   shinycssloaders::withSpinner()
-              ))
+              ),options = list(handles="w,e"))
             ),
             div(
               id = "id2",
@@ -121,7 +121,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 height = "100%",
                 plotly::plotlyOutput("gecco_rate", height = "500px",)%>%
                   shinycssloaders::withSpinner()
-              ))
+              ),options = list(handles="w,e"))
             ),
           )
         ),
@@ -142,7 +142,7 @@ ui <- shinydashboardPlus::dashboardPage(
                   selected = "avg_p"),
                 shiny::sliderInput("plot_step_gecco", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
                 shiny::sliderInput("plot_start_gecco", "Chose plot start point(barplot)", min = 0, max = 99, value = 0)
-              ))
+              ), options = list(handles="w,e"))
             )
           )
         ),
@@ -166,7 +166,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 closable = TRUE,
                 plotly::plotlyOutput("deep_reference_2")  %>%
                   shinycssloaders::withSpinner()
-              )))
+              )), options = list(handles="w,e"))
             ),
             div(
               id="id2",
@@ -178,26 +178,11 @@ ui <- shinydashboardPlus::dashboardPage(
                 collapsible = TRUE,                                          
                 closable = TRUE,
                 height = "100%",
+                shiny::selectInput("ref", "Choose reference data", choices = c(""),
+                                   selected = ""),
                 plotly::plotlyOutput("deep_reference")  %>%
                   shinycssloaders::withSpinner()
-              ), options = list(handles="w,e")),
-            )
-          )
-          )
-        ),
-        shiny::fluidRow(
-          tags$div(
-            id = "anno_data2",
-            div(
-              id="id1",
-              shinyjqui::jqui_resizable(shinydashboardPlus::box(
-                title = "Annotation to the reference comparison plot controls",
-                id = "annotation_reference_comparison_controls_box",
-                collapsible = TRUE,                                          
-                closable = TRUE,
-                shiny::selectInput("ref", "Choose reference data", choices = c(""),
-                                   selected = "")
-              ))
+              )), options = list(handles="w,e")),
             )
           )
         ),
@@ -270,7 +255,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 height = "100%",
                 plotly::plotlyOutput("barplot_rank", height = "600px")%>%
                   shinycssloaders::withSpinner()
-              )))
+              )),options = list(handles="w,e"))
             ),
             div(
               id="id2",
@@ -287,7 +272,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 shiny::selectInput("group_by", "Group data by", choices = c(""),  selected = ''),
                 shiny::tableOutput("group_table")%>%
                   shinycssloaders::withSpinner()
-              )))
+              )),options = list(handles="w,e"))
             )
           )
         ),
@@ -424,16 +409,16 @@ ui <- shinydashboardPlus::dashboardPage(
                                  "Upload renaming and coloring scheme", accept = ".csv"),
                 shiny::actionButton("rename", "Rename"),
                 shiny::actionButton("reset_name", "Reset")
-              ))
+              ),options = list(handles="w,e"))
             ),
             div(
               id = "id2",
-              shinyjqui::jqui_resizable(shiny::uiOutput("deep_filter_box"))
+              shinyjqui::jqui_resizable(shiny::uiOutput("deep_filter_box"),options = list(handles="w,e"))
             ),
             
             div(
               id = "id3",
-              shinyjqui::jqui_resizable(shiny::uiOutput("gecco_filter_box"))
+              shinyjqui::jqui_resizable(shiny::uiOutput("gecco_filter_box"),options = list(handles="w,e"))
             ),
             div(
               id = "id4",
@@ -445,7 +430,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 shiny::checkboxInput("prism_supp", "Visualize PRISM resistance and regulatory genes"),
                 shiny::selectInput("dup_choice", "Choose duplicated core gene to plot only it", choices = c("All"),
                                    selected = "All")
-              ))
+              ),options = list(handles="w,e"))
             ),
             div(
               id = "id5",
@@ -468,7 +453,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 collapsible = TRUE,                                          
                 closable = TRUE,
                 shiny::downloadButton("download","Download currently used datasets (as for Biocircos plot)" )
-              ))
+              ),options = list(handles="w,e"))
             )
           )
         ),
