@@ -154,6 +154,8 @@ ui <- shinydashboardPlus::dashboardPage(
         shiny::fluidRow(
           tags$div(
             id="anno_data1",
+            shiny::column(
+              width = 12,
             div(
               id="anno_div_1",
               shinyjqui::jqui_resizable(
@@ -161,6 +163,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 title = "Annotations reference",
                 id = "annotation_reference_box",
                 height = "100%",
+                width = NULL,
                 collapsible = TRUE,                                          
                 closable = TRUE,
                 plotly::plotlyOutput("deep_reference_2")  %>%
@@ -175,6 +178,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 id = "annotation_reference_comparison_box",
                 collapsible = TRUE,                                          
                 closable = TRUE,
+                width = NULL,
                 height = "100%",
                 shiny::selectInput("ref", "Choose reference data", choices = c(""),
                                    selected = ""),
@@ -183,7 +187,7 @@ ui <- shinydashboardPlus::dashboardPage(
               ), options = list(handles="w,e")),
             )
           )
-        ),
+        )),
         sortable::sortable_js("anno_data1", options = sortable::sortable_options(swap = TRUE, group = "anno_data")),
         sortable::sortable_js("anno_data2", options = sortable::sortable_options(swap = TRUE, group = "anno_data"))
       ),
