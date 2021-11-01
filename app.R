@@ -203,6 +203,18 @@ ui <- shinydashboardPlus::dashboardPage(
                 closable = TRUE,
                 width = 12,
                 shiny::checkboxInput("ShowBiocircosColoring", "Show Biocircos coloring scheme"),
+                sidebar = shinydashboardPlus::boxSidebar(
+                  id = "biocircos_box_sidebar",
+                  width = 25,
+                  shiny::checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
+                  shiny::checkboxInput("label_color", "Make links in biocircos colorful, based on the class"),
+                  shiny::selectInput("label_color_class", "Choose the mode to color the links", choices = c("Hierarchical-based" = "H",
+                                                                                                            "Purity-based" = "P",
+                                                                                                            "Reference column-based" = "R"
+                  ),
+                  selected = 'H'),
+                  shiny::selectInput("ref_col_biocircos", "Choose reference column to color the links", choices = c(""), selected = '')
+                ),
                 BioCircos::BioCircosOutput("biocircos", height = "900px")%>%
                   shinycssloaders::withSpinner()
               )
@@ -215,23 +227,6 @@ ui <- shinydashboardPlus::dashboardPage(
             div(
               id = "id1",
               shiny::uiOutput("biocircos_coloring")
-            ),
-            div(
-              id="id2",
-              shinydashboardPlus::box(
-                title = "Biocircos options",
-                collapsible = TRUE,
-                closable = TRUE,
-                id = "biocircos_controls_box",
-                shiny::checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
-                shiny::checkboxInput("label_color", "Make links in biocircos colorful, based on the class"),
-                shiny::selectInput("label_color_class", "Choose the mode to color the links", choices = c("Hierarchical-based" = "H",
-                                                                                                          "Purity-based" = "P",
-                                                                                                          "Reference column-based" = "R"
-                ),
-                selected = 'H'),
-                shiny::selectInput("ref_col_biocircos", "Choose reference column to color the links", choices = c(""), selected = '')
-              )
             )
           )
         ),
@@ -443,7 +438,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 shiny::checkboxInput("prism_supp_data_input_width", "Add thickness to PRISM resistance + regulatory genes results visualization"),
                 shiny::checkboxInput("arts_width", "Add thickness to ARTS results visualization"),
                 shiny::checkboxInput("sempi_width", "Add thickness to SEMPI results visualization")
-              ))
+              ),options = list(handles="w,e"))
             ),
             div(
               id = "id6",
