@@ -156,7 +156,9 @@ ui <- shinydashboardPlus::dashboardPage(
             id="anno_data1",
             div(
               id="anno_div_1",
-              shinyjqui::jqui_resizable(shinydashboardPlus::box(
+              shinyjqui::jqui_resizable(
+                shinyjqui::jqui_draggable(
+                  shinydashboardPlus::box(
                 title = "Annotations reference",
                 id = "annotation_reference_box",
                 height = "100%",
@@ -164,11 +166,13 @@ ui <- shinydashboardPlus::dashboardPage(
                 closable = TRUE,
                 plotly::plotlyOutput("deep_reference_2")  %>%
                   shinycssloaders::withSpinner()
-              ))
+              )))
             ),
             div(
               id="id2",
-              shinyjqui::jqui_resizable(shinydashboardPlus::box(
+              shinyjqui::jqui_resizable(
+                shinyjqui::jqui_draggable(
+                shinydashboardPlus::box(
                 title = "Annotation comparison to the reference",
                 id = "annotation_reference_comparison_box",
                 collapsible = TRUE,                                          
@@ -176,8 +180,9 @@ ui <- shinydashboardPlus::dashboardPage(
                 height = "100%",
                 plotly::plotlyOutput("deep_reference")  %>%
                   shinycssloaders::withSpinner()
-              )),
+              ), options = list(handles="w,e")),
             )
+          )
           )
         ),
         shiny::fluidRow(
@@ -255,7 +260,9 @@ ui <- shinydashboardPlus::dashboardPage(
             id="summarize_data1",
             div(
               id="id1",
-              shinyjqui::jqui_resizable(shinydashboardPlus::box(
+              shinyjqui::jqui_resizable(
+                shinyjqui::jqui_draggable(
+                  shinydashboardPlus::box(
                 title = "Ranking barplot",
                 id = "ranking_barplot_box",
                 collapsible = TRUE,                                          
@@ -263,11 +270,13 @@ ui <- shinydashboardPlus::dashboardPage(
                 height = "100%",
                 plotly::plotlyOutput("barplot_rank", height = "600px")%>%
                   shinycssloaders::withSpinner()
-              ))
+              )))
             ),
             div(
               id="id2",
-              shinyjqui::jqui_resizable( shinydashboardPlus::box(
+              shinyjqui::jqui_resizable( 
+                shinyjqui::jqui_draggable(
+                  shinydashboardPlus::box(
                 title = "Group table",
                 id = "group_table_box",
                 collapsible = TRUE,                                          
@@ -278,7 +287,7 @@ ui <- shinydashboardPlus::dashboardPage(
                 shiny::selectInput("group_by", "Group data by", choices = c(""),  selected = ''),
                 shiny::tableOutput("group_table")%>%
                   shinycssloaders::withSpinner()
-              ))
+              )))
             )
           )
         ),
@@ -402,7 +411,8 @@ ui <- shinydashboardPlus::dashboardPage(
             id="options_data1",
             div(
               id = "id1",
-              shinyjqui::jqui_resizable(shinydashboardPlus::box(
+              shinyjqui::jqui_resizable(
+                shinydashboardPlus::box(
                 title = "Rename",
                 id = "rename_box",
                 collapsible = TRUE,                                          
