@@ -140,7 +140,7 @@ process_prism_json_suppl <- function(data){
   return(list(prism_data, final_reg))
 }
 # Filtering the DeepBGC
-filter_deepbgc <- function(deep_data,cluster_type,score_a,score_c,score_d,domains_filter,biodomain_filter,gene_filter){
+filter_deepbgc <- function(deep_data,cluster_type,score_a_input,score_c_input,score_d_input,domains_filter,biodomain_filter,gene_filter){
   score_a <- apply(deep_data %>% dplyr::select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
   score_d <- apply(deep_data %>% dplyr::select(c("deepbgc_score")),1, function(x) max(x))
   score_c <- apply(deep_data %>% dplyr::select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
@@ -171,8 +171,8 @@ filter_deepbgc <- function(deep_data,cluster_type,score_a,score_c,score_d,domain
     #Finally store deepbgc data in plotting variable. Do final scores processing 
     biocircos_deep <- deep_data_chromo%>%
       dplyr::mutate( product_class = Cluster_type, score_a = score_a, score_d = score_d, score_c = score_c) %>%
-      dplyr::filter(score_a >= as.numeric(score_a )/ 100, score_c >=as.numeric(score_c)/100 , 
-                    score_d >= as.numeric(score_d)/100,  num_domains >= domains_filter,
+      dplyr::filter(score_a >= as.numeric(score_a_input )/ 100, score_c >=as.numeric(score_c_input)/100 , 
+                    score_d >= as.numeric(score_d_input)/100,  num_domains >= domains_filter,
                     num_bio_domains>=biodomain_filter, num_proteins>=gene_filter)
   }
   
