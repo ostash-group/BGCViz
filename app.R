@@ -387,16 +387,18 @@ ui <- shinydashboardPlus::dashboardPage(
       shinydashboard::tabItem(
         tabName = "options_sidemenu",
         shiny::fluidRow(
-          tags$div(
-            id="options_data1",
+            shiny::column(
+              width = 6,
+              tags$div(
+                id="options_data1",
             div(
               id = "id1",
-              shinyjqui::jqui_resizable(
-                shinydashboardPlus::box(
+              shinydashboardPlus::box(
                 title = "Rename",
                 id = "rename_box",
                 collapsible = TRUE,                                          
                 closable = TRUE,
+                width = NULL,
                 shiny::checkboxInput("anti_hybrid", "Visualize AntiSMASH BGC with several types as 'Hybrid'"),
                 shiny::checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
                 shiny::checkboxInput("sempi_hybrid", "Visualize SEMPI BGC with several types as 'Hybrid'"),
@@ -404,55 +406,63 @@ ui <- shinydashboardPlus::dashboardPage(
                                  "Upload renaming and coloring scheme", accept = ".csv"),
                 shiny::actionButton("rename", "Rename"),
                 shiny::actionButton("reset_name", "Reset")
-              ),options = list(handles="w,e"))
+              )
             ),
             div(
               id = "id2",
-              shinyjqui::jqui_resizable(shiny::uiOutput("deep_filter_box"),options = list(handles="w,e"))
-            ),
-            
+              shiny::uiOutput("deep_filter_box")
+            ))),
+            shiny::column(
+              width = 6,
+              tags$div(
+                id="options_data2",
             div(
               id = "id3",
-              shinyjqui::jqui_resizable(shiny::uiOutput("gecco_filter_box"),options = list(handles="w,e"))
-            ),
-            div(
-              id = "id4",
-              shinyjqui::jqui_resizable(shinydashboardPlus::box(
-                title = "Prism supplement + ARTS options",
-                id = "prism_supplement_arts_box",
-                collapsible = TRUE,                                          
-                closable = TRUE,
-                shiny::checkboxInput("prism_supp", "Visualize PRISM resistance and regulatory genes"),
-                shiny::selectInput("dup_choice", "Choose duplicated core gene to plot only it", choices = c("All"),
-                                   selected = "All")
-              ),options = list(handles="w,e"))
+              shiny::uiOutput("gecco_filter_box")
             ),
             div(
               id = "id5",
-              shinyjqui::jqui_resizable(shinydashboardPlus::box(
+              shinydashboardPlus::box(
                 title = "Improve global visualization",
                 id = "improve_visualization_box",
                 collapsible = TRUE,                                          
                 closable = TRUE,
+                width = NULL,
                 shiny::checkboxInput("rre_width", "Add thickness to RRE results visualization"),
                 shiny::checkboxInput("prism_supp_data_input_width", "Add thickness to PRISM resistance + regulatory genes results visualization"),
                 shiny::checkboxInput("arts_width", "Add thickness to ARTS results visualization"),
                 shiny::checkboxInput("sempi_width", "Add thickness to SEMPI results visualization")
-              ),options = list(handles="w,e"))
+              )
+            ),
+            div(
+              id = "id4",
+             shinydashboardPlus::box(
+                title = "Prism supplement + ARTS options",
+                id = "prism_supplement_arts_box",
+                collapsible = TRUE,                                          
+                closable = TRUE,
+                width = NULL,
+                shiny::checkboxInput("prism_supp", "Visualize PRISM resistance and regulatory genes"),
+                shiny::selectInput("dup_choice", "Choose duplicated core gene to plot only it", choices = c("All"),
+                                   selected = "All")
+              )
             ),
             div(
               id = "id6",
-              shinyjqui::jqui_resizable(shinydashboardPlus::box(
+              shinydashboardPlus::box(
                 title = "Download data",
                 id = "download_data_box",
                 collapsible = TRUE,                                          
                 closable = TRUE,
+                width = NULL,
                 shiny::downloadButton("download","Download currently used datasets (as for Biocircos plot)" )
-              ),options = list(handles="w,e"))
+              )
+            )
             )
           )
         ),
-        sortable::sortable_js("options_data1", options = sortable::sortable_options(swap = TRUE))
+        sortable::sortable_js("options_data1", options = sortable::sortable_options(swap = TRUE, group = "options_data")),
+        sortable::sortable_js("options_data2", options = sortable::sortable_options(swap = TRUE, group = "options_data"))
       )
     )
   )
@@ -1338,23 +1348,37 @@ server <- function(input, output, session) {
   })
   output$deep_filter_box <- shiny::renderUI({
     if (vals$deep_data_input == T){
+      vals$deep_global <- T
       shinydashboardPlus::box(
         title = "DeepBGC filtering",
         id = "deep_filtering_box",
         collapsible = TRUE,                                          
         closable = TRUE,
-        shiny::uiOutput("deep_filter_UI")
+        width = NULL,
+        shiny::sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+        shiny::sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+        shiny::sliderInput("score_c", "Cluster_type score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
+        # Domains, biodomains and proteins dplyr::filter. Remain >= of set threshold
+        shiny::sliderInput("domains_filter", "Domain number threshold for DeepBGC data", min = 0, max = 100, value = 5),
+        shiny::sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
+        shiny::sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
+        shiny::sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
       )
     }
   })
   output$gecco_filter_box <- shiny::renderUI({
     if (vals$gecco_data_input == T){
+      vals$gecco_global <- T
       shinydashboardPlus::box(
         title = "GECCO filtering",
         id = "gecco_filtering_box",
         collapsible = TRUE,                                          
         closable = TRUE,
-        shiny::uiOutput("gecco_filter_UI")
+        width = NULL,
+        shiny::sliderInput("score_average_gecco", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
+        shiny::sliderInput("score_cluster_gecco", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
+        shiny::sliderInput("domains_filter_gecco", "Domain number threshold for Gecco data", min = 0, max = 100, value = 1),
+        shiny::sliderInput("prot_filter_gecco", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1)
       )
     }
   })
@@ -1372,19 +1396,6 @@ server <- function(input, output, session) {
     shiny::sliderInput("cluster_type_sidemenu","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
     )
   })
-  output$deep_filter_UI <- shiny::renderUI({
-    vals$deep_global <- T
-    shiny::tagList(
-      shiny::sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-      shiny::sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-      shiny::sliderInput("score_c", "Cluster_type score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
-      # Domains, biodomains and proteins dplyr::filter. Remain >= of set threshold
-      shiny::sliderInput("domains_filter", "Domain number threshold for DeepBGC data", min = 0, max = 100, value = 5),
-      shiny::sliderInput("biodomain_filter", "Biodomain number threshold for DeepBGC data", min = 0, max = 100, value = 1),
-      shiny::sliderInput("gene_filter", "Protein number threshold for DeepBGC data", min = 0, max = 100, value = 1),
-      shiny::sliderInput("cluster_type","Choose threshold to assign cluster type for DeepBGC data ", min = 0, max = 100, value = 50)
-    )
-  })
   output$gecco_filter_UI_sidemenu <- shiny::renderUI({
     vals$gecco_sidebar <- T
     shiny::tagList(
@@ -1394,16 +1405,6 @@ server <- function(input, output, session) {
       shiny::sliderInput("prot_filter_gecco_sidemenu", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1)
     )
   })
-  output$gecco_filter_UI <- shiny::renderUI({
-    vals$gecco_global <- T
-    shiny::tagList(
-      shiny::sliderInput("score_average_gecco", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
-      shiny::sliderInput("score_cluster_gecco", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
-      shiny::sliderInput("domains_filter_gecco", "Domain number threshold for Gecco data", min = 0, max = 100, value = 1),
-      shiny::sliderInput("prot_filter_gecco", "Protein number threshold for Gecco data", min = 0, max = 100, value = 1)
-    )
-  })
-  
   
   update_filter_values <- function(listening_value, comparing_values, updating_value, rendering_check){
     if( (as.numeric(listening_value) !=  comparing_values) && (rendering_check == F)){
