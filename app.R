@@ -549,6 +549,10 @@ server <- function(input, output, session) {
   vals$score_cluster_gecco <- 50
   vals$domains_filter_gecco <- 1
   vals$prot_filter_gecco <- 1
+  vals$gecco_sidebar <- FALSE
+  vals$deep_sidebar <- FALSE
+  vals$deep_global <- FALSE
+  vals$gecco_global <- FALSE
   ##----------------------------------------------------------------
   ##                        Helper functions                       -
   ##----------------------------------------------------------------
@@ -1354,7 +1358,9 @@ server <- function(input, output, session) {
       )
     }
   })
+
   output$deep_filter_UI_sidemenu <- shiny::renderUI({
+    vals$deep_sidebar <- T
   shiny::tagList(
     shiny::sliderInput("score_a_sidemenu", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
     shiny::sliderInput("score_d_sidemenu", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
@@ -1367,6 +1373,7 @@ server <- function(input, output, session) {
     )
   })
   output$deep_filter_UI <- shiny::renderUI({
+    vals$deep_global <- T
     shiny::tagList(
       shiny::sliderInput("score_a", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
       shiny::sliderInput("score_d", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50 ),
@@ -1379,6 +1386,7 @@ server <- function(input, output, session) {
     )
   })
   output$gecco_filter_UI_sidemenu <- shiny::renderUI({
+    vals$gecco_sidebar <- T
     shiny::tagList(
       shiny::sliderInput("score_average_gecco_sidemenu", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
       shiny::sliderInput("score_cluster_gecco_sidemenu", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
@@ -1387,6 +1395,7 @@ server <- function(input, output, session) {
     )
   })
   output$gecco_filter_UI <- shiny::renderUI({
+    vals$gecco_global <- T
     shiny::tagList(
       shiny::sliderInput("score_average_gecco", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
       shiny::sliderInput("score_cluster_gecco", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50 ),
@@ -1396,83 +1405,133 @@ server <- function(input, output, session) {
   })
   
   
-  update_filter_values <- function(listening_value, comparing_values, updating_value){
-    if (as.numeric(listening_value) !=  comparing_values){
+  update_filter_values <- function(listening_value, comparing_values, updating_value, rendering_check){
+    if( (as.numeric(listening_value) !=  comparing_values) && (rendering_check == F)){
       shiny::updateSliderInput(session, updating_value, NULL, listening_value)
-      return(as.numeric(listening_value))
+      return(list(as.numeric(listening_value),F))
     } else{
-      return(comparing_values)
+      if (grepl("sidemenu", updating_value) == T){
+        shiny::updateSliderInput(session, stringr::str_split(updating_value, "_sidemenu")[[1]][1], NULL, comparing_values)
+      }else{
+        shiny::updateSliderInput(session, paste0(updating_value, "_sidemenu")[[1]][1], NULL, comparing_values)
+      }
+      return(list(comparing_values, F))
     }
   }
   
+  
   observeEvent(input$score_a,{
-    vals$score_a <- update_filter_values(input$score_a,vals$score_a, "score_a_sidemenu" )
+    res <- update_filter_values(input$score_a,vals$score_a, "score_a_sidemenu", vals$deep_sidebar)
+    vals$score_a <- res[[1]]
+    vals$deep_sidebar <- res[[2]]
    })
   observeEvent(input$score_d,{
-    vals$score_d <- update_filter_values(input$score_d,vals$score_d, "score_d_sidemenu" )
+    res <- update_filter_values(input$score_d,vals$score_d, "score_d_sidemenu", vals$deep_sidebar )
+    vals$score_d <- res[[1]]
+    vals$deep_sidebar <- res[[2]]
   })
   observeEvent(input$score_c,{
-    vals$score_c <- update_filter_values(input$score_c,vals$score_c, "score_c_sidemenu" )
+    res <- update_filter_values(input$score_c,vals$score_c, "score_c_sidemenu", vals$deep_sidebar )
+    vals$score_c <- res[[1]]
+    vals$deep_sidebar <- res[[2]]
   })
   observeEvent(input$domains_filter,{
-    vals$domains_filter <- update_filter_values(input$domains_filter,vals$domains_filter, "domains_filter_sidemenu" )
+    res <- update_filter_values(input$domains_filter,vals$domains_filter, "domains_filter_sidemenu", vals$deep_sidebar )
+    vals$domains_filter <- res[[1]]
+    vals$deep_sidebar <- res[[2]]
   })
   observeEvent(input$biodomain_filter,{
-    vals$biodomain_filter <- update_filter_values(input$biodomain_filter,vals$biodomain_filter, "biodomain_filter_sidemenu" )
+    res <- update_filter_values(input$biodomain_filter,vals$biodomain_filter, "biodomain_filter_sidemenu" , vals$deep_sidebar)
+    vals$biodomain_filter <- res[[1]]
+    vals$deep_sidebar <- res[[2]]
   })
   observeEvent(input$gene_filter,{
-    vals$gene_filter <- update_filter_values(input$gene_filter,vals$gene_filter, "gene_filter_sidemenu" )
+    res <- update_filter_values(input$gene_filter,vals$gene_filter, "gene_filter_sidemenu", vals$deep_sidebar )
+    vals$gene_filter <- res[[1]]
+    vals$deep_sidebar <- res[[2]]
   })
   observeEvent(input$cluster_type,{
-    vals$cluster_type <- update_filter_values(input$cluster_type,vals$cluster_type, "cluster_type_sidemenu" )
+    res <- update_filter_values(input$cluster_type,vals$cluster_type, "cluster_type_sidemenu", vals$deep_sidebar )
+    vals$cluster_type <-res[[1]]
+    vals$deep_sidebar <- res[[2]]
   })
   observeEvent(input$score_a_sidemenu,{
-    vals$score_a <- update_filter_values(input$score_a_sidemenu,vals$score_a, "score_a" )
+    res <- update_filter_values(input$score_a_sidemenu,vals$score_a, "score_a", vals$deep_global )
+    vals$score_a <- res[[1]]
+    vals$deep_global  <- res[[2]]
   })
   observeEvent(input$score_d_sidemenu,{
-    vals$score_d <- update_filter_values(input$score_d_sidemenu,vals$score_d, "score_d" )
+    res <- update_filter_values(input$score_d_sidemenu,vals$score_d, "score_d" , vals$deep_global )
+    vals$score_d <- res[[1]]
+    vals$deep_global  <- res[[2]]
   })
   observeEvent(input$score_c_sidemenu,{
-    vals$score_c <- update_filter_values(input$score_c_sidemenu,vals$score_c, "score_c" )
+    res <- update_filter_values(input$score_c_sidemenu,vals$score_c, "score_c" , vals$deep_global )
+    vals$score_c <- res[[1]]
+    vals$deep_global  <- res[[2]]
   })
   observeEvent(input$domains_filter_sidemenu,{
-    vals$domains_filter <- update_filter_values(input$domains_filter_sidemenu,vals$domains_filter, "domains_filter" )
+    res <- update_filter_values(input$domains_filter_sidemenu,vals$domains_filter, "domains_filter" , vals$deep_global )
+    vals$domains_filter <- res[[1]]
+    vals$deep_global  <- res[[2]]
   })
   observeEvent(input$biodomain_filter_sidemenu,{
-    vals$biodomain_filter <- update_filter_values(input$biodomain_filter_sidemenu,vals$biodomain_filter, "biodomain_filter" )
+    res <- update_filter_values(input$biodomain_filter_sidemenu,vals$biodomain_filter, "biodomain_filter" , vals$deep_global )
+    vals$biodomain_filter <- res[[1]]
+    vals$deep_global  <- res[[2]]
   })
   observeEvent(input$gene_filter_sidemenu,{
-    vals$gene_filter <- update_filter_values(input$gene_filter_sidemenu,vals$gene_filter, "gene_filter" )
+    res <- update_filter_values(input$gene_filter_sidemenu,vals$gene_filter, "gene_filter", vals$deep_global  )
+    vals$gene_filter <- res[[1]]
+    vals$deep_global  <- res[[2]]
   })
   observeEvent(input$cluster_type_sidemenu,{
-    vals$cluster_type <- update_filter_values(input$cluster_type_sidemenu,vals$cluster_type, "cluster_type" )
+    res <- update_filter_values(input$cluster_type_sidemenu,vals$cluster_type, "cluster_type", vals$deep_global  )
+    vals$cluster_type <- res[[1]]
+    vals$deep_global  <- res[[2]]
   })
   
   
   
   observeEvent(input$score_average_gecco,{
-    vals$score_average_gecco <- update_filter_values(input$score_average_gecco,vals$score_average_gecco, "score_average_gecco_sidemenu" )
+    res <- update_filter_values(input$score_average_gecco,vals$score_average_gecco, "score_average_gecco_sidemenu",vals$gecco_sidebar )
+    vals$score_average_gecco <- res[[1]]
+    vals$gecco_sidebar <- res[[2]]
   })
   observeEvent(input$score_cluster_gecco,{
-    vals$score_cluster_gecco <- update_filter_values(input$score_cluster_gecco,vals$score_cluster_gecco, "score_cluster_gecco_sidemenu" )
+    res <- update_filter_values(input$score_cluster_gecco,vals$score_cluster_gecco, "score_cluster_gecco_sidemenu",vals$gecco_sidebar )
+    vals$score_cluster_gecco <- res[[1]]
+    vals$gecco_sidebar <- res[[2]]
   })
   observeEvent(input$domains_filter_gecco,{
-    vals$domains_filter_gecco <- update_filter_values(input$domains_filter_gecco,vals$domains_filter_gecco, "domains_filter_gecco_sidemenu" )
+    res <- update_filter_values(input$domains_filter_gecco,vals$domains_filter_gecco, "domains_filter_gecco_sidemenu" ,vals$gecco_sidebar)
+    vals$domains_filter_gecco <- res[[1]]
+    vals$gecco_sidebar <- res[[2]]
   })
   observeEvent(input$prot_filter_gecco,{
-    vals$prot_filter_gecco <- update_filter_values(input$prot_filter_gecco,vals$prot_filter_gecco, "prot_filter_gecco_sidemenu" )
+    res <- update_filter_values(input$prot_filter_gecco,vals$prot_filter_gecco, "prot_filter_gecco_sidemenu" ,vals$gecco_sidebar)
+    vals$prot_filter_gecco <- res[[1]]
+    vals$gecco_sidebar <- res[[2]]
   })
   observeEvent(input$score_average_gecco_sidemenu,{
-    vals$score_average_gecco <- update_filter_values(input$score_average_gecco_sidemenu,vals$score_average_gecco, "score_average_gecco" )
+    res <- update_filter_values(input$score_average_gecco_sidemenu,vals$score_average_gecco, "score_average_gecco",vals$gecco_global )
+    vals$score_average_gecco <- res[[1]]
+    vals$gecco_global <- res[[2]]
   })
   observeEvent(input$score_cluster_gecco_sidemenu,{
-    vals$score_cluster_gecco <- update_filter_values(input$score_cluster_gecco_sidemenu,vals$score_cluster_gecco, "score_cluster_gecco" )
+    res <- update_filter_values(input$score_cluster_gecco_sidemenu,vals$score_cluster_gecco, "score_cluster_gecco",vals$gecco_global )
+    vals$score_cluster_gecco <- res[[1]]
+    vals$gecco_global <- res[[2]]
   })
   observeEvent(input$domains_filter_gecco_sidemenu,{
-    vals$domains_filter_gecco <- update_filter_values(input$domains_filter_gecco_sidemenu,vals$domains_filter_gecco, "domains_filter_gecco" )
+    res <- update_filter_values(input$domains_filter_gecco_sidemenu,vals$domains_filter_gecco, "domains_filter_gecco",vals$gecco_global )
+    vals$domains_filter_gecco <- res[[1]]
+    vals$gecco_global <- res[[2]]
   })
   observeEvent(input$prot_filter_gecco_sidemenu,{
-    vals$prot_filter_gecco <- update_filter_values(input$prot_filter_gecco_sidemenu,vals$prot_filter_gecco, "prot_filter_gecco" )
+    res <- update_filter_values(input$prot_filter_gecco_sidemenu,vals$prot_filter_gecco, "prot_filter_gecco",vals$gecco_global )
+    vals$prot_filter_gecco <- res[[1]]
+    vals$gecco_global <- res[[2]]
   })
   
   shiny::observeEvent(input$restore_box,{
