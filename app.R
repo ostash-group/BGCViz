@@ -2795,6 +2795,9 @@ server <- function(input, output, session) {
     #create the zip file from flst vector
     zip(file,  flst) },
   contentType = "application/zip" )
+  shiny::onSessionEnded(function() {
+    shiny::stopApp()
+  })
 }
 
 # Run the application 
