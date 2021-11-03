@@ -1,0 +1,43 @@
+Package: BGCViz
+Title: BGCViz
+Version: 0.0.0.9000
+Authors@R: person('Pavlo', 'Hrab', email = 'pavlo.hrab@gmail.com', role = c('cre', 'aut'))
+Description: PKG_DESC.
+License: MIT + file LICENSE
+biocViews: 
+Imports: 
+    BioCircos,
+    config (>= 0.3.1),
+    dplyr,
+    DT,
+    GenomicRanges,
+    ggplot2,
+    golem (>= 0.3.1),
+    magrittr,
+    pkgload,
+    plotly,
+    plyr,
+    processx,
+    rjson,
+    RSQLite,
+    shiny (>= 1.7.1),
+    shinycssloaders,
+    shinydashboard,
+    shinydashboardPlus,
+    shinydisconnect,
+    shinyjqui,
+    shinyjs,
+    sortable,
+    stringi,
+    stringr,
+    tidyr
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+URL: https://github.com/ostash-group/BGCViz
+BugReports: https://github.com/ostash-group/BGCViz/issues
+Suggests: 
+    spelling,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Language: en-US
