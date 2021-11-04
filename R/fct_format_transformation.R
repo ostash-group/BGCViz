@@ -1,15 +1,18 @@
 #' sempi_to_df 
 #'
 #' @description Function, which transforms Track.db file into dataframe, which could be then written to csv
+#' 
+#' @param file - path to a json file,
+#' @param write_to - path where to write generated csv file
 #'
-#' @return dataframe object with sempi results
+#' @return csv file in specified location
 #'
-#' @noRd
-sempi_to_df <- function(data){
-conn <- RSQLite::dbConnect(RSQLite::SQLite(), data)
+#' @export
+sempi_to_csv <- function(file, write_to = getwd()){
+conn <- RSQLite::dbConnect(RSQLite::SQLite(), file)
 
 data <- RSQLite::dbGetQuery(conn, "SELECT * FROM tbl_segments")
-
+RSQLite::dbDisconnect(conn)
 
 data <- data %>%
   dplyr::filter(trackid==6)
@@ -26,17 +29,21 @@ sempi_data$Cluster <- as.numeric(sempi_data$Cluster)
 sempi_data$Start <- as.numeric(sempi_data$Start)
 sempi_data$Stop <- as.numeric(sempi_data$Stop)
 sempi_data$Type <- stringr::str_trim(tolower(sempi_data$Type))
-return(sempi_data)
+write.csv(sempi_data, paste0(write_to,"/sempi.csv"), row.names = FALSE)
 }
+
 #' prism_to_df 
 #'
 #' @description Function, that transforms prism json object into dataframe, which could be written to the csv file
+#' 
+#' @param file - path to a json file,
+#' @param write_to - path where to write generated csv file
 #'
-#' @return dataframe object
+#' @return csv file in specified location
 #'
-#' @noRd
-prism_to_df <- function(data){
-data <- rjson::fromJSON(file =args[1])
+#' @export
+prism_to_csv <- function(file, write_to = getwd()){
+data <- rjson::fromJSON(file =file)
 
 
 types <- sapply(data$prism_results$clusters, function(x){
@@ -64,18 +71,22 @@ end <- sapply(data$prism_results$clusters, function(x){
 prism_data <- data.frame(cbind(start, end, types))
 prism_data <- prism_data %>%
   dplyr::transmute(Cluster=as.numeric(rownames(prism_data)), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
-return(prism_data)
+write.csv(prism_data, paste0(write_to,"/prism.csv"), row.names = FALSE)
+
 }
 
 #' antismash_to_df 
 #'
 #' @description Function, that returns dataframe, out of supplied antismash json file
+#' 
+#' @param file - path to a json file,
+#' @param write_to - path where to write generated csv file
 #'
-#' @return dataframe object
+#' @return csv file in specified location
 #'
-#' @noRd
-antismash_to_df <- function(data){
-  data <- rjson::fromJSON(file = data)
+#' @export
+antismash_to_csv <- function(file, write_to = getwd()){
+  data <- rjson::fromJSON(file = file)
   types <- sapply(data$records, function(y){
     lapply(y$features, function(x){
       if (unlist(x$type == 'region')){
@@ -118,5 +129,5 @@ antismash_to_df <- function(data){
   anti_data$Cluster <- as.numeric(anti_data$Cluster)
   anti_data$Start <- as.numeric(anti_data$Start)
   anti_data$Stop <- as.numeric(anti_data$Stop)
-  return(anti_data)
+  write.csv(anti_data, paste0(write_to,"/antismash.csv"), row.names = FALSE)
 }
