@@ -62,8 +62,8 @@ app_server <- function( input, output, session ) {
     anti=F,deep=F, gecco=F, arts=F, prism=F, sempi=F, prism_supp=F, rre=F
   )
   # Making coloring datatable
-  vals$rename_data <- read.csv("inst/extdata/rename.csv")
-  rename_data <- read.csv("inst/extdata/rename.csv")
+  vals$rename_data <- read.csv("extdata/rename.csv")
+  rename_data <- read.csv("extdata/rename.csv")
   coloring_datatable <-data.frame( tidyr::drop_na(data.frame(cbind(as.character(rename_data$Group_color), as.character(rename_data$Color), rename_data$Hierarchy)) ))
   coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all),]
   colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
@@ -553,13 +553,13 @@ app_server <- function( input, output, session ) {
   ##----------------------------------------------------------------
   shiny::observeEvent(input$anti_sco,{
     
-    anti_data <- read.csv("inst/extdata/sco_antismash.csv")
+    anti_data <- read.csv("extdata/sco_antismash.csv")
     anti_data <- read_antismash(anti_data)
     
   })
   
   shiny::observeEvent(input$gecco_sco,{
-    gecco_data <- read.delim("inst/extdata/sco_gecco.tsv")
+    gecco_data <- read.delim("extdata/sco_gecco.tsv")
     read_gecco(gecco_data)
     
   })
@@ -567,37 +567,37 @@ app_server <- function( input, output, session ) {
   shiny::observeEvent(input$prism_sco,{
     # Read data
     
-    data <- rjson::fromJSON(file = "inst/extdata/sco_prism.json")
+    data <- rjson::fromJSON(file = "extdata/sco_prism.json")
     read_prism(data)
     
   })
   
   shiny::observeEvent(input$sempi_sco,{
-    sempi_data <- read.csv("inst/extdata/sco_sempi.csv")
+    sempi_data <- read.csv("extdata/sco_sempi.csv")
     read_sempi(sempi_data)
     
   })
   
   shiny::observeEvent(input$arts_sco, {
     
-    data <- read.delim("inst/extdata/sco_duptable.tsv")
+    data <- read.delim("extdata/sco_duptable.tsv")
     disable_event_logic()
     read_arts_dupdata(data)
     
-    data <- read.delim("inst/extdata/sco_knownhits.tsv")
+    data <- read.delim("extdata/sco_knownhits.tsv")
     read_arts_knownhits(data)
   })
   
   shiny::observeEvent(input$deep_sco, {
     
-    data <- read.delim("inst/extdata/sco_deep.tsv") 
+    data <- read.delim("extdata/sco_deep.tsv") 
     read_deep(data)
   })
   
   shiny::observeEvent(input$rre_sco, {
     
     # Read data
-    data <-  read.delim("inst/extdata/sco_rre.txt")
+    data <-  read.delim("extdata/sco_rre.txt")
     read_rre(data)
     
   })
@@ -2325,14 +2325,24 @@ app_server <- function( input, output, session ) {
         flst <- c(flst, file_names)
       } else if (grepl('group_by.csv', file_names, fixed = TRUE)){
         flst <- c(flst, file_names)
-      } else if (grepl('inst/scripts/group.py', file_names, fixed = TRUE)){
-        flst <- c(flst, file_names)
-      }
+      } 
     }
     #create the zip file from flst vector
+    flst <- c(flst, 'scripts/group.py')
     zip(file,  flst) },
   contentType = "application/zip" )
   shiny::onSessionEnded(function() {
+    # List files in directory
+    files_in_dir <- list.files()
+    # Iterate over those files and if found "_biocircos.csv" add to the flst vector
+    for (file_names in files_in_dir) {
+      if (grepl('_biocircos.csv', file_names, fixed = TRUE)) {
+        file.remove(file_names)
+      } else if (grepl('group_by.csv', file_names, fixed = TRUE)){
+        file.remove(file_names)
+      }
+    }
+
     shiny::stopApp()
   })
 }
