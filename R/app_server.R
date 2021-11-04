@@ -62,8 +62,9 @@ app_server <- function( input, output, session ) {
     anti=F,deep=F, gecco=F, arts=F, prism=F, sempi=F, prism_supp=F, rre=F
   )
   # Making coloring datatable
-  vals$rename_data <- read.csv("extdata/rename.csv")
-  rename_data <- read.csv("extdata/rename.csv")
+  rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
+  vals$rename_data <- read.csv(rename_file)
+  rename_data <- read.csv(rename_file)
   coloring_datatable <-data.frame( tidyr::drop_na(data.frame(cbind(as.character(rename_data$Group_color), as.character(rename_data$Color), rename_data$Hierarchy)) ))
   coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all),]
   colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
@@ -552,52 +553,54 @@ app_server <- function( input, output, session ) {
   ##            Loading and processing of example data             -
   ##----------------------------------------------------------------
   shiny::observeEvent(input$anti_sco,{
-    
-    anti_data <- read.csv("extdata/sco_antismash.csv")
+    anti_file <- system.file("extdata", "sco_antismash.csv", package = "BGCViz")
+    anti_data <- read.csv(anti_file)
     anti_data <- read_antismash(anti_data)
     
   })
   
   shiny::observeEvent(input$gecco_sco,{
-    gecco_data <- read.delim("extdata/sco_gecco.tsv")
+    gecco_file <- system.file("extdata", "sco_gecco.tsv", package = "BGCViz")
+    gecco_data <- read.delim(gecco_file)
     read_gecco(gecco_data)
     
   })
   
   shiny::observeEvent(input$prism_sco,{
     # Read data
-    
-    data <- rjson::fromJSON(file = "extdata/sco_prism.json")
+    prism_file <- system.file("extdata", "sco_prism.json", package = "BGCViz")
+    data <- rjson::fromJSON(file = prism_file)
     read_prism(data)
     
   })
   
   shiny::observeEvent(input$sempi_sco,{
-    sempi_data <- read.csv("extdata/sco_sempi.csv")
+    sempi_file <- system.file("extdata", "sco_sempi.csv", package = "BGCViz")
+    sempi_data <- read.csv(sempi_file)
     read_sempi(sempi_data)
     
   })
   
   shiny::observeEvent(input$arts_sco, {
-    
-    data <- read.delim("extdata/sco_duptable.tsv")
+    dup_data_file <- system.file("extdata", "sco_duptable.tsv", package = "BGCViz")
+    data <- read.delim(dup_data_file)
     disable_event_logic()
     read_arts_dupdata(data)
-    
-    data <- read.delim("extdata/sco_knownhits.tsv")
+    knownhits_file <- system.file("extdata", "sco_knownhits.tsv", package = "BGCViz")
+    data <- read.delim(knownhits_file)
     read_arts_knownhits(data)
   })
   
   shiny::observeEvent(input$deep_sco, {
-    
-    data <- read.delim("extdata/sco_deep.tsv") 
+    deep_file <- system.file("extdata", "sco_deep.tsv", package = "BGCViz")
+    data <- read.delim(deep_file) 
     read_deep(data)
   })
   
   shiny::observeEvent(input$rre_sco, {
-    
     # Read data
-    data <-  read.delim("extdata/sco_rre.txt")
+    rre_file <- system.file("extdata", "sco_rre.txt", package = "BGCViz")
+    data <-  read.delim(sco_rre.txt)
     read_rre(data)
     
   })
@@ -1129,7 +1132,7 @@ app_server <- function( input, output, session ) {
     
     rename_data <- vals$rename_data
     if (vals$anti_data_input == T){
-      anti_data <- read.csv("anti_data.csv")
+      anti_data <- vals$anti_data
       res <- rename_vector(anti_data, rename_data, vals$renaming_notification)
       vals$anti_type <- res[[1]]
       vals$renaming_notification <- res[[2]]
@@ -1138,7 +1141,7 @@ app_server <- function( input, output, session ) {
     }
     
     if (vals$sempi_data_input == T){
-      sempi_data <- read.csv("sempi_data.csv")
+      sempi_data <- vals$sempi_data
       res <- rename_vector(sempi_data, rename_data, vals$renaming_notification)
       vals$sempi_type <- res[[1]]
       vals$renaming_notification <- res[[2]]
@@ -1147,7 +1150,7 @@ app_server <- function( input, output, session ) {
     }
     
     if(vals$prism_data_input == T){
-      prism_data <- read.csv("prism_data.csv")
+      prism_data <- vals$prism_data
       res <- rename_vector(prism_data, rename_data, vals$renaming_notification)
       vals$prism_type <- res[[1]]
       vals$renaming_notification <- res[[2]]
@@ -1167,7 +1170,7 @@ app_server <- function( input, output, session ) {
     
     rename_data <- vals$rename_data
     if (vals$anti_data_input == T){
-      anti_data <- read.csv("anti_data.csv")
+      anti_data <- vals$anti_data
       res <- rename_vector(anti_data, rename_data, vals$renaming_notification)
       vals$anti_type <- res[[1]]
       vals$renaming_notification <- res[[2]]
@@ -1176,7 +1179,7 @@ app_server <- function( input, output, session ) {
     }
     
     if (vals$sempi_data_input == T){
-      sempi_data <- read.csv("sempi_data.csv")
+      sempi_data <- vals$sempi_data
       res <- rename_vector(sempi_data, rename_data, vals$renaming_notification)
       vals$sempi_type <- res[[1]]
       vals$renaming_notification <- res[[2]]      
@@ -1185,7 +1188,7 @@ app_server <- function( input, output, session ) {
     }
     
     if(vals$prism_data_input == T){
-      prism_data <- read.csv("prism_data.csv")
+      prism_data <- vals$prism_data
       res <- rename_vector(prism_data, rename_data, vals$renaming_notification)
       vals$prism_type <- res[[1]]
       vals$renaming_notification <- res[[2]]      
@@ -2328,7 +2331,8 @@ app_server <- function( input, output, session ) {
       } 
     }
     #create the zip file from flst vector
-    flst <- c(flst, 'scripts/group.py')
+    group_by_script <- system.file("scripts", "group.py", package = "BGCViz")
+    flst <- c(flst, group_by_script)
     zip(file,  flst) },
   contentType = "application/zip" )
   shiny::onSessionEnded(function() {
