@@ -74,45 +74,7 @@ app_ui <- function(request) {
           ),
           shinydashboard::tabItem(
             tabName = "biocircos_sidemenu",
-            shiny::fluidRow(
-              tags$div(
-                id = "biocircos_data1",
-                div(
-                  id = "id1",
-                  shinydashboardPlus::box(
-                    title = "Biocircos plot",
-                    id = "biocircos_plot_box",
-                    collapsible = TRUE,                                          
-                    closable = TRUE,
-                    width = 12,
-                    shiny::checkboxInput("ShowBiocircosColoring", "Show Biocircos coloring scheme"),
-                    sidebar = shinydashboardPlus::boxSidebar(
-                      id = "biocircos_box_sidebar",
-                      width = 25,
-                      shiny::checkboxInput("biocircos_color", "Make arcs in biocircos colorful, based on the class"),
-                      shiny::checkboxInput("label_color", "Make links in biocircos colorful, based on the class"),
-                      shiny::selectInput("label_color_class", "Choose the mode to color the links", choices = c("Hierarchical-based" = "H",
-                                                                                                                "Purity-based" = "P",
-                                                                                                                "Reference column-based" = "R"
-                      ),
-                      selected = 'H'),
-                      shiny::selectInput("ref_col_biocircos", "Choose reference column to color the links", choices = c(""), selected = '')
-                    ),
-                    BioCircos::BioCircosOutput("biocircos", height = "900px")%>%
-                      shinycssloaders::withSpinner()
-                  )
-                )
-              )
-            ),
-            shiny::fluidRow(
-              tags$div(
-                id = "biocircos_data2",
-                div(
-                  id = "id1",
-                  shiny::uiOutput("biocircos_coloring")
-                )
-              )
-            ),
+            mod_biocircos_ui("biocircos_ui_1"),
             sortable::sortable_js("biocircos_data1", options = sortable::sortable_options(swap = TRUE, group = "biocircos_data")),
             sortable::sortable_js("biocircos_data2", options = sortable::sortable_options(swap = TRUE, group = "biocircos_data"))
           ),
