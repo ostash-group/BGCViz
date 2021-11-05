@@ -46,8 +46,7 @@ golem::add_module( name = "barplot_rank" ) # Name of the module
 golem::add_module( name = "group_table" ) # Name of the module
 golem::add_module( name = "download" ) # Name of the module
 golem::add_module( name = "deepbgc_plots" ) # Name of the module
-
-
+golem::add_module( name = "gecco_plots" ) # Name of the module
 
 
 
