@@ -2028,11 +2028,8 @@ app_server <- function( input, output, session ) {
   
   # Render interactive plot, which shows bgcs of antismash, intercepted with chosen app. Also all app bgs. On hover shows all available information
   # For antismash and PRISM data showed only ID, Start, Stop, Type
-  output$deep_reference <- plotly::renderPlotly({
-    shiny::req(vals$deep_reference_to_plot)
-    vals$can_plot_deep_ref_2 <- T
-    vals$deep_reference_to_plot
-  })
+  mod_deep_reference_server("deep_reference_ui_1", vals=vals)
+  
   
   output$deep_reference_2 <- plotly::renderPlotly({
     shiny::req(vals$can_plot_deep_ref_2 == T)

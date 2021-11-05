@@ -167,22 +167,7 @@ app_ui <- function(request) {
                           shinycssloaders::withSpinner()
                       ), options = list(handles="w,e"))
                   ),
-                  div(
-                    id="id2",
-                    shinyjqui::jqui_resizable(
-                      shinydashboardPlus::box(
-                        title = "Annotation comparison to the reference",
-                        id = "annotation_reference_comparison_box",
-                        collapsible = TRUE,                                          
-                        closable = TRUE,
-                        width = NULL,
-                        height = "100%",
-                        shiny::selectInput("ref", "Choose reference data", choices = c(""),
-                                           selected = ""),
-                        plotly::plotlyOutput("deep_reference")  %>%
-                          shinycssloaders::withSpinner()
-                      ), options = list(handles="w,e")),
-                  )
+                  mod_deep_reference_ui("deep_reference_ui_1")
                 )
               )),
             sortable::sortable_js("anno_data1", options = sortable::sortable_options(swap = TRUE, group = "anno_data")),
