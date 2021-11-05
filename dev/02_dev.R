@@ -43,6 +43,8 @@ usethis::use_package( "RSQLite" )
 golem::add_module( name = "deep_reference" ) # Name of the module
 golem::add_module( name = "deep_reference_2" ) # Name of the module
 golem::add_module( name = "barplot_rank" ) # Name of the module
+golem::add_module( name = "group_table" ) # Name of the module
+
 
 
 ## Add helper functions ----

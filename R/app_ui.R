@@ -210,22 +210,7 @@ app_ui <- function(request) {
               tags$div(
                 id="summarize_data1",
                 mod_barplot_rank_ui("barplot_rank_ui_1"),
-                div(
-                  id="id2",
-                  shinyjqui::jqui_resizable( 
-                    shinydashboardPlus::box(
-                      title = "Group table",
-                      id = "group_table_box",
-                      collapsible = TRUE,                                          
-                      closable = TRUE,
-                      style='overflow-x: scroll;height:700px;overflow-y: scroll;',
-                      height = "100%",
-                      shiny::checkboxInput("count_all", "Show all BGC for the 'group by' method (+ individually annotated BGC)"),
-                      shiny::selectInput("group_by", "Group data by", choices = c(""),  selected = ''),
-                      shiny::tableOutput("group_table")%>%
-                        shinycssloaders::withSpinner()
-                    ),options = list(handles="w,e"))
-                )
+                mod_group_table_ui("group_table_ui_1")
               )
             ),
             sortable::sortable_js("summarize_data1", options = sortable::sortable_options(swap = TRUE))
