@@ -2075,26 +2075,8 @@ app_server <- function( input, output, session ) {
   mod_group_table_server("group_table_ui_1", vals=vals, data_uploads = data_uploads, soft_names = soft_names, soft_namings = soft_namings, data_to_use = data_to_use, abbr = abbr)
   
   # Download used datasets (as for BioCircos)
-  output$download <- shiny::downloadHandler(filename = function(){
-    paste("datasets.zip")     
-  },  
-  content =  function(file){
-    flst <- c()
-    # List files in directory
-    files_in_dir <- list.files()
-    # Iterate over those files and if found "_biocircos.csv" add to the flst vector
-    for (file_names in files_in_dir) {
-      if (grepl('_biocircos.csv', file_names, fixed = TRUE)) {
-        flst <- c(flst, file_names)
-      } else if (grepl('group_by.csv', file_names, fixed = TRUE)){
-        flst <- c(flst, file_names)
-      } 
-    }
-    #create the zip file from flst vector
-    group_by_script <- system.file("scripts", "group.py", package = "BGCViz")
-    flst <- c(flst, group_by_script)
-    zip(file,  flst) },
-  contentType = "application/zip" )
+  mod_download_server("download_ui_1")
+  
   shiny::onSessionEnded(function() {
     # List files in directory
     files_in_dir <- list.files()

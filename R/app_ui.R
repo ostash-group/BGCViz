@@ -389,17 +389,7 @@ app_ui <- function(request) {
                                          selected = "All")
                     )
                   ),
-                  div(
-                    id = "id6",
-                    shinydashboardPlus::box(
-                      title = "Download data",
-                      id = "download_data_box",
-                      collapsible = TRUE,                                          
-                      closable = TRUE,
-                      width = NULL,
-                      shiny::downloadButton("download","Download currently used datasets (as for Biocircos plot)" )
-                    )
-                  )
+                  mod_download_ui("download_ui_1")
                 )
               )
             ),
