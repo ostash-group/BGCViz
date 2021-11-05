@@ -44,6 +44,8 @@ golem::add_module( name = "deep_reference" ) # Name of the module
 golem::add_module( name = "deep_reference_2" ) # Name of the module
 golem::add_module( name = "barplot_rank" ) # Name of the module
 golem::add_module( name = "group_table" ) # Name of the module
+golem::add_module( name = "download" ) # Name of the module
+
 
 
 
