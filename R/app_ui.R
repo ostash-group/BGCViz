@@ -47,47 +47,7 @@ app_ui <- function(request) {
         ),
         shinydashboard::tabItems(
           shinydashboard::tabItem( tabName = "deep_sidemenu",
-                                   shiny::fluidRow(
-                                     tags$div(
-                                       id = "deep_data1",
-                                       div(id = "id1",
-                                           shinyjqui::jqui_resizable(shinydashboardPlus::box(
-                                             title = "DeepBGC comparison",
-                                             id = "deep_comparison_box",
-                                             collapsible = TRUE,                                        
-                                             closable = TRUE,
-                                             height = "100%",
-                                             shiny::plotOutput("deep_barplot", height = "500px",) %>%
-                                               shinycssloaders::withSpinner()
-                                           ),options = list(handles="w,e"))),
-                                       div(id = "id2", 
-                                           shinyjqui::jqui_resizable(shinydashboardPlus::box(
-                                             title = "DeepBGC rate",
-                                             id = "deep_rate_box",
-                                             collapsible = TRUE,                                         
-                                             height = "100%",
-                                             plotly::plotlyOutput("deep_rate", height = "500px",) %>%
-                                               shinycssloaders::withSpinner()
-                                           ),options = list(handles="w,e"))))),
-                                   shiny::fluidRow(
-                                     tags$div( id = "deep_data2",
-                                               div(id = "id1",
-                                                   shinyjqui::jqui_resizable(shinydashboardPlus::box( 
-                                                     title = "DeepBGC comparison controls",
-                                                     id = "deep_comparison_controls_box",
-                                                     collapsible = TRUE,                                          
-                                                     closable = TRUE,
-                                                     shiny::selectInput("ref_comparison", "Choose data for comparison with DeepBGC", choices = c(""), selected = ''),
-                                                     # Score to use for thresholds
-                                                     shiny::selectInput("score_type", "Choose score type to set threshold", choices = c("Activity score" = "Activity",
-                                                                                                                                        "Cluster_type score" = "Cluster_Type",
-                                                                                                                                        "DeepBGC score" = "DeepBGC"),
-                                                                        selected = "Activity score"),
-                                                     # Chose step for barplot (as a threshold to draw a bar)
-                                                     shiny::sliderInput("plot_step", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
-                                                     shiny::sliderInput("plot_start", "Chose plot start point(barplot)", min = 0, max = 99, value = 0)
-                                                   ),options = list(handles="w,e")))
-                                     )),
+                                  mod_deepbgc_plots_ui("deep_barplot_ui_1"),
                                    sortable::sortable_js("deep_data1", options = sortable::sortable_options(swap = TRUE, group = "deep_data")),
                                    sortable::sortable_js("deep_data2", options = sortable::sortable_options(swap = TRUE, group = "deep_data"))
           ),
