@@ -49,4 +49,4 @@ mod_deep_reference_server <- function(id, vals){
 # mod_deep_reference_ui("deep_reference_ui_1")
     
 ## To be copied in the server
-# mod_deep_reference_server("deep_reference_ui_1")
+# mod_deep_reference_server("deep_reference_ui_1", vals=vals)
