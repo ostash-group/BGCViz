@@ -46,63 +46,15 @@ app_ui <- function(request) {
           css = ""
         ),
         shinydashboard::tabItems(
-          shinydashboard::tabItem( tabName = "deep_sidemenu",
-                                  mod_deepbgc_plots_ui("deep_barplot_ui_1"),
-                                   sortable::sortable_js("deep_data1", options = sortable::sortable_options(swap = TRUE, group = "deep_data")),
-                                   sortable::sortable_js("deep_data2", options = sortable::sortable_options(swap = TRUE, group = "deep_data"))
+          shinydashboard::tabItem( 
+            tabName = "deep_sidemenu",
+            mod_deepbgc_plots_ui("deep_barplot_ui_1"),
+            sortable::sortable_js("deep_data1", options = sortable::sortable_options(swap = TRUE, group = "deep_data")),
+            sortable::sortable_js("deep_data2", options = sortable::sortable_options(swap = TRUE, group = "deep_data"))
           ),
           shinydashboard::tabItem(
             tabName = "gecco_sidemenu",
-            shiny::fluidRow(
-              tags$div(
-                id = "gecco_data1",
-                div(
-                  id = "id1",
-                  shinyjqui::jqui_resizable(shinydashboardPlus::box(
-                    title = "GECCO comparison",
-                    id = "gecco_comparison_box",
-                    collapsible = TRUE,                                          
-                    closable = TRUE,
-                    height = "100%",
-                    shiny::plotOutput("gecco_barplot", height = "500px") %>%
-                      shinycssloaders::withSpinner()
-                  ),options = list(handles="w,e"))
-                ),
-                div(
-                  id = "id2",
-                  shinyjqui::jqui_resizable(shinydashboardPlus::box(
-                    title = "GECCO rate",
-                    id = "gecco_rate_box",
-                    collapsible = TRUE,                                          
-                    closable = TRUE,
-                    height = "100%",
-                    plotly::plotlyOutput("gecco_rate", height = "500px",)%>%
-                      shinycssloaders::withSpinner()
-                  ),options = list(handles="w,e"))
-                ),
-              )
-            ),
-            shiny::fluidRow(
-              tags$div(
-                id = "gecco_data2",
-                div(
-                  id = "id1",
-                  shinyjqui::jqui_resizable(shinydashboardPlus::box(
-                    title = "GECCO comparison controls",
-                    id = "gecco_comparison_controls_box",
-                    collapsible = TRUE,                                          
-                    closable = TRUE,
-                    shiny::selectInput("ref_comparison_gecco", "Choose data for comparison with Gecco", choices = c(""),selected = ''),
-                    shiny::selectInput("score_type_gecco", "Choose score type to set threshold", choices = c(
-                      "Average p-value" = "avg_p",
-                      "Cluster_type score" = "Cluster_Type"),
-                      selected = "avg_p"),
-                    shiny::sliderInput("plot_step_gecco", "Choose step for plots(barplot)", min = 1, max = 50,value = 10),
-                    shiny::sliderInput("plot_start_gecco", "Chose plot start point(barplot)", min = 0, max = 99, value = 0)
-                  ), options = list(handles="w,e"))
-                )
-              )
-            ),
+            mod_gecco_plots_ui("gecco_plots_ui_1"),
             sortable::sortable_js("gecco_data1", options = sortable::sortable_options(swap = TRUE, group = "gecco_data")),
             sortable::sortable_js("gecco_data2", options = sortable::sortable_options(swap = TRUE, group = "gecco_data"))
           ),
