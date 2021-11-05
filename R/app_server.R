@@ -875,17 +875,7 @@ app_server <- function( input, output, session ) {
       shinydashboard::menuItem("Summarize interception", tabName = "summarize_sidemenu", icon = icon("fas fa-chart-bar"))
     }
   })
-  output$biocircos_coloring <- shiny::renderUI({
-    if (input$ShowBiocircosColoring == T){
-      shinydashboardPlus::box(
-        title = "Biocircos coloring scheme",
-        closable = TRUE,
-        collapsible = TRUE,                                          
-        DT::dataTableOutput("biocircos_legend") %>%
-          shinycssloaders::withSpinner()
-      )
-    }
-  })
+
   output$deep_filter_box <- shiny::renderUI({
     if (vals$deep_data_input == T){
       vals$deep_global <- T
@@ -1734,35 +1724,7 @@ app_server <- function( input, output, session ) {
   ##                      Biocircos plot tab                       -
   ##---------------------------------------------------------------
   # Render Biocircos Plot for all-vs-all comparison
-  output$biocircos <- BioCircos::renderBioCircos({
-    shiny::req(vals$data_upload_count >1)
-    
-    # Plot BioCircos
-    BioCircos::BioCircos(vals$tracklist, genome = vals$Biocircos_chromosomes, genomeTicksScale = 1e+6)
-  })
-  
-  
-  output$biocircos_legend <- DT::renderDataTable({
-    shiny::req(vals$data_upload_count >=1)
-    rownames = FALSE
-    new_data <- vals$coloring_datatable
-    color_vec <- new_data$x$data$Color
-    options(DT.options = list(pageLength = 50))
-    new_data %>% DT::formatStyle('Color', backgroundColor=DT::styleEqual(color_vec, color_vec))
-    
-    
-  })
-  
-  # Updating values in Datatable on edit
-  shiny::observeEvent(input$biocircos_legend_cell_edit, {
-    if (input$biocircos_legend_cell_edit$col[1] == 0){
-      vals$coloring_datatable$x$data$Name <- input$biocircos_legend_cell_edit$value
-    } else if (input$biocircos_legend_cell_edit$col[1] == 1){
-      vals$coloring_datatable$x$data$Color <- input$biocircos_legend_cell_edit$value
-    } else if (input$biocircos_legend_cell_edit$col[1] == 2){
-      vals$coloring_datatable$x$data$Hierarchy <- input$biocircos_legend_cell_edit$value
-    }
-  })
+  mod_biocircos_server("biocircos_ui_1", vals = vals)
   ##---------------------------------------------------------------
   ##                        Summarize tab                         -
   ##---------------------------------------------------------------
