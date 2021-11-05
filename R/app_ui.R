@@ -209,19 +209,7 @@ app_ui <- function(request) {
             shiny::fluidRow(
               tags$div(
                 id="summarize_data1",
-                div(
-                  id="id1",
-                  shinyjqui::jqui_resizable(
-                    shinydashboardPlus::box(
-                      title = "Ranking barplot",
-                      id = "ranking_barplot_box",
-                      collapsible = TRUE,                                          
-                      closable = TRUE,
-                      height = "100%",
-                      plotly::plotlyOutput("barplot_rank", height = "600px")%>%
-                        shinycssloaders::withSpinner()
-                    ),options = list(handles="w,e"))
-                ),
+                mod_barplot_rank_ui("barplot_rank_ui_1"),
                 div(
                   id="id2",
                   shinyjqui::jqui_resizable( 
