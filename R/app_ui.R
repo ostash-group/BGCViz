@@ -153,20 +153,7 @@ app_ui <- function(request) {
                 id="anno_data1",
                 shiny::column(
                   width = 12,
-                  div(
-                    id="anno_div_1",
-                    shinyjqui::jqui_resizable(
-                      shinydashboardPlus::box(
-                        title = "Annotations reference",
-                        id = "annotation_reference_box",
-                        height = "100%",
-                        width = NULL,
-                        collapsible = TRUE,                                          
-                        closable = TRUE,
-                        plotly::plotlyOutput("deep_reference_2")  %>%
-                          shinycssloaders::withSpinner()
-                      ), options = list(handles="w,e"))
-                  ),
+                  mod_deep_reference_2_ui("deep_reference_2_ui_1"),
                   mod_deep_reference_ui("deep_reference_ui_1")
                 )
               )),
