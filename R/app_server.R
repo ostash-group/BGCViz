@@ -600,7 +600,7 @@ app_server <- function( input, output, session ) {
   shiny::observeEvent(input$rre_sco, {
     # Read data
     rre_file <- system.file("extdata", "sco_rre.txt", package = "BGCViz")
-    data <-  read.delim(sco_rre.txt)
+    data <-  read.delim(rre_file)
     read_rre(data)
     
   })
