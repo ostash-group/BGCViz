@@ -283,14 +283,39 @@ app_server <- function( input, output, session ) {
                                selected = "PRISM")
     }
   }
-  read_sempi <- function(data){
-    sempi_data <- data
+  read_sempi <- function(data, zip=T){
+    if (zip==T){
+      unzip(data, files = "genome_browser/main/Tracks.db", exdir =  "./SEMPI_TracksDB", junkpaths = T)
+      fl <- "./SEMPI_TracksDB/Tracks.db"
+      conn <- RSQLite::dbConnect(RSQLite::SQLite(),fl)
+      
+      data <- RSQLite::dbGetQuery(conn, "SELECT * FROM tbl_segments")
+      RSQLite::dbDisconnect(conn)
+      unlink("./SEMPI_TracksDB", recursive = T)
+      data <- data %>%
+        dplyr::filter(trackid==6)
+      
+      types <- sapply(data$name, function(x){
+        tmp <- stringr::str_trim(x)
+        tmp <- gsub(", ", "", tmp)
+        gsub(" ", "__", tmp)
+      })
+      
+      sempi_data <- data.frame(cbind(seq(1:length(data$trackid)),data$start, data$end,as.character(types)))
+      colnames(sempi_data) <- c("Cluster", "Start", "Stop", "Type")
+      sempi_data$Cluster <- as.numeric(sempi_data$Cluster)
+      sempi_data$Start <- as.numeric(sempi_data$Start)
+      sempi_data$Stop <- as.numeric(sempi_data$Stop)
+      sempi_data$Type <- stringr::str_trim(tolower(sempi_data$Type))
+    } else {
+      sempi_data <- data
+    }
     res_validation <- validate_basic_input(sempi_data)
     if (!(res_validation[[1]])){
       sempi_data <- NULL
       return(NULL)
     } else{
-      sempi_data <- res_validation[[2]]
+    sempi_data <- res_validation[[2]]
     }
     sempi_data['Type2'] <- stringr::str_trim(tolower(sempi_data$Type))
     vals$sempi_type <- sempi_data$Type2
@@ -539,7 +564,7 @@ app_server <- function( input, output, session ) {
   shiny::observeEvent(input$sempi_sco,{
     sempi_file <- system.file("extdata", "sco_sempi.csv", package = "BGCViz")
     sempi_data <- read.csv(sempi_file)
-    read_sempi(sempi_data)
+    read_sempi(sempi_data, zip = F)
   })
   
   shiny::observeEvent(input$arts_sco, {
@@ -626,9 +651,12 @@ app_server <- function( input, output, session ) {
   
   shiny::observeEvent(input$sempi_data,{
     
-    
-    sempi_data <- read.csv(input$sempi_data$datapath)
-    read_sempi(sempi_data)
+    if (input$sempi_data$type=="text/csv"){ 
+      sempi_data <- read.csv(input$sempi_data$datapath)
+      read_sempi(sempi_data, zip = F)
+    } else {
+      read_sempi(input$sempi_data$datapath, zip = T)
+    }
     
   })
   
