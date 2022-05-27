@@ -556,14 +556,14 @@ app_server <- function( input, output, session ) {
     anti_file <- system.file("extdata", "sco_antismash.csv", package = "BGCViz")
     anti_data <- read.csv(anti_file)
     anti_data <- read_antismash(anti_data)
-    
+    usethis::use_data(vals$anti_data, anti_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$gecco_sco,{
     gecco_file <- system.file("extdata", "sco_gecco.tsv", package = "BGCViz")
     gecco_data <- read.delim(gecco_file)
     read_gecco(gecco_data)
-    
+    usethis::use_data(vals$gecco_data, gecco_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$prism_sco,{
@@ -571,14 +571,14 @@ app_server <- function( input, output, session ) {
     prism_file <- system.file("extdata", "sco_prism.json", package = "BGCViz")
     data <- rjson::fromJSON(file = prism_file)
     read_prism(data)
-    
+    usethis::use_data(vals$prism_data, prism_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$sempi_sco,{
     sempi_file <- system.file("extdata", "sco_sempi.csv", package = "BGCViz")
     sempi_data <- read.csv(sempi_file)
     read_sempi(sempi_data)
-    
+    usethis::use_data(vals$sempi_data, sempi_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$arts_sco, {
@@ -589,12 +589,14 @@ app_server <- function( input, output, session ) {
     knownhits_file <- system.file("extdata", "sco_knownhits.tsv", package = "BGCViz")
     data <- read.delim(knownhits_file)
     read_arts_knownhits(data)
+    usethis::use_data(vals$arts_data, arts_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$deep_sco, {
     deep_file <- system.file("extdata", "sco_deep.tsv", package = "BGCViz")
     data <- read.delim(deep_file) 
     read_deep(data)
+    usethis::use_data(vals$deep_data, deep_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$rre_sco, {
@@ -602,7 +604,7 @@ app_server <- function( input, output, session ) {
     rre_file <- system.file("extdata", "sco_rre.txt", package = "BGCViz")
     data <-  read.delim(rre_file)
     read_rre(data)
-    
+    usethis::use_data(vals$rre_data, rre_data, internal = TRUE)
   })
   
   ##----------------------------------------------------------------
@@ -647,6 +649,8 @@ app_server <- function( input, output, session ) {
       
       location <- gsub("\\[", "", location)
       location <- gsub("\\]", "", location)
+      location <- gsub("<", "", location)
+      location <- gsub(">", "", location)
       location <- data.frame(location)
       colnames(location) <- "split"
       anti_data <- location %>%
