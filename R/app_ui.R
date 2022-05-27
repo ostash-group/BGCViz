@@ -172,10 +172,8 @@ app_ui <- function(request) {
                     id = "upload_arts_box",
                     collapsible = TRUE,                                          
                     closable = TRUE,
-                    shiny::fileInput("known_data",
-                                     "Upload ARTS knownhits data", accept = ".csv"),
-                    shiny::fileInput("dup_data",
-                                     "Upload ARTS duptable data", accept = ".csv")
+                    shiny::fileInput("arts_data",
+                                     "Upload ARTS data", accept = list(".csv", ".zip"))
                   )
                 ),
                 div(

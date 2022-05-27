@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_format_transformation.R
 \name{prism_to_csv}
 \alias{prism_to_csv}
-\title{prism_to_df}
+\title{prism_to_csv}
 \usage{
 prism_to_csv(file, write_to = getwd())
 }

@@ -1,4 +1,4 @@
-#' sempi_to_df 
+#' sempi_to_csv
 #'
 #' @description Function, which transforms Track.db file into dataframe, which could be then written to csv. 
 #' Download project folder from SEMPI and supply as `project_archive` argument to a function
@@ -35,7 +35,7 @@ sempi_data$Type <- stringr::str_trim(tolower(sempi_data$Type))
 write.csv(sempi_data, paste0(write_to,"/sempi.csv"), row.names = FALSE)
 }
 
-#' prism_to_df 
+#' prism_to_csv
 #'
 #' @description Function, that transforms prism json object into dataframe, which could be written to the csv file
 #' 
@@ -78,7 +78,7 @@ write.csv(prism_data, paste0(write_to,"/prism.csv"), row.names = FALSE)
 
 }
 
-#' antismash_to_df 
+#' antismash_to_csv
 #'
 #' @description Function, that returns dataframe, out of supplied antismash json file
 #' 
@@ -133,4 +133,92 @@ antismash_to_csv <- function(file, write_to = getwd()){
   anti_data$Start <- as.numeric(anti_data$Start)
   anti_data$Stop <- as.numeric(anti_data$Stop)
   write.csv(anti_data, paste0(write_to,"/antismash.csv"), row.names = FALSE)
+}
+
+#' arts_to_csv 
+#'
+#' @description Function, which extracts tables from arts result zip archive and transforms them into BGCViz input
+#' 
+#' @param project_archive - path to zip file, downloaded from ARTS 
+#' @param write_to - path where to write generated csv file
+#'
+#' @return csv file in specified location
+#'
+#' @export
+arts_to_csv <- function(project_archive, write_to = getwd()){
+  unzip(project_archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = paste0(write_to, "/ARTS_tables"), junkpaths = T)
+  known_hits <- read.delim(paste0(stringr::str_extract(write_to, ".*/"),"/ARTS_tables/knownhits.tsv"))
+  dupl_table <- read.delim(paste0(stringr::str_extract(write_to, ".*/"),"/ARTS_tables/duptable.tsv"))
+  locations <- sapply(known_hits$Sequence.description, function(x){
+    tail(stringr::str_split(x , "\\|")[[1]], 1)
+  })
+  
+  start <- sapply(locations, function(x){
+    stringr::str_split(x, "_")[[1]][1]
+  })
+  stop <- sapply(locations, function(x){
+    stringr::str_split(x, "_")[[1]][2]
+  })
+  # Parse known_hits data
+  known_table <- data.frame(cbind(start, stop))
+  colnames(known_table) <- c("Start", "Stop")
+  rownames(known_table) <- seq(1:dim(known_table)[1])
+  known_table$Start <- as.numeric(known_table$Start )
+  known_table$Stop <- as.numeric(known_table$Stop)
+  known_table$Description <- known_hits$Description
+  known_table$Model <- known_hits$X.Model
+  known_table$Evalue <- known_hits$evalue
+  known_table$Bitscore <- known_hits$bitscore
+  known_table$ID <- seq(1:dim(known_table)[1])
+  known_table$Cluster <-known_table$ID
+  known_table$Type <- 'resistance'
+  known_table$Type2 <- known_table$Type
+  known_table$Hit <- NA
+  known_table$Core <- "Not_core"
+  known_table$Count <- 1
+  # Parse duplication data
+  get_location_duptable <- function(x, y){
+    test <- stringr::str_split(x, ";")
+    test2<- sub(".*loc\\|", "", test[[1]])
+    test3 <- stringr::str_split(test2, " ")
+    res <- list()
+    for (i in seq(1:length(test3))){
+      id <- paste('hit',as.character(i), sep = "_")
+      start <- test3[[i]][1]
+      stop <- test3[[i]][2]
+      res_1 <- list(id,start, stop)
+      res <- append(res, list(res_1))
+    }
+    return(res)
+    
+  }
+  
+  dup_table <- data.frame()
+  for (i in seq(1:dim(dupl_table)[1])){
+    lst <- get_location_duptable(dupl_table$X.Hits_listed.[i])
+    fin_data <- data.frame(do.call("rbind", lst))
+    fin_data$Core_gene <- dupl_table$X.Core_gene[i]
+    fin_data$Description <- dupl_table$Description[i]
+    fin_data$Count <- dupl_table$Count[i]
+    colnames(fin_data) <- c("Hit", "Start", "Stop", "Core", "Description", "Count")
+    dup_table <- rbind(dup_table, fin_data)
+  }
+  dup_table$Hit <- unlist(dup_table$Hit)
+  dup_table$Start <- unlist(dup_table$Start)
+  dup_table$Stop <- unlist(dup_table$Stop)
+  dup_table$Start <- as.numeric(dup_table$Start )
+  dup_table$Stop <- as.numeric(dup_table$Stop)
+  dup_table$ID <- seq(1: dim(dup_table)[1])
+  dup_table$Cluster <- dup_table$ID
+  dup_table$Type <- 'core'
+  dup_table$Type2 <- dup_table$Type
+  dup_table$Evalue <- NA 
+  dup_table$Bitscore <- NA 
+  dup_table$Model <- "Core" 
+  arts_data <- rbind(dup_table, known_table)
+  arts_data <- arts_data %>%
+    dplyr::arrange(Start)
+  arts_data$ID <- seq(1:dim(arts_data)[1])
+  arts_data$Cluster <- arts_data$ID
+  write.csv(arts_data, paste0(write_to,"/arts.csv"), row.names = FALSE)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_format_transformation.R
 \name{sempi_to_csv}
 \alias{sempi_to_csv}
-\title{sempi_to_df}
+\title{sempi_to_csv}
 \usage{
 sempi_to_csv(project_archive, write_to = getwd())
 }
