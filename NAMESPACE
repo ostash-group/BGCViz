@@ -2,9 +2,11 @@
 
 export(antismash_to_csv)
 export(arts_to_csv)
+export(get_defaults)
 export(prism_to_csv)
 export(run_app)
 export(sempi_to_csv)
+export(set_defaults)
 import(shiny)
 importFrom(golem,activate_js)
 importFrom(golem,add_resource_path)
