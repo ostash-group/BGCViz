@@ -1,26 +1,29 @@
 #' sempi_to_df 
 #'
-#' @description Function, which transforms Track.db file into dataframe, which could be then written to csv
+#' @description Function, which transforms Track.db file into dataframe, which could be then written to csv. 
+#' Download project folder from SEMPI and supply as `project_archive` argument to a function
 #' 
-#' @param file - path to a json file,
+#' @param project_archive - path to project.zip file, downloaded from SEMPI
 #' @param write_to - path where to write generated csv file
 #'
 #' @return csv file in specified location
 #'
 #' @export
-sempi_to_csv <- function(file, write_to = getwd()){
-conn <- RSQLite::dbConnect(RSQLite::SQLite(), file)
-
-data <- RSQLite::dbGetQuery(conn, "SELECT * FROM tbl_segments")
-RSQLite::dbDisconnect(conn)
-
-data <- data %>%
-  dplyr::filter(trackid==6)
-
-types <- sapply(data$name, function(x){
-  tmp <- stringr::str_trim(x)
-  tmp <- gsub(", ", "", tmp)
-  gsub(" ", "__", tmp)
+sempi_to_csv <- function(project_archive, write_to = getwd()){
+  unzip(project_archive, files = "genome_browser/main/Tracks.db", exdir = paste0(write_to, "/SEMPI_TracksDB"), junkpaths = T)
+  fl <- paste0(stringr::str_extract(write_to, ".*/"),"/SEMPI_TracksDB/Tracks.db")
+  conn <- RSQLite::dbConnect(RSQLite::SQLite(),fl)
+  
+  data <- RSQLite::dbGetQuery(conn, "SELECT * FROM tbl_segments")
+  RSQLite::dbDisconnect(conn)
+  unlink(paste0(stringr::str_extract(write_to, ".*/"),"/SEMPI_TracksDB"), recursive = T)
+  data <- data %>%
+    dplyr::filter(trackid==6)
+  
+  types <- sapply(data$name, function(x){
+    tmp <- stringr::str_trim(x)
+    tmp <- gsub(", ", "", tmp)
+    gsub(" ", "__", tmp)
 })
 
 sempi_data <- data.frame(cbind(seq(1:length(data$trackid)),data$start, data$end,as.character(types)))

@@ -4,10 +4,10 @@
 \alias{sempi_to_csv}
 \title{sempi_to_df}
 \usage{
-sempi_to_csv(file, write_to = getwd())
+sempi_to_csv(project_archive, write_to = getwd())
 }
 \arguments{
-\item{file}{- path to a json file,}
+\item{project_archive}{- path to project.zip file, downloaded from SEMPI}
 
 \item{write_to}{- path where to write generated csv file}
 }
@@ -15,5 +15,6 @@ sempi_to_csv(file, write_to = getwd())
 csv file in specified location
 }
 \description{
-Function, which transforms Track.db file into dataframe, which could be then written to csv
+Function, which transforms Track.db file into dataframe, which could be then written to csv. 
+Download project folder from SEMPI and supply as `project_archive` argument to a function
 }
