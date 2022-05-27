@@ -20,8 +20,7 @@ app_server <- function( input, output, session ) {
     )
   })
   inputData <- shiny::reactive({
-    list( vals$sempi_data_input, vals$rre_data_input,  vals$anti_data_input, vals$prism_data_input,
-          vals$known_data_input,vals$dup_data_input,  vals$prism_supp_data_input, vals$deep_data_input, vals$gecco_data_input
+    list( vals$sempi_data_input, vals$rre_data_input,  vals$anti_data_input, vals$prism_data_input, vals$prism_supp_data_input, vals$deep_data_input, vals$gecco_data_input
     )
   })
   dynamicInput <-  shiny::reactive({
@@ -324,140 +323,106 @@ app_server <- function( input, output, session ) {
                                selected = "SEMPI")
     }
   }
-  read_arts_knownhits <- function(data){
-    locations <- sapply(data$Sequence.description, function(x){
-      tail(stringr::str_split(x , "\\|")[[1]], 1)
-    })
-    
-    start <- sapply(locations, function(x){
-      stringr::str_split(x, "_")[[1]][1]
-    })
-    stop <- sapply(locations, function(x){
-      stringr::str_split(x, "_")[[1]][2]
-    })
-    
-    known_table <- data.frame(cbind(start, stop))
-    colnames(known_table) <- c("Start", "Stop")
-    rownames(known_table) <- seq(1:dim(known_table)[1])
-    known_table$Start <- as.numeric(known_table$Start )
-    known_table$Stop <- as.numeric(known_table$Stop)
-    known_table$Description <- data$Description
-    known_table$Model <- data$X.Model
-    known_table$Evalue <- data$evalue
-    known_table$Bitscore <- data$bitscore
-    known_table$ID <- seq(1:dim(known_table)[1])
-    known_table$Cluster <-known_table$ID
-    known_table$Type <- 'resistance'
-    known_table$Type2 <- known_table$Type
-    known_table$Hit <- NA
-    known_table$Core <- "Not_core"
-    known_table$Count <- 1
-    vals$known_data <- known_table
-    vals$known_data_input <- TRUE
-    #write.csv(vals$known_data, "knownhits_data.csv", row.names = F)
-    if ((vals$dup_data_input == T)){
-      vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
-      vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "ARTS")
-      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
-      update_ui_with_data()
-      dup_table <- vals$dup_data
-      known_table <- vals$known_data
-      arts_data <- rbind(dup_table, known_table)
-      arts_data <- arts_data %>%
-        dplyr::arrange(Start)
-      arts_data$ID <- seq(1:dim(arts_data)[1])
-      arts_data$Cluster <- arts_data$ID
-      vals$arts_data <- arts_data
-      vals$arts_data_input <- T
-      vals$data_upload_count <-  vals$data_upload_count +1
-      dup_table_id <- arts_data %>%
-        dplyr::filter(Core != "Not_core")
-      shiny::updateSelectInput(session, "dup_choice",
-                               choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
-                               selected = "All" )
-      vals$upl_arts = T
-      if (vals$data_upload_count == 1){
-        shiny::updateSelectInput(session, "ref",
-                                 selected = "ARTS" )
-        shiny::updateSelectInput(session, "group_table_ui_1-group_by",
-                                 selected = "ARTS" )
-        shiny::updateSelectInput(session, "ref_col_biocircos",
-                                 selected =  "ARTS")
-      }
-    } 
-    
-  }
-  read_arts_dupdata <- function(data){
-    get_location_duptable <- function(x, y){
-      test <- stringr::str_split(x, ";")
-      test2<- sub(".*loc\\|", "", test[[1]])
-      test3 <- stringr::str_split(test2, " ")
-      res <- list()
-      for (i in seq(1:length(test3))){
-        id <- paste('hit',as.character(i), sep = "_")
-        start <- test3[[i]][1]
-        stop <- test3[[i]][2]
-        res_1 <- list(id,start, stop)
-        res <- append(res, list(res_1))
-      }
-      return(res)
+  read_arts_archive <- function(archive, zip = T){
+    if (zip == T){
+      unzip(archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = "./ARTS_tables", junkpaths = T)
+      known_hits <- read.delim("./ARTS_tables/knownhits.tsv")
+      dupl_table <- read.delim("./ARTS_tables/duptable.tsv")
+      unlink("./ARTS_tables", recursive = T)
+      locations <- sapply(known_hits$Sequence.description, function(x){
+        tail(stringr::str_split(x , "\\|")[[1]], 1)
+      })
       
-    }
-    
-    dup_table <- data.frame()
-    for (i in seq(1:dim(data)[1])){
-      lst <- get_location_duptable(data$X.Hits_listed.[i])
-      fin_data <- data.frame(do.call("rbind", lst))
-      fin_data$Core_gene <- data$X.Core_gene[i]
-      fin_data$Description <- data$Description[i]
-      fin_data$Count <- data$Count[i]
-      colnames(fin_data) <- c("Hit", "Start", "Stop", "Core", "Description", "Count")
-      dup_table <- rbind(dup_table, fin_data)
-    }
-    dup_table$Hit <- unlist(dup_table$Hit)
-    dup_table$Start <- unlist(dup_table$Start)
-    dup_table$Stop <- unlist(dup_table$Stop)
-    dup_table$Start <- as.numeric(dup_table$Start )
-    dup_table$Stop <- as.numeric(dup_table$Stop)
-    dup_table$ID <- seq(1: dim(dup_table)[1])
-    dup_table$Cluster <- dup_table$ID
-    dup_table$Type <- 'core'
-    dup_table$Type2 <- dup_table$Type
-    dup_table$Evalue <- NA 
-    dup_table$Bitscore <- NA 
-    dup_table$Model <- "Core" 
-    vals$dup_data <- dup_table
-    vals$dup_data_input = T
-    #write.csv(dup_table, "duptable_data.csv", row.names = F)
-    if ((vals$known_data_input == T)){
-      vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
-      vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "ARTS")
-      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
-      update_ui_with_data()
-      dup_table <- vals$dup_data
-      known_table <- vals$known_data
+      start <- sapply(locations, function(x){
+        stringr::str_split(x, "_")[[1]][1]
+      })
+      stop <- sapply(locations, function(x){
+        stringr::str_split(x, "_")[[1]][2]
+      })
+      # Parse known_hits data
+      known_table <- data.frame(cbind(start, stop))
+      colnames(known_table) <- c("Start", "Stop")
+      rownames(known_table) <- seq(1:dim(known_table)[1])
+      known_table$Start <- as.numeric(known_table$Start )
+      known_table$Stop <- as.numeric(known_table$Stop)
+      known_table$Description <- known_hits$Description
+      known_table$Model <- known_hits$X.Model
+      known_table$Evalue <- known_hits$evalue
+      known_table$Bitscore <- known_hits$bitscore
+      known_table$ID <- seq(1:dim(known_table)[1])
+      known_table$Cluster <-known_table$ID
+      known_table$Type <- 'resistance'
+      known_table$Type2 <- known_table$Type
+      known_table$Hit <- NA
+      known_table$Core <- "Not_core"
+      known_table$Count <- 1
+      # Parse duplication data
+      get_location_duptable <- function(x, y){
+        test <- stringr::str_split(x, ";")
+        test2<- sub(".*loc\\|", "", test[[1]])
+        test3 <- stringr::str_split(test2, " ")
+        res <- list()
+        for (i in seq(1:length(test3))){
+          id <- paste('hit',as.character(i), sep = "_")
+          start <- test3[[i]][1]
+          stop <- test3[[i]][2]
+          res_1 <- list(id,start, stop)
+          res <- append(res, list(res_1))
+        }
+        return(res)
+        
+      }
+      
+      dup_table <- data.frame()
+      for (i in seq(1:dim(dupl_table)[1])){
+        lst <- get_location_duptable(dupl_table$X.Hits_listed.[i])
+        fin_data <- data.frame(do.call("rbind", lst))
+        fin_data$Core_gene <- dupl_table$X.Core_gene[i]
+        fin_data$Description <- dupl_table$Description[i]
+        fin_data$Count <- dupl_table$Count[i]
+        colnames(fin_data) <- c("Hit", "Start", "Stop", "Core", "Description", "Count")
+        dup_table <- rbind(dup_table, fin_data)
+      }
+      dup_table$Hit <- unlist(dup_table$Hit)
+      dup_table$Start <- unlist(dup_table$Start)
+      dup_table$Stop <- unlist(dup_table$Stop)
+      dup_table$Start <- as.numeric(dup_table$Start )
+      dup_table$Stop <- as.numeric(dup_table$Stop)
+      dup_table$ID <- seq(1: dim(dup_table)[1])
+      dup_table$Cluster <- dup_table$ID
+      dup_table$Type <- 'core'
+      dup_table$Type2 <- dup_table$Type
+      dup_table$Evalue <- NA 
+      dup_table$Bitscore <- NA 
+      dup_table$Model <- "Core" 
       arts_data <- rbind(dup_table, known_table)
       arts_data <- arts_data %>%
         dplyr::arrange(Start)
       arts_data$ID <- seq(1:dim(arts_data)[1])
       arts_data$Cluster <- arts_data$ID
       vals$arts_data <- arts_data
-      vals$data_upload_count <-  vals$data_upload_count +1
-      vals$arts_data_input <- T
-      dup_table_id <- arts_data %>%
-        dplyr::filter(Core != "Not_core")
-      shiny::updateSelectInput(session, "dup_choice",
-                               choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
-                               selected = "All" )
-      if (vals$data_upload_count == 1){
-        shiny::updateSelectInput(session, "ref",
-                                 selected = "ARTS" )
-        shiny::updateSelectInput(session, "group_table_ui_1-group_by",
-                                 selected = "ARTS" )
-        shiny::updateSelectInput(session, "ref_col_biocircos",
-                                 selected =  "ARTS")
-      }
-    } 
+    } else {
+      vals$arts_data <- read.csv(archive)
+    }
+    vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
+    vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "ARTS")
+    vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
+    update_ui_with_data()
+    vals$data_upload_count <-  vals$data_upload_count +1
+    vals$arts_data_input <- T
+    dup_table_id <- vals$arts_data %>%
+      dplyr::filter(Core != "Not_core")
+    shiny::updateSelectInput(session, "dup_choice",
+                             choices = c("All", paste0("ID:",dup_table_id$ID, " ,Core:", dup_table_id$Core)),
+                             selected = "All" )
+    if (vals$data_upload_count == 1){
+      shiny::updateSelectInput(session, "ref",
+                               selected = "ARTS" )
+      shiny::updateSelectInput(session, "group_table_ui_1-group_by",
+                               selected = "ARTS" )
+      shiny::updateSelectInput(session, "ref_col_biocircos",
+                               selected =  "ARTS")
+    }
   }
   read_deep <- function(data){
     res_validation <- validate_deep_input(data)
@@ -555,15 +520,13 @@ app_server <- function( input, output, session ) {
   shiny::observeEvent(input$anti_sco,{
     anti_file <- system.file("extdata", "sco_antismash.csv", package = "BGCViz")
     anti_data <- read.csv(anti_file)
-    anti_data <- read_antismash(anti_data)
-    usethis::use_data(vals$anti_data, anti_data, internal = TRUE)
+    read_antismash(anti_data)
   })
   
   shiny::observeEvent(input$gecco_sco,{
     gecco_file <- system.file("extdata", "sco_gecco.tsv", package = "BGCViz")
     gecco_data <- read.delim(gecco_file)
     read_gecco(gecco_data)
-    usethis::use_data(vals$gecco_data, gecco_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$prism_sco,{
@@ -571,32 +534,25 @@ app_server <- function( input, output, session ) {
     prism_file <- system.file("extdata", "sco_prism.json", package = "BGCViz")
     data <- rjson::fromJSON(file = prism_file)
     read_prism(data)
-    usethis::use_data(vals$prism_data, prism_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$sempi_sco,{
     sempi_file <- system.file("extdata", "sco_sempi.csv", package = "BGCViz")
     sempi_data <- read.csv(sempi_file)
     read_sempi(sempi_data)
-    usethis::use_data(vals$sempi_data, sempi_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$arts_sco, {
-    dup_data_file <- system.file("extdata", "sco_duptable.tsv", package = "BGCViz")
-    data <- read.delim(dup_data_file)
+    arts_file <- system.file("extdata", "sco_arts.csv", package = "BGCViz")
+    arts_data <- read.csv(arts_file)
+    read_arts_archive(arts_file, zip=F)
     disable_event_logic()
-    read_arts_dupdata(data)
-    knownhits_file <- system.file("extdata", "sco_knownhits.tsv", package = "BGCViz")
-    data <- read.delim(knownhits_file)
-    read_arts_knownhits(data)
-    usethis::use_data(vals$arts_data, arts_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$deep_sco, {
     deep_file <- system.file("extdata", "sco_deep.tsv", package = "BGCViz")
     data <- read.delim(deep_file) 
     read_deep(data)
-    usethis::use_data(vals$deep_data, deep_data, internal = TRUE)
   })
   
   shiny::observeEvent(input$rre_sco, {
@@ -604,7 +560,6 @@ app_server <- function( input, output, session ) {
     rre_file <- system.file("extdata", "sco_rre.txt", package = "BGCViz")
     data <-  read.delim(rre_file)
     read_rre(data)
-    usethis::use_data(vals$rre_data, rre_data, internal = TRUE)
   })
   
   ##----------------------------------------------------------------
@@ -686,20 +641,16 @@ app_server <- function( input, output, session ) {
   
   # These are for ARTS data processing
   # input$known_data and inoput$dup_data
-  shiny::observeEvent(input$known_data, {
+  
+  shiny::observeEvent(input$arts_data, {
     disable_event_logic()
-    
-    data <- read.delim(input$known_data$datapath)
-    read_arts_knownhits(data)
+    if (input$arts_data$type=="text/csv"){
+      read_arts_archive(input$arts_data$datapath, zip = F)
+    } else {
+      read_arts_archive(input$arts_data$datapath, zip = T)
+    }
   })
   
-  shiny::observeEvent(input$dup_data, {
-    disable_event_logic()
-    
-    data <- read.delim(input$dup_data$datapath)
-    
-    read_arts_dupdata(data)
-  })
   
   shiny::observeEvent(input$prism_data,{
     

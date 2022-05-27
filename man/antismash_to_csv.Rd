@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_format_transformation.R
 \name{antismash_to_csv}
 \alias{antismash_to_csv}
-\title{antismash_to_df}
+\title{antismash_to_csv}
 \usage{
 antismash_to_csv(file, write_to = getwd())
 }
