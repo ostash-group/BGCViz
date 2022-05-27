@@ -124,7 +124,7 @@ app_ui <- function(request) {
                     collapsible = TRUE,                                          
                     closable = TRUE,
                     shiny::fileInput("sempi_data",
-                                     "Upload SEMPI 2.0 data", accept = ".csv")
+                                     "Upload SEMPI 2.0 data", accept = list(".csv", ".zip"))
                   )
                 ),
                 div(
