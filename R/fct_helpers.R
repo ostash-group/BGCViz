@@ -76,3 +76,32 @@ hybrid_col <- function(data){
   })
   return(types)
 }
+
+#' get_defaults 
+#'
+#' @description Function, which downloads default options csv file into provided location. 
+#' Then can be used with `set_defaults` function to change the default behaviour
+#' 
+#' @param write_to - location where the write configuration file. default - current working directory
+#'
+#' @return csv file in specified location
+#'
+#' @export
+get_defaults <- function(write_to = getwd()){
+  rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
+  option_data <- read.csv(rename_file)
+  write.csv(option_data, paste0(write_to, "/BGCViz_options.csv"), row.names = FALSE)
+}
+#' set_defaults 
+#'
+#' @description Function, which uploads default options csv file to the package. 
+#' Use with `get_defaults` function to download currently used default options.
+#'  
+#' @param csv_file - path to csv file with default options.
+#'
+#' @export
+set_defaults <- function(csv_file){
+  rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
+  option_data <- read.csv(csv_file)
+  write.csv(option_data, rename_file, row.names = FALSE)
+}
