@@ -75,7 +75,7 @@ golem::add_utils( "helpers" )
 
 ## Tests ----
 ## Add one line by test you want to create
-#usethis::use_test( "app" )
+usethis::use_test("fct_biocircos")
 
 # Documentation
 
