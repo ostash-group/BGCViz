@@ -33,8 +33,17 @@ mod_deep_reference_2_ui <- function(id){
 mod_deep_reference_2_server <- function(id, vals, data_uploads, data_to_use){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
-    output$deep_reference_2 <- plotly::renderPlotly({
+    # Silence R CMD note
+    x <- y <- yend <- xend <- 
+      ID <- Software <- Chr <- 
+      Type2 <- Start <- Stop <- 
+      Type <- num_domains <- deepbgc_score <- 
+      activity <- Score <- E_value <- P_value <- 
+      RRE_start <- RRE_stop <- Probability <- 
+      Name <- Full_name <- Hit <- Core <- 
+      Bitscore <- Count <- Model <- Num_proteins <- 
+      Num_domains <- Average_p <- Max_p <- NULL
+      output$deep_reference_2 <- plotly::renderPlotly({
       shiny::req(vals$can_plot_deep_ref_2 == T)
       vals$can_plot_deep_ref_2 == F
       rename_y_axis <- shiny::isolate(vals$rename_y_axis)

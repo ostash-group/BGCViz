@@ -62,7 +62,11 @@ mod_deepbgc_plots_ui <- function(id){
 mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
+    # Silence R CMD note
+    Start <- Stop <- Source <- 
+      Quantity <- Score <- Novelty_rate <- 
+      Annotation_rate <- Skip_rate <- Rates_data <- 
+      Rates <- NULL
     output$deep_barplot <- shiny::renderPlot({
       shiny::req((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) ))
       

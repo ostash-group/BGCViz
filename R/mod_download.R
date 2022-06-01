@@ -48,7 +48,7 @@ mod_download_server <- function(id){
       #create the zip file from flst vector
       group_by_script <- system.file("scripts", "group.py", package = "BGCViz")
       flst <- c(flst, group_by_script)
-      zip(file,  flst) },
+      utils::zip(file,  flst) },
     contentType = "application/zip" )
   })
 }

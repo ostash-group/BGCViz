@@ -69,6 +69,11 @@ mod_gecco_plots_ui <- function(id){
 mod_gecco_plots_server <- function(id, vals,score_average_gecco,score_cluster_gecco){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    # Silence R CMD note
+    Start <- Stop <- Source <- Quantity <- 
+      Score <- Novelty_rate <- Annotation_rate <- 
+      Skip_rate <- Skip_rate <- Rates_data <- 
+      Rates <- NULL
     output$gecco_barplot <- shiny::renderPlot({
       shiny::req((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T) ))
       
