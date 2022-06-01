@@ -89,8 +89,8 @@ hybrid_col <- function(data){
 #' @export
 get_defaults <- function(write_to = getwd()){
   rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
-  option_data <- read.csv(rename_file)
-  write.csv(option_data, paste0(write_to, "/BGCViz_options.csv"), row.names = FALSE)
+  option_data <- utils::read.csv(rename_file)
+  utils::write.csv(option_data, paste0(write_to, "/BGCViz_options.csv"), row.names = FALSE)
 }
 #' set_defaults 
 #'
@@ -102,6 +102,6 @@ get_defaults <- function(write_to = getwd()){
 #' @export
 set_defaults <- function(csv_file){
   rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
-  option_data <- read.csv(csv_file)
-  write.csv(option_data, rename_file, row.names = FALSE)
+  option_data <- utils::read.csv(csv_file)
+  utils::write.csv(option_data, rename_file, row.names = FALSE)
 }

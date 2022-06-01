@@ -3,7 +3,7 @@ The user can explicitly change the renaming scheme and coloring options.
 
 # Renaming 
 
-The renaming schema is stored is a csv file, called rename.csv. This file looks like this:
+The renaming schema is stored is a csv file, called rename.csv (/inst/extdata/rename.csv). This file looks like this:
 
 | Code      | Group |  Group_color | Color | Vacant_colors | Hierarchy |
 | ----------- | ----------- |  ----------- |  ----------- |  ----------- |  ----------- |
@@ -40,3 +40,20 @@ The "Vacant_color" column is not used in any analysis.  The logic behind it is t
 # Hierarchy
 
 The "Hierarchy" column defines the order of the link coloring in the 'Hierarchy-based' mode. More on Biocircos link coloring is available [here](Logic_of_the_output.md#biocircos-plot)
+
+# Changing default settings
+
+**Changing default settings is possible only with local [installation](Installation.md), with R console**
+
+Default settings can be changed using `get_defaults` and `set_defaults` functions within BGCViz package.
+
+We reccomend to download the csv file with current settings with `get_defaults` first:
+
+```R
+BGCViz::get_defaults()
+```
+Which will write "BGCViz_options.csv" file in current working directory
+After modifications, the file can be uploaded back to a package directory:
+```R
+BGCViz::set_defaults("modified_BGCViz_options.csv")
+```

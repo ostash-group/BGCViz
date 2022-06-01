@@ -6,6 +6,8 @@
 #' @noRd
 app_server <- function( input, output, session ) {
   # Your application server logic 
+  # Silence R CMD note
+  Start <- Stop <- Core <- Chr <- NULL
   ##---------------------------------------------------------------
   ##        Some lists of reactive values to listen later         -
   ##---------------------------------------------------------------
@@ -62,8 +64,8 @@ app_server <- function( input, output, session ) {
   )
   # Making coloring datatable
   rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
-  vals$rename_data <- read.csv(rename_file)
-  rename_data <- read.csv(rename_file)
+  vals$rename_data <- utils::read.csv(rename_file)
+  rename_data <- utils::read.csv(rename_file)
   coloring_datatable <-data.frame( tidyr::drop_na(data.frame(cbind(as.character(rename_data$Group_color), as.character(rename_data$Color), rename_data$Hierarchy)) ))
   coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all),]
   colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
@@ -183,6 +185,11 @@ app_server <- function( input, output, session ) {
     return(anti_data)
   }
   read_gecco <- function(data){
+    # Silence R CMD note
+    polyketide_probability <- other_probability <- 
+      nrp_probability <- alkaloid_probability <- 
+      terpene_probability <- saccharide_probability <- 
+      ripp_probability <- NULL
     # Add chromosome column
     gecco_data <- data
     
@@ -284,8 +291,10 @@ app_server <- function( input, output, session ) {
     }
   }
   read_sempi <- function(data, zip=T){
+    # Silence R CMD note
+    trackid <- NULL
     if (zip==T){
-      unzip(data, files = "genome_browser/main/Tracks.db", exdir =  "./SEMPI_TracksDB", junkpaths = T)
+      utils::unzip(data, files = "genome_browser/main/Tracks.db", exdir =  "./SEMPI_TracksDB", junkpaths = T)
       fl <- "./SEMPI_TracksDB/Tracks.db"
       conn <- RSQLite::dbConnect(RSQLite::SQLite(),fl)
       
@@ -349,13 +358,15 @@ app_server <- function( input, output, session ) {
     }
   }
   read_arts_archive <- function(archive, zip = T){
+    # Silence R CMD note
+    Start <- Core <- NULL
     if (zip == T){
-      unzip(archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = "./ARTS_tables", junkpaths = T)
-      known_hits <- read.delim("./ARTS_tables/knownhits.tsv")
-      dupl_table <- read.delim("./ARTS_tables/duptable.tsv")
+      utils::unzip(archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = "./ARTS_tables", junkpaths = T)
+      known_hits <- utils::read.delim("./ARTS_tables/knownhits.tsv")
+      dupl_table <- utils::read.delim("./ARTS_tables/duptable.tsv")
       unlink("./ARTS_tables", recursive = T)
       locations <- sapply(known_hits$Sequence.description, function(x){
-        tail(stringr::str_split(x , "\\|")[[1]], 1)
+        utils::tail(stringr::str_split(x , "\\|")[[1]], 1)
       })
       
       start <- sapply(locations, function(x){
@@ -427,7 +438,7 @@ app_server <- function( input, output, session ) {
       arts_data$Cluster <- arts_data$ID
       vals$arts_data <- arts_data
     } else {
-      vals$arts_data <- read.csv(archive)
+      vals$arts_data <- utils::read.csv(archive)
     }
     vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
     vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "ARTS")
@@ -450,6 +461,7 @@ app_server <- function( input, output, session ) {
     }
   }
   read_deep <- function(data){
+    polyketide <- nrp <-  NULL # Silence R CMD error
     res_validation <- validate_deep_input(data)
     if (!(res_validation[[1]])){
       deep_data <- NULL
@@ -491,6 +503,7 @@ app_server <- function( input, output, session ) {
     }
   }
   read_rre <- function(data){
+    Gene.name <- Coordinates <- NULL # Silence R CMD error
     res_validation <- validate_rre_input(data)
     if (!(res_validation[[1]])){
       data <- NULL
@@ -539,18 +552,19 @@ app_server <- function( input, output, session ) {
     }
   }
   
+  
   #----------------------------------------------------------------
   ##            Loading and processing of example data             -
   ##----------------------------------------------------------------
   shiny::observeEvent(input$anti_sco,{
     anti_file <- system.file("extdata", "sco_antismash.csv", package = "BGCViz")
-    anti_data <- read.csv(anti_file)
+    anti_data <- utils::read.csv(anti_file)
     read_antismash(anti_data)
   })
   
   shiny::observeEvent(input$gecco_sco,{
     gecco_file <- system.file("extdata", "sco_gecco.tsv", package = "BGCViz")
-    gecco_data <- read.delim(gecco_file)
+    gecco_data <- utils::read.delim(gecco_file)
     read_gecco(gecco_data)
   })
   
@@ -563,27 +577,27 @@ app_server <- function( input, output, session ) {
   
   shiny::observeEvent(input$sempi_sco,{
     sempi_file <- system.file("extdata", "sco_sempi.csv", package = "BGCViz")
-    sempi_data <- read.csv(sempi_file)
+    sempi_data <- utils::read.csv(sempi_file)
     read_sempi(sempi_data, zip = F)
   })
   
   shiny::observeEvent(input$arts_sco, {
     arts_file <- system.file("extdata", "sco_arts.csv", package = "BGCViz")
-    arts_data <- read.csv(arts_file)
+    arts_data <- utils::read.csv(arts_file)
     read_arts_archive(arts_file, zip=F)
     disable_event_logic()
   })
   
   shiny::observeEvent(input$deep_sco, {
     deep_file <- system.file("extdata", "sco_deep.tsv", package = "BGCViz")
-    data <- read.delim(deep_file) 
+    data <- utils::read.delim(deep_file) 
     read_deep(data)
   })
   
   shiny::observeEvent(input$rre_sco, {
     # Read data
     rre_file <- system.file("extdata", "sco_rre.txt", package = "BGCViz")
-    data <-  read.delim(rre_file)
+    data <-  utils::read.delim(rre_file)
     read_rre(data)
   })
   
@@ -595,7 +609,7 @@ app_server <- function( input, output, session ) {
     disable_event_logic()
     # Read data
     if (input$anti_data$type=="text/csv"){
-      anti_data <- read.csv(input$anti_data$datapath)
+      anti_data <- utils::read.csv(input$anti_data$datapath)
     }else{
       data <- rjson::fromJSON(file = input$anti_data$datapath)
       types <- sapply(data$records, function(y){
@@ -652,7 +666,7 @@ app_server <- function( input, output, session ) {
   shiny::observeEvent(input$sempi_data,{
     
     if (input$sempi_data$type=="text/csv"){ 
-      sempi_data <- read.csv(input$sempi_data$datapath)
+      sempi_data <- utils::read.csv(input$sempi_data$datapath)
       read_sempi(sempi_data, zip = F)
     } else {
       read_sempi(input$sempi_data$datapath, zip = T)
@@ -662,7 +676,7 @@ app_server <- function( input, output, session ) {
   
   shiny::observeEvent(input$gecco_data,{
     
-    gecco_data <- read.delim(input$gecco_data$datapath)
+    gecco_data <- utils::read.delim(input$gecco_data$datapath)
     read_gecco(gecco_data)
     
   })
@@ -684,7 +698,7 @@ app_server <- function( input, output, session ) {
     
     # Read data
     if (input$prism_data$type == "text/csv"){
-      prism_data <- read.csv(input$prism_data$datapath)
+      prism_data <- utils::read.csv(input$prism_data$datapath)
       read_prism(prism_data, json=F)
     } else{
       data <- rjson::fromJSON(file = input$prism_data$datapath)
@@ -695,14 +709,14 @@ app_server <- function( input, output, session ) {
   
   shiny::observeEvent(input$deep_data, {
     
-    data <- read.delim(input$deep_data$datapath)
+    data <- utils::read.delim(input$deep_data$datapath)
     read_deep(data)
   })
   
   shiny::observeEvent(input$rre_data, {
     
     # Read data
-    rre_data <- read.delim(input$rre_data$datapath)
+    rre_data <- utils::read.delim(input$rre_data$datapath)
     read_rre(rre_data)
   })
   
@@ -1194,7 +1208,7 @@ app_server <- function( input, output, session ) {
   # Read the uploaded renaming scheme csv
   shiny::observeEvent(input$rename_data,{
     
-    rename_data <- read.csv(input$rename_data$datapath)
+    rename_data <- utils::read.csv(input$rename_data$datapath)
     vals$rename_data <- rename_data
     coloring_datatable <-data.frame( tidyr::drop_na(data.frame(cbind(as.character(rename_data$Group_color), as.character(rename_data$Color), rename_data$Hierarchy)) ))
     coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all),]
@@ -1539,7 +1553,7 @@ app_server <- function( input, output, session ) {
           }
           index2 <- index2 +1
         }
-        write.csv(vals[[data_to_use[index]]], paste0(soft_names[index], "_biocircos.csv"), row.names = F)
+        utils::write.csv(vals[[data_to_use[index]]], paste0(soft_names[index], "_biocircos.csv"), row.names = F)
       }
       index <- index +1 
     }

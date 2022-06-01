@@ -10,7 +10,8 @@
 #'
 #' @export
 sempi_to_csv <- function(project_archive, write_to = getwd()){
-  unzip(project_archive, files = "genome_browser/main/Tracks.db", exdir = paste0(write_to, "/SEMPI_TracksDB"), junkpaths = T)
+  trackid <- NULL # Silence R CMD note
+  utils::unzip(project_archive, files = "genome_browser/main/Tracks.db", exdir = paste0(write_to, "/SEMPI_TracksDB"), junkpaths = T)
   fl <- paste0(stringr::str_extract(write_to, ".*/"),"/SEMPI_TracksDB/Tracks.db")
   conn <- RSQLite::dbConnect(RSQLite::SQLite(),fl)
   
@@ -32,7 +33,7 @@ sempi_data$Cluster <- as.numeric(sempi_data$Cluster)
 sempi_data$Start <- as.numeric(sempi_data$Start)
 sempi_data$Stop <- as.numeric(sempi_data$Stop)
 sempi_data$Type <- stringr::str_trim(tolower(sempi_data$Type))
-write.csv(sempi_data, paste0(write_to,"/sempi.csv"), row.names = FALSE)
+utils::write.csv(sempi_data, paste0(write_to,"/sempi.csv"), row.names = FALSE)
 }
 
 #' prism_to_csv
@@ -74,7 +75,7 @@ end <- sapply(data$prism_results$clusters, function(x){
 prism_data <- data.frame(cbind(start, end, types))
 prism_data <- prism_data %>%
   dplyr::transmute(Cluster=as.numeric(rownames(prism_data)), Start=as.numeric(start), Stop = as.numeric(end), Type = types)
-write.csv(prism_data, paste0(write_to,"/prism.csv"), row.names = FALSE)
+utils::write.csv(prism_data, paste0(write_to,"/prism.csv"), row.names = FALSE)
 
 }
 
@@ -89,6 +90,7 @@ write.csv(prism_data, paste0(write_to,"/prism.csv"), row.names = FALSE)
 #'
 #' @export
 antismash_to_csv <- function(file, write_to = getwd()){
+  Start <- Stop <- NULL # To silence R CMD notes
   data <- rjson::fromJSON(file = file)
   types <- sapply(data$records, function(y){
     lapply(y$features, function(x){
@@ -132,7 +134,7 @@ antismash_to_csv <- function(file, write_to = getwd()){
   anti_data$Cluster <- as.numeric(anti_data$Cluster)
   anti_data$Start <- as.numeric(anti_data$Start)
   anti_data$Stop <- as.numeric(anti_data$Stop)
-  write.csv(anti_data, paste0(write_to,"/antismash.csv"), row.names = FALSE)
+  utils::write.csv(anti_data, paste0(write_to,"/antismash.csv"), row.names = FALSE)
 }
 
 #' arts_to_csv 
@@ -146,11 +148,12 @@ antismash_to_csv <- function(file, write_to = getwd()){
 #'
 #' @export
 arts_to_csv <- function(project_archive, write_to = getwd()){
-  unzip(project_archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = paste0(write_to, "/ARTS_tables"), junkpaths = T)
-  known_hits <- read.delim(paste0(stringr::str_extract(write_to, ".*/"),"/ARTS_tables/knownhits.tsv"))
-  dupl_table <- read.delim(paste0(stringr::str_extract(write_to, ".*/"),"/ARTS_tables/duptable.tsv"))
+  Start <- NULL # Silence R CMD note
+ utils:: unzip(project_archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = paste0(write_to, "/ARTS_tables"), junkpaths = T)
+  known_hits <- utils::read.delim(paste0(stringr::str_extract(write_to, ".*/"),"/ARTS_tables/knownhits.tsv"))
+  dupl_table <- utils::read.delim(paste0(stringr::str_extract(write_to, ".*/"),"/ARTS_tables/duptable.tsv"))
   locations <- sapply(known_hits$Sequence.description, function(x){
-    tail(stringr::str_split(x , "\\|")[[1]], 1)
+    utils::tail(stringr::str_split(x , "\\|")[[1]], 1)
   })
   
   start <- sapply(locations, function(x){
@@ -220,5 +223,5 @@ arts_to_csv <- function(project_archive, write_to = getwd()){
     dplyr::arrange(Start)
   arts_data$ID <- seq(1:dim(arts_data)[1])
   arts_data$Cluster <- arts_data$ID
-  write.csv(arts_data, paste0(write_to,"/arts.csv"), row.names = FALSE)
+  utils::write.csv(arts_data, paste0(write_to,"/arts.csv"), row.names = FALSE)
 }

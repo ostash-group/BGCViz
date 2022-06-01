@@ -32,6 +32,10 @@ mod_barplot_rank_ui <- function(id){
 mod_barplot_rank_server <- function(id, vals, data_uploads, soft_names, soft_namings, data_to_use, abbr){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    # Silence R CMD note
+    Cluster <- Count <- Type <- 
+      Start <- Start <- Stop <- 
+      Label <- NULL
     output$barplot_rank <- plotly::renderPlotly({
       shiny::req(vals$data_upload_count >1)
       shiny::req(vals$need_filter == F)

@@ -6,8 +6,8 @@
 #'
 #' @noRd
 refine_unique <- function(data){
-  n <- tail(data, n=1)
-  data <- head(data, -1)
+  n <- utils::tail(data, n=1)
+  data <- utils::head(data, -1)
   n_list <-  stringr::str_split(n, ",")
   out <- sapply(n_list[[1]], function(x){x %in% unlist(stringr::str_split(data, ","))})
   res <- sapply(out, function(x){

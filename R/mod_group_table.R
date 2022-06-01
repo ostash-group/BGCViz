@@ -116,7 +116,7 @@ mod_group_table_server <- function(id,vals,data_uploads,soft_names,soft_namings,
         data_to_add <- sort(unique(add_inters[[name]]))
         data[nrow(data), soft_namings[match(name, soft_names)]] <-  paste(data_to_add[!(data_to_add %in% unique(unlist(c(data[soft_namings[match(name, soft_names)]]))))], collapse = ",")
       }
-      write.csv(data, "group_by.csv", row.names = F)
+      utils::write.csv(data, "group_by.csv", row.names = F)
       data
     })
   })

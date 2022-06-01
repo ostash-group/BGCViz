@@ -1,35 +1,27 @@
 # Installation
 
-The app itself is written in R and is available as a [shiny app server](https://ostash-group.shinyapps.io/BGCViz/) with no istallation required. However local run have some advantages(See Why local run section) over remote one. Considering ease of installation and UI indentity, we are suggetting local installation
+The app itself is written in R and is available as a [shiny app server](https://ostash-group.shinyapps.io/BGCViz/) with no installation required. However local run have some advantages(See Why local run section) over remote one. Considering ease of installation and UI indentity, we are suggetting local installation
 
-## Base packages
-All packages can be installed via R console in Rstudio via:
+## Installation
+Install `remotes` package first with R console. (for example via Rstudio)
 ```R
-install.packages(c("BioCircos", "ggplot2", "plotly",  "plyr", "tidyverse", "shiny", "DT" ,"rjson", "stringr", "shinyjs", "bslib" ))
+install.packages("remotes")
 ``` 
-After, to install GenomicRanges package please run
+After run the following command in R console:
 ```R
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("GenomicRanges")
+remotes::install_github("ostash-group/BGCViz")
+```
+This will install BGCViz as an R package. Running an app is as easy as:
+```R
+BGCViz::run_app()
 ```
 
-If conda package manager is installed (see [Anaconda](https://www.anaconda.com) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html)) you can use the following command to install R and Rstudio:
+You computer should have [R](https://cloud.r-project.org) and [Rstudio](https://www.rstudio.com/products/rstudio/download/) installed
 
-`conda install r-base rstudio`
-
-## Packages for input files conversion
-
-To covert input files from the program's native output format to BGCViz-compatible csv one, a set of R scripts in the /scripts folder is available. They depends on `rjson` library to convert antismash and PRISM data,  and `RSQLite` library to covert the SEMPI data. Also common libraries in all three scripts are: `dplyr`, `tidyr`, `stringr`. Therefore one line installation from R console is:
-```R
-install.packages(c("dplyr", "tidyr", "stringr", "RSQLite", "rjson" ))
-```
+If you have troubles with installation, do not hesitate to open an [issue](https://github.com/ostash-group/BGCViz/issues)
 
 ## Why local run
 The local run of an app is identical to the website one, with the same UI in the browser. Howewer, it have several advantages:
-- Fast upload of files
+- Much faster upload of files. Especially bigger json files or archives.
 - Better response time
 - Control over execution. Quick modifications to the code.
-
-Besides speed and flexibility of a local run, ability of upload raw  json output files from  AntiSMASH is a big plus (more details [here](Input_files_options.md)). For server usage we are suggesting to convert the json file to the csv one, using provided scripts (more details [here](Input_files_options.md)). 

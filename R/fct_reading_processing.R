@@ -52,6 +52,7 @@ fix_duplicates <-  function(test_score, order_vec, regul_genes_orfs, test_name){
 #'
 #' @noRd
 process_prism_json_suppl <- function(data){
+  Start <- NULL # Silence R CMD note
   types <- sapply(data$prism_results$clusters, function(x){
     tolower(x$type)
   })

@@ -6,6 +6,12 @@
 #'
 #' @noRd
 filter_deepbgc <- function(deep_data,cluster_type,score_a_input,score_c_input,score_d_input,domains_filter,biodomain_filter,gene_filter){
+  # Silence R CMD note
+  alkaloid <- nrps <- other <- 
+    pks <- ripp <- saccharide <- 
+    terpene <- score <- Cluster_type <- 
+    num_domains <- num_bio_domains <- 
+    num_proteins <- NULL
   score_a <- apply(deep_data %>% dplyr::select(c("antibacterial", "cytotoxic","inhibitor","antifungal")),1, function(x) max(x))
   score_d <- apply(deep_data %>% dplyr::select(c("deepbgc_score")),1, function(x) max(x))
   score_c <- apply(deep_data %>% dplyr::select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
@@ -56,6 +62,12 @@ filter_deepbgc <- function(deep_data,cluster_type,score_a_input,score_c_input,sc
 #'
 #' @noRd
 filter_gecco <- function(gecco_data,score_cluster_gecco,score_average_gecco,domains_filter_gecco,prot_filter_gecco){
+  # Silence R CMD note
+  alkaloid <- nrps <- other <- 
+    pks <- ripp <- saccharide <- 
+    terpene <- score <- Type2 <- 
+    Cluster_type <- score_a <- score_c <- 
+    num_domains <- num_prot <- NULL
   score_a_gecco <- apply(gecco_data %>% dplyr::select(c("average_p")),1, function(x) max(x))
   score_c_gecco <- apply(gecco_data %>% dplyr::select(c("alkaloid", "nrps","other","pks","ripp","saccharide","terpene")),1, function(x) max(x))
   if (is.null(score_cluster_gecco)){

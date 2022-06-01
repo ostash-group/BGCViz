@@ -6,6 +6,9 @@
 #'
 #' @noRd
 geom_anti <- function(data, rre_more){
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type2 <- 
+    Software <- ID <- Start <- Stop <- Type <- NULL
 ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
                                               ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
 }
@@ -17,7 +20,11 @@ ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color 
 #'
 #' @noRd
 geom_prism <- function(data,rre_more){
-  ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type2 <- 
+    Software <- ID <- Start <- Stop <- Type <- NULL
+  ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
+                                                ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
 }
 #' geom_deep 
 #'
@@ -27,6 +34,11 @@ geom_prism <- function(data,rre_more){
 #'
 #' @noRd
 geom_deep <- function(data,rre_more){
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type <- 
+    Software <- ID <- Start <- Stop <- 
+    Type <- num_domains <- deepbgc_score <- 
+    activity <- NULL
   ggplot2::geom_segment(data=data,ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Software = Software,
                                                ID = ID, Start = Start, Stop = Stop, Type = Type, num_domains = num_domains,
                                                deepbgc_score = deepbgc_score,activity = activity ),size =3)
@@ -39,6 +51,11 @@ geom_deep <- function(data,rre_more){
 #'
 #' @noRd
 geom_rre <- function(data, rre_more){
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type <- 
+    Score <- Software <- ID <- Start <- 
+    Stop <- Type <- E_value <- P_value <- RRE_start <- 
+    RRE_stop <- Probability <- NULL
   if (rre_more == T){
     ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type, Score = Score, Software = Software,
                                                   ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,
@@ -58,7 +75,10 @@ geom_rre <- function(data, rre_more){
 #'
 #' @noRd
 geom_sempi <- function(data,rre_more){
-  
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type2 <- 
+    Software <- ID <- Start <- Stop <- 
+    Type <- NULL
   ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
                                                 ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
 }
@@ -70,6 +90,10 @@ geom_sempi <- function(data,rre_more){
 #'
 #' @noRd
 geom_prism_supp <- function(data,rre_more){
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type2 <- 
+    Software <- ID <- Start <- Stop<- Type <- Name <- 
+    Full_name <- Score <- NULL
   ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, ID = ID,
                                                 Start = Start, Stop = Stop, Type = Type, Name = Name, Full_name = Full_name,
                                                 Score = Score), size = 3)
@@ -82,7 +106,13 @@ geom_prism_supp <- function(data,rre_more){
 #'
 #' @noRd
 geom_arts <- function(data,rre_more){
-  ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,                                                                                                             ID = ID, Start = Start, Stop = Stop, Type = Type, Hit = Hit, 
+  # Silence R CMD error
+  x <- y <- xend <- yend <- Type2 <- 
+    Start <- Stop <- Type <- ID <- Hit <- 
+    Software <- Core <- E_value <- 
+    Bitscore <- Count <- Model <- NULL
+  ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
+                                                ID = ID, Start = Start, Stop = Stop, Type = Type, Hit = Hit, 
                                                 Core = Core, E_value = E_value, Bitscore = Bitscore, Count = Count, Model = Model), size = 3)
 }
 #' geom_gecco 
@@ -93,6 +123,10 @@ geom_arts <- function(data,rre_more){
 #'
 #' @noRd
 geom_gecco <- function(data,rre_more){
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type2 <- Software <- 
+    ID <- Start <- Stop <- Type <- Num_proteins <-
+    Num_domains <- Average_p <- Max_p <- NULL
   ggplot2::geom_segment(data=data, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
                                                 ID = ID, Start = Start, Stop = Stop, Type = Type, Num_proteins= Num_proteins,
                                                 Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3)
