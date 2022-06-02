@@ -1,5 +1,5 @@
 ## code to prepare `anti_data` dataset goes here
-anti_data <- utils::read.csv("https://raw.githubusercontent.com/pavlohrab/BGCViz/raw_datasets/datasets/sco_antismash.csv")
+anti_data <- utils::read.csv("https://raw.githubusercontent.com/pavlohrab/BGCViz-datasets/main/example_data/sco_antismash.csv")
 # Add chromosome column
 anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
 # Type magic
