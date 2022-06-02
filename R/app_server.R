@@ -57,7 +57,7 @@ app_server <- function( input, output, session ) {
                                 gecco_data_filtered = NULL, seg_df_ref_g = NULL, prism_supp_data_input = F, computed  = NULL,
                                 need_filter = F, filter_data = F, choices = list(ref=NULL, group_by=NULL, ref_col_biocircos=NULL, ref_comparison_gecco=NULL, ref_comparison = NULL),
                                 renamed = NULL, renaming_notification = list(), rename_y_axis = list(), can_plot_deep_ref_2 = F, can_plot_deep_ref = F,
-                                can_plot_biocircos = F, can_plot_barplot_rank = F, can_plot_group_table = F, prism_supp_plot = F
+                                can_plot_biocircos = F, can_plot_barplot_rank = F, can_plot_group_table = F, prism_supp_plot =F
   )
   
   vals$computed <- list(
@@ -75,6 +75,8 @@ app_server <- function( input, output, session ) {
   #source("src/validate_functions.R")
   # Variables, that holds data uploads boolean (so if data is present or not)
   data_uploads <- c("anti_data_input","sempi_data_input","prism_data_input","prism_supp_data_input",
+                    "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
+  data_uploads_inter <- c("anti_data_input","sempi_data_input","prism_data_input","prism_json",
                     "arts_data_input","deep_data_input","gecco_data_input","rre_data_input")
   # Universal beginings for variables, used in the app for different data
   soft_names <- c("anti","sempi","prism","prism_supp","arts","deep","gecco","rre" )
@@ -221,8 +223,8 @@ app_server <- function( input, output, session ) {
         vals$prism_supp_data_input = T
         vals$prism_supp <- processed[[2]]
         vals$prism_supp_data <- processed[[2]]
-        vals$prism_json = TT
-        vals$prism_supp_plot <- 
+        vals$prism_json = T
+        vals$prism_supp_plot <- T
         shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
       } else {
         processed <- read_prism(data, json=F)
@@ -651,7 +653,7 @@ app_server <- function( input, output, session ) {
     }
   })
   shiny::observeEvent(vals$data_upload_count, {
-    if ((vals$arts_data_input == T)  || (vals$prism_supp_data_input == T) ){
+    if ((vals$arts_data_input == T)  || (vals$prism_json == T) ){
       shinyjs::showElement(selector = "#prism_supplement_arts_box")
     } else {
       shinyjs::hideElement(selector = "#prism_supplement_arts_box")
@@ -1060,9 +1062,9 @@ app_server <- function( input, output, session ) {
   ############################################################################
   shiny::observeEvent(input$prism_supp, ignoreInit = T,priority = 3,{
     if (input$prism_supp == T){
+      vals$need_filter <- T
       vals$prism_supp_data_input = T
       vals$prism_supp_plot <- T
-      vals$need_filter <- T
       if (!("PRISM-Supp" %in% names(vals$choices$ref))){
         vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
         vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PRISM-Supp")
@@ -1125,7 +1127,7 @@ app_server <- function( input, output, session ) {
         dplyr::select(Start,Stop)
       sempi_inter$seqnames <- "chr"
     }
-    if (vals$prism_supp_data_input == T){
+    if (vals$prism_json == T){
       prism_supp_data <- vals$prism_supp_data
       prism_supp_inter <- vals$prism_supp_data %>%
         dplyr::select(Start,Stop)
@@ -1156,10 +1158,10 @@ app_server <- function( input, output, session ) {
     
     inters <- vals$inters
     index = 1
-    for (i in data_uploads){
+    for (i in data_uploads_inter){
       index_2 = 1
       j = soft_names[index]
-      for (p in data_uploads){
+      for (p in data_uploads_inter){
         x = soft_names[index_2]
         if ((vals[[i]] == TRUE) & (vals$computed[[j]]==F) & (j!= x)){
           if ((vals[[p]] == TRUE) & (j != soft_names[index_2])){
@@ -1358,6 +1360,7 @@ app_server <- function( input, output, session ) {
     soft_names_2 <- soft_names
     data_to_use_2 <- data_to_use
     index <- 1
+    print("____NEW____")
     for (upload in data_uploads){
       data_uploads_2 <- data_uploads_2[-1]
       soft_2 <- soft_2[-1]
@@ -1368,7 +1371,7 @@ app_server <- function( input, output, session ) {
         for (upload2 in data_uploads_2){
           if ((vals[[upload2]]==T) & (length(data_uploads_2) > 0) & (soft_namings[index] != soft_2[index2])){
             output <- add_biocircos_data(inters[[soft_names[index]]][[soft_names_2[index2]]]$from, inters[[soft_names[index]]][[soft_names_2[index2]]]$to, vals[[data_to_use_2[index2]]], vals[[data_to_use[index]]], soft_2[index2], soft_namings[index], rename_data, input$label_color_class, input$ref_col_biocircos, coloring_datatable)
-            
+            print(output[[11]])
             chromosomes_start <- c(chromosomes_start, output[[3]])
             # Add link end. Just populate second output from the vectors, used above. 
             chromosomes_end <- c(chromosomes_end, output[[4]] )
