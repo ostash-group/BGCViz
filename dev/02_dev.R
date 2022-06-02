@@ -75,6 +75,8 @@ usethis::use_data_raw( name = "anti_data", open = FALSE )
 usethis::use_data_raw( name = "prism_data", open = FALSE ) 
 usethis::use_data_raw( name = "prism_supp_data", open = FALSE )
 usethis::use_data_raw( name = "gecco_data", open = FALSE )
+usethis::use_data_raw( name = "sempi_data", open = FALSE )
+
 
 ## Tests ----
 ## Add one line by test you want to create
