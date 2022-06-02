@@ -1,6 +1,6 @@
 #' The application User-Interface
-#' 
-#' @param request Internal parameter for `{shiny}`. 
+#'
+#' @param request Internal parameter for `{shiny}`.
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
@@ -8,13 +8,13 @@ app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
-    # Your application UI logic 
+    # Your application UI logic
     shinydashboardPlus::dashboardPage(
       shinydashboardPlus::dashboardHeader(title = "BGCViz"),
       shinydashboardPlus::dashboardSidebar(
         width = 350,
         shinydashboard::sidebarMenu(
-          id="menu_items",
+          id = "menu_items",
           style = "white-space: normal;",
           shinydashboard::menuItem("Upload data", tabName = "uploaddata_sidemenu", icon = icon("fas fa-upload")),
           shinydashboard::menuItem("Global options", tabName = "options_sidemenu", icon = icon("fas fa-cogs")),
@@ -23,13 +23,15 @@ app_ui <- function(request) {
           shinydashboard::menuItemOutput("anno_sidemenu_out"),
           shinydashboard::menuItemOutput("biocircos_sidemenu_out"),
           shinydashboard::menuItemOutput("summarize_sidemenu_out"),
-          shinydashboard::menuItem(tabName = "restore_boxes",
-                                   actionButton("restore_box", "Restore all boxes", class = "bg-success"))
+          shinydashboard::menuItem(
+            tabName = "restore_boxes",
+            actionButton("restore_box", "Restore all boxes", class = "bg-success")
+          )
         )
       ),
       shinydashboard::dashboardBody(
-        tags$head( 
-          tags$style(HTML(".main-sidebar { font-size: 15px; }")) #change the font size to 20
+        tags$head(
+          tags$style(HTML(".main-sidebar { font-size: 15px; }")) # change the font size to 20
         ),
         shinyjs::useShinyjs(),
         shinydisconnect::disconnectMessage(
@@ -46,7 +48,7 @@ app_ui <- function(request) {
           css = ""
         ),
         shinydashboard::tabItems(
-          shinydashboard::tabItem( 
+          shinydashboard::tabItem(
             tabName = "deep_sidemenu",
             mod_deepbgc_plots_ui("deep_barplot_ui_1"),
             sortable::sortable_js("deep_data1", options = sortable::sortable_options(swap = TRUE, group = "deep_data")),
@@ -62,13 +64,14 @@ app_ui <- function(request) {
             tabName = "anno_sidemenu",
             shiny::fluidRow(
               tags$div(
-                id="anno_data1",
+                id = "anno_data1",
                 shiny::column(
                   width = 12,
                   mod_deep_reference_2_ui("deep_reference_2_ui_1"),
                   mod_deep_reference_ui("deep_reference_ui_1")
                 )
-              )),
+              )
+            ),
             sortable::sortable_js("anno_data1", options = sortable::sortable_options(swap = TRUE, group = "anno_data")),
             sortable::sortable_js("anno_data2", options = sortable::sortable_options(swap = TRUE, group = "anno_data"))
           ),
@@ -82,7 +85,7 @@ app_ui <- function(request) {
             tabName = "summarize_sidemenu",
             shiny::fluidRow(
               tags$div(
-                id="summarize_data1",
+                id = "summarize_data1",
                 mod_barplot_rank_ui("barplot_rank_ui_1"),
                 mod_group_table_ui("group_table_ui_1")
               )
@@ -93,16 +96,18 @@ app_ui <- function(request) {
             tabName = "uploaddata_sidemenu",
             shiny::fluidRow(
               tags$div(
-                id="upload_data1",
+                id = "upload_data1",
                 div(
                   id = "id1",
                   shinydashboardPlus::box(
                     title = "Upload Antismash data",
                     id = "upload_anti_box",
-                    collapsible = TRUE,                                          
+                    collapsible = TRUE,
                     closable = TRUE,
                     shiny::fileInput("anti_data",
-                                     "Upload Antismash data", accept = list(".csv", ".json"))
+                      "Upload Antismash data",
+                      accept = list(".csv", ".json")
+                    )
                   )
                 ),
                 div(
@@ -110,10 +115,12 @@ app_ui <- function(request) {
                   shinydashboardPlus::box(
                     title = "Upload PRISM data",
                     id = "upload_prism_box",
-                    collapsible = TRUE,                                          
+                    collapsible = TRUE,
                     closable = TRUE,
                     shiny::fileInput("prism_data",
-                                     "Upload PRISM data", accept = list(".csv", ".json"))
+                      "Upload PRISM data",
+                      accept = list(".csv", ".json")
+                    )
                   )
                 ),
                 div(
@@ -121,10 +128,12 @@ app_ui <- function(request) {
                   shinydashboardPlus::box(
                     title = "Upload SEMPI 2.0 data",
                     id = "upload_sempi_box",
-                    collapsible = TRUE,                                          
+                    collapsible = TRUE,
                     closable = TRUE,
                     shiny::fileInput("sempi_data",
-                                     "Upload SEMPI 2.0 data", accept = list(".csv", ".zip"))
+                      "Upload SEMPI 2.0 data",
+                      accept = list(".csv", ".zip")
+                    )
                   )
                 ),
                 div(
@@ -132,26 +141,30 @@ app_ui <- function(request) {
                   shinydashboardPlus::box(
                     title = "Upload DeepBGC data",
                     id = "upload_deep_box",
-                    collapsible = TRUE,                                          
+                    collapsible = TRUE,
                     closable = TRUE,
                     shiny::fileInput("deep_data",
-                                     "Upload DeepBGC data", accept = ".tsv")
+                      "Upload DeepBGC data",
+                      accept = ".tsv"
+                    )
                   )
                 )
               )
             ),
             shiny::fluidRow(
               tags$div(
-                id="upload_data2",
+                id = "upload_data2",
                 div(
                   id = "id1",
                   shinydashboardPlus::box(
                     title = "Upload Gecco data",
                     id = "upload_gecco_box",
-                    collapsible = TRUE,                                          
+                    collapsible = TRUE,
                     closable = TRUE,
                     shiny::fileInput("gecco_data",
-                                     "Upload Gecco data", accept = ".tsv")
+                      "Upload Gecco data",
+                      accept = ".tsv"
+                    )
                   )
                 ),
                 div(
@@ -159,10 +172,12 @@ app_ui <- function(request) {
                   shinydashboardPlus::box(
                     title = "Upload RRE-Finder data",
                     id = "upload_rre_box",
-                    collapsible = TRUE,                                          
+                    collapsible = TRUE,
                     closable = TRUE,
-                    shiny::fileInput("rre_data",
-                                     "Upload RRE-Finder data")
+                    shiny::fileInput(
+                      "rre_data",
+                      "Upload RRE-Finder data"
+                    )
                   )
                 ),
                 div(
@@ -170,10 +185,12 @@ app_ui <- function(request) {
                   shinydashboardPlus::box(
                     title = "Upload ARTS data",
                     id = "upload_arts_box",
-                    collapsible = TRUE,                                          
+                    collapsible = TRUE,
                     closable = TRUE,
                     shiny::fileInput("arts_data",
-                                     "Upload ARTS data", accept = list(".csv", ".zip"))
+                      "Upload ARTS data",
+                      accept = list(".csv", ".zip")
+                    )
                   )
                 ),
                 div(
@@ -181,7 +198,7 @@ app_ui <- function(request) {
                   shinydashboardPlus::box(
                     title = "Use Example data",
                     id = "use_example_data_box",
-                    collapsible = TRUE,                                          
+                    collapsible = TRUE,
                     closable = TRUE,
                     shiny::actionButton("anti_sco", "Use Antismash example data from S.coelicolor"),
                     shiny::actionButton("prism_sco", "Use PRISM example data from S.coelicolor"),
@@ -204,20 +221,22 @@ app_ui <- function(request) {
               shiny::column(
                 width = 6,
                 tags$div(
-                  id="options_data1",
+                  id = "options_data1",
                   div(
                     id = "id1",
                     shinydashboardPlus::box(
                       title = "Rename",
                       id = "rename_box",
-                      collapsible = TRUE,                                          
+                      collapsible = TRUE,
                       closable = TRUE,
                       width = NULL,
                       shiny::checkboxInput("anti_hybrid", "Visualize AntiSMASH BGC with several types as 'Hybrid'"),
                       shiny::checkboxInput("prism_hybrid", "Visualize PRISM BGC with several types as 'Hybrid'"),
                       shiny::checkboxInput("sempi_hybrid", "Visualize SEMPI BGC with several types as 'Hybrid'"),
                       shiny::fileInput("rename_data",
-                                       "Upload renaming and coloring scheme", accept = ".csv"),
+                        "Upload renaming and coloring scheme",
+                        accept = ".csv"
+                      ),
                       shiny::actionButton("rename", "Rename"),
                       shiny::actionButton("reset_name", "Reset")
                     )
@@ -225,11 +244,13 @@ app_ui <- function(request) {
                   div(
                     id = "id2",
                     shiny::uiOutput("deep_filter_box")
-                  ))),
+                  )
+                )
+              ),
               shiny::column(
                 width = 6,
                 tags$div(
-                  id="options_data2",
+                  id = "options_data2",
                   div(
                     id = "id3",
                     shiny::uiOutput("gecco_filter_box")
@@ -239,7 +260,7 @@ app_ui <- function(request) {
                     shinydashboardPlus::box(
                       title = "Improve global visualization",
                       id = "improve_visualization_box",
-                      collapsible = TRUE,                                          
+                      collapsible = TRUE,
                       closable = TRUE,
                       width = NULL,
                       shiny::checkboxInput("rre_width", "Add thickness to RRE results visualization"),
@@ -253,12 +274,14 @@ app_ui <- function(request) {
                     shinydashboardPlus::box(
                       title = "Prism supplement + ARTS options",
                       id = "prism_supplement_arts_box",
-                      collapsible = TRUE,                                          
+                      collapsible = TRUE,
                       closable = TRUE,
                       width = NULL,
                       shiny::checkboxInput("prism_supp", "Visualize PRISM resistance and regulatory genes"),
-                      shiny::selectInput("dup_choice", "Choose duplicated core gene to plot only it", choices = c("All"),
-                                         selected = "All")
+                      shiny::selectInput("dup_choice", "Choose duplicated core gene to plot only it",
+                        choices = c("All"),
+                        selected = "All"
+                      )
                     )
                   ),
                   mod_download_ui("download_ui_1")
@@ -271,31 +294,29 @@ app_ui <- function(request) {
         )
       )
     )
-    )
+  )
 }
 
 #' Add external Resources to the Application
-#' 
-#' This function is internally used to add external 
-#' resources inside the Shiny application. 
-#' 
+#'
+#' This function is internally used to add external
+#' resources inside the Shiny application.
+#'
 #' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
-golem_add_external_resources <- function(){
-  
+golem_add_external_resources <- function() {
   add_resource_path(
-    'www', app_sys('app/www')
+    "www", app_sys("app/www")
   )
- 
+
   tags$head(
     favicon(),
     bundle_resources(
-      path = app_sys('app/www'),
-      app_title = 'BGCViz'
+      path = app_sys("app/www"),
+      app_title = "BGCViz"
     )
     # Add here other external resources
-    # for example, you can add shinyalert::useShinyalert() 
+    # for example, you can add shinyalert::useShinyalert()
   )
 }
-

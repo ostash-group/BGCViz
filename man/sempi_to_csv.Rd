@@ -15,6 +15,6 @@ sempi_to_csv(project_archive, write_to = getwd())
 csv file in specified location
 }
 \description{
-Function, which transforms Track.db file into dataframe, which could be then written to csv. 
+Function, which transforms Track.db file into dataframe, which could be then written to csv.
 Download project folder from SEMPI and supply as `project_archive` argument to a function
 }

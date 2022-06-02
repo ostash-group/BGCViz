@@ -10,6 +10,6 @@ set_defaults(csv_file)
 \item{csv_file}{- path to csv file with default options.}
 }
 \description{
-Function, which uploads default options csv file to the package. 
+Function, which uploads default options csv file to the package.
 Use with `get_defaults` function to download currently used default options.
 }

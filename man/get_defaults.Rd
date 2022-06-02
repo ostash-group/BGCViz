@@ -13,6 +13,6 @@ get_defaults(write_to = getwd())
 csv file in specified location
 }
 \description{
-Function, which downloads default options csv file into provided location. 
+Function, which downloads default options csv file into provided location.
 Then can be used with `set_defaults` function to change the default behaviour
 }
