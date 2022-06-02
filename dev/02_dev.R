@@ -60,6 +60,7 @@ golem::add_fct( "filtering" )
 golem::add_fct( "reading_processing" )
 golem::add_fct( "helpers" )
 golem::add_fct( "format_transformation" )
+golem::add_fct( "reading_functions" )
 golem::add_utils( "deep_reference" )
 golem::add_utils( "helpers" )
 

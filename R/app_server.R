@@ -234,7 +234,7 @@ app_server <- function( input, output, session ) {
       
     }
   }
-  read_prism <- function(data, json=T){
+  read_prism <- function(data, json=T, sco=F, supp=NULL){
     if (json==T){
       processed_data <- process_prism_json_suppl(data)
       shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
@@ -244,6 +244,14 @@ app_server <- function( input, output, session ) {
       vals$prism_supp_data <- processed_data[[2]]
       vals$prism_json = T 
     } else {
+      if (sco==T){
+        prism_data <- data
+        shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
+        vals$prism_supp_data_input = T
+        vals$prism_supp <- supp
+        vals$prism_supp_data <- supp
+        vals$prism_json = T 
+      }
       prism_data <- data
     }
     res_validation <- validate_basic_input(prism_data)
@@ -438,7 +446,7 @@ app_server <- function( input, output, session ) {
       arts_data$Cluster <- arts_data$ID
       vals$arts_data <- arts_data
     } else {
-      vals$arts_data <- utils::read.csv(archive)
+      vals$arts_data <- archive
     }
     vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
     vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "ARTS")
@@ -559,48 +567,41 @@ app_server <- function( input, output, session ) {
   ##            Loading and processing of example data             -
   ##----------------------------------------------------------------
   shiny::observeEvent(input$anti_sco,{
-    anti_file <- system.file("extdata", "sco_antismash.csv", package = "BGCViz")
-    anti_data <- utils::read.csv(anti_file)
+    data("anti_data", package = "BGCViz")
     read_antismash(anti_data)
   })
   
   shiny::observeEvent(input$gecco_sco,{
-    gecco_file <- system.file("extdata", "sco_gecco.tsv", package = "BGCViz")
-    gecco_data <- utils::read.delim(gecco_file)
+    data("gecco_data", package = "BGCViz")
     read_gecco(gecco_data)
   })
   
   shiny::observeEvent(input$prism_sco,{
-    # Read data
-    prism_file <- system.file("extdata", "sco_prism.json", package = "BGCViz")
-    data <- rjson::fromJSON(file = prism_file)
-    read_prism(data)
+    data("prism_data", package = "BGCViz")
+    data("prism_supp_data", package = "BGCViz")
+    read_prism(prism_data, sco=T, supp=prism_supp_data)
   })
   
   shiny::observeEvent(input$sempi_sco,{
-    sempi_file <- system.file("extdata", "sco_sempi.csv", package = "BGCViz")
-    sempi_data <- utils::read.csv(sempi_file)
+    data("sempi_data", package = "BGCViz")
     read_sempi(sempi_data, zip = F)
   })
   
   shiny::observeEvent(input$arts_sco, {
-    arts_file <- system.file("extdata", "sco_arts.csv", package = "BGCViz")
-    arts_data <- utils::read.csv(arts_file)
-    read_arts_archive(arts_file, zip=F)
+    data("arts_data", package = "BGCViz")
+    read_arts_archive(arts_data, zip=F)
     disable_event_logic()
   })
   
   shiny::observeEvent(input$deep_sco, {
-    deep_file <- system.file("extdata", "sco_deep.tsv", package = "BGCViz")
-    data <- utils::read.delim(deep_file) 
-    read_deep(data)
+    data("deep_data", package = "BGCViz")
+    read_deep(deep_data)
   })
   
   shiny::observeEvent(input$rre_sco, {
     # Read data
-    rre_file <- system.file("extdata", "sco_rre.txt", package = "BGCViz")
-    data <-  utils::read.delim(rre_file)
-    read_rre(data)
+    data <-  data("rre_data", package = "BGCViz")
+    read_rre(rre_data)
   })
   
   ##----------------------------------------------------------------
