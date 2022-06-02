@@ -1,5 +1,5 @@
 ## code to prepare `gecco_data` dataset goes here
-gecco_data <- utils::read.delim("https://raw.githubusercontent.com/pavlohrab/BGCViz/raw_datasets/datasets/sco_gecco.tsv")
+gecco_data <- utils::read.delim("https://raw.githubusercontent.com/pavlohrab/BGCViz-datasets/main/example_data/sco_gecco.tsv")
 # Silence R CMD note
 polyketide_probability <- other_probability <- 
   nrp_probability <- alkaloid_probability <- 
