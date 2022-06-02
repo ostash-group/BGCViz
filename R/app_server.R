@@ -1474,7 +1474,7 @@ app_server <- function( input, output, session ) {
         if (input$ref == soft_namings[sup_index]){
           shiny::validate(need(nrow(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))))>0,"Reference data is empty, and so, insufficient for plotting. Please select another one") )
           plot <- ggplot2::ggplot(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), ggplot2::aes(x = vals$chr_len, y = Chr)) + 
-            eval(as.name(paste0("geom_", soft_names[sup_index])))(seg_ref,vals$rre_more)
+            suppressWarnings(eval(as.name(paste0("geom_", soft_names[sup_index])))(seg_ref,vals$rre_more))
           soft_let <- abbr[sup_index]
           lettrs <- lett[2:length(lett)]
           labels_1 <- list()
@@ -1485,7 +1485,7 @@ app_server <- function( input, output, session ) {
               seg_df <- simple_seg(df, lettrs[index], soft_namings[index], soft_names[index],soft_major,inter = T, inters)
               seg_df <- define_spec_seg_df(soft_names, index,seg_df, soft_major, df,inter = T, vals$rre_more, inters)
               labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
-              plot <- add_more_annot(seg_df, plot, soft_names, index, vals$rre_more)
+              plot <- suppressWarnings(add_more_annot(seg_df, plot, soft_names, index, vals$rre_more))
             }
             index = index +1
             
@@ -1497,7 +1497,7 @@ app_server <- function( input, output, session ) {
             ggplot2::xlab("Chromosome length")+ 
             ggplot2::theme(legend.title = ggplot2::element_blank()) +
             ggplot2::ggtitle("Annotations' comparison to the reference")
-          suppressWarnings(to_plot <- plotly::ggplotly(plot, tooltip = tooltip))
+          to_plot <- plotly::ggplotly(plot, tooltip = tooltip)
           to_plot <- to_plot %>% 
             plotly::layout(legend=list(font = list(
               family = "sans-serif",

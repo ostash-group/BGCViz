@@ -68,9 +68,9 @@ mod_deep_reference_2_server <- function(id, vals, data_uploads, data_to_use){
       
       plot <- ggplot2::ggplot(data, ggplot2::aes(x = vals$chr_len, y = Chr))
       if (vals$anti_data_input == TRUE){
-        suppressWarnings(plot <- plot + 
+        plot <- plot + 
                            ggplot2::geom_segment(data=vals$seg_df_ref_a, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
-                                                                                      ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3))
+                                                                                      ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
       }
       if (vals$deep_data_input == TRUE){
         if (dim(vals$seg_df_ref_d)[1] >0) {
@@ -98,8 +98,8 @@ mod_deep_reference_2_server <- function(id, vals, data_uploads, data_to_use){
         
       }
       if (vals$sempi_data_input == TRUE){
-        suppressWarnings(plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_s, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
-                                                                                                   ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3))
+        plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_s, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software,
+                                                                                                   ID = ID, Start = Start, Stop = Stop, Type = Type ), size = 3)
         
         
       }
@@ -118,7 +118,7 @@ mod_deep_reference_2_server <- function(id, vals, data_uploads, data_to_use){
         if (dim(vals$seg_df_ref_g)[1] >0) {
           plot <- plot + ggplot2::geom_segment(data =  vals$seg_df_ref_g, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
                                                                                        ID = ID, Start = Start, Stop = Stop, Type = Type, Num_proteins= Num_proteins,
-                                                                                       Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3) 
+                                                                                       Num_domains = Num_domains,Average_p = Average_p, Max_p = Max_p ), size = 3)
         }
       }
       to_plot <- plotly::ggplotly(plot +
