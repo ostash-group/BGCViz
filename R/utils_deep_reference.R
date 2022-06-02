@@ -1,6 +1,7 @@
 #' geom_anti
 #'
-#' @description A function, that returns antismash geom with the legend, specific to this software (to show on mouse hover).
+#' @description A function, that returns antismash geom with the legend, 
+#' specific to this software (to show on mouse hover).
 #'
 #' @return geom_segment with specific fields
 #'
@@ -32,7 +33,8 @@ geom_prism <- function(data, rre_more) {
 }
 #' geom_deep
 #'
-#' @description A function, that returns deepbgc geom with the legend, specific to this software (to show on mouse hover).
+#' @description A function, that returns deepbgc geom with the legend, 
+#' specific to this software (to show on mouse hover).
 #'
 #' @return geom_segment with specific fields
 #'
@@ -51,7 +53,8 @@ geom_deep <- function(data, rre_more) {
 }
 #' geom_rre
 #'
-#' @description A function, that returns RRE-Finder geom with the legend, specific to this software (to show on mouse hover).
+#' @description A function, that returns RRE-Finder geom with the legend, 
+#' specific to this software (to show on mouse hover).
 #'
 #' @return geom_segment with specific fields
 #'
@@ -95,7 +98,8 @@ geom_sempi <- function(data, rre_more) {
 }
 #' deep_reference
 #'
-#' @description A function, that returns Prism-Supplement geom with the legend, specific to this software (to show on mouse hover).
+#' @description A function, that returns Prism-Supplement geom with the legend, 
+#' specific to this software (to show on mouse hover).
 #'
 #' @return geom_segment with specific fields
 #'
@@ -113,7 +117,8 @@ geom_prism_supp <- function(data, rre_more) {
 }
 #' geom_arts
 #'
-#' @description A function, that returns ARTS geom with the legend, specific to this software (to show on mouse hover).
+#' @description A function, that returns ARTS geom with the legend, 
+#' specific to this software (to show on mouse hover).
 #'
 #' @return geom_segment with specific fields
 #'

@@ -79,8 +79,6 @@ app_server <- function(input, output, session) {
   coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all), ]
   colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
   vals$coloring_datatable <- DT::datatable(coloring_datatable, rownames = F, editable = "column", options = list(dom = "t", ordering = F))
-  # Validation
-  # source("src/validate_functions.R")
   # Variables, that holds data uploads boolean (so if data is present or not)
   data_uploads <- c(
     "anti_data_input", "sempi_data_input", "prism_data_input", "prism_supp_data_input",
@@ -132,8 +130,6 @@ app_server <- function(input, output, session) {
     }
   }
   options(shiny.maxRequestSize = 100 * 1024^2)
-  # Small function to make integers zeros
-  # source("src/helper_functions.R")
 
   disable_event_logic <- function() {
     vals$can_plot_deep_ref <- F
@@ -167,8 +163,6 @@ app_server <- function(input, output, session) {
     }
     vals$anti_type <- anti_data$Type2
     vals$anti_data <- anti_data
-    # Save file
-    # write.csv(vals$anti_data, "anti_data.csv", row.names = F)
     vals$anti_data_input <- TRUE
     vals$data_upload_count <- vals$data_upload_count + 1
     vals$choices$ref <- c(vals$choices$ref, "Antismash" = "Antismash")
@@ -204,8 +198,6 @@ app_server <- function(input, output, session) {
     }
     vals$gecco_data <- gecco_data
     vals$gecco_data_filtered <- filter_gecco(vals$gecco_data, vals$score_cluster_gecco, vals$score_average_gecco, vals$domains_filter_gecco, vals$prot_filter_gecco)
-    # Save file
-    # write.csv(vals$gecco_data, "gecco_data.csv", row.names = F)
     vals$gecco_data_input <- TRUE
     vals$data_upload_count <- vals$data_upload_count + 1
     vals$choices$ref <- c(vals$choices$ref, "GECCO" = "GECCO")
@@ -262,8 +254,6 @@ app_server <- function(input, output, session) {
     vals$prism_data$chromosome <- rep("P", length(vals$prism_data$Cluster))
     # Add ID column (same as Cluster)
     vals$prism_data$ID <- vals$prism_data$Cluster
-    # Save file
-    # write.csv(vals$prism_data, "prism_data.csv", row.names = F)
     vals$prism_data_input <- TRUE
     vals$data_upload_count <- vals$data_upload_count + 1
     vals$choices$ref <- c(vals$choices$ref, "PRISM" = "PRISM")
@@ -307,8 +297,6 @@ app_server <- function(input, output, session) {
     vals$sempi_data$chromosome <- rep("S", length(vals$sempi_data$Cluster))
     # Add ID column (same as Cluster)
     vals$sempi_data$ID <- vals$sempi_data$Cluster
-    # Save file
-    # write.csv(vals$sempi_data, "sempi_data.csv", row.names = F)
     vals$sempi_data_input <- TRUE
     vals$data_upload_count <- vals$data_upload_count + 1
     vals$choices$ref <- c(vals$choices$ref, "SEMPI" = "SEMPI")
@@ -384,7 +372,6 @@ app_server <- function(input, output, session) {
     # Add ID column as number seuquence of dataframe length
     vals$deep_data$ID <- seq(1:length(vals$deep_data$bgc_candidate_id))
     vals$deep_data$Cluster <- vals$deep_data$ID
-    # write.csv(vals$deep_data, "deep_data.csv", row.names = F)
     vals$deep_data_input <- TRUE
     vals$data_upload_count <- vals$data_upload_count + 1
     vals$deep_data_filtered <- filter_deepbgc(vals$deep_data, vals$cluster_type, vals$score_a, vals$score_c, vals$score_d, vals$domains_filter, vals$biodomain_filter, vals$gene_filter)
