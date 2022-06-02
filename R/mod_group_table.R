@@ -106,7 +106,7 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
         } else {
           if (!(soft_names[i] %in% added_inters)) {
             matched_v <- match(added_inters, names(inters[[soft_names[i]]]))
-            soft_n <- soft_names[-(matched_v[!is.na(matched_v)])]
+            soft_n <- soft_names[ -(matched_v[!is.na(matched_v)])]
             for (inter in names(inters[[soft_names[i]]])) {
               if (!(inter %in% added_inters)) {
                 add_inters[[soft_names[i]]] <- c(add_inters[[soft_names[i]]], inters[[soft_names[i]]][[inter]]$to)
@@ -120,7 +120,9 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
 
       for (name in names(add_inters)) {
         data_to_add <- sort(unique(add_inters[[name]]))
-        data[nrow(data), soft_namings[match(name, soft_names)]] <- paste(data_to_add[!(data_to_add %in% unique(unlist(c(data[soft_namings[match(name, soft_names)]]))))], collapse = ",")
+        data[nrow(data), soft_namings[match(name, soft_names)]] <- 
+          paste(data_to_add[!(data_to_add %in% 
+                                unique(unlist(c(data[soft_namings[match(name, soft_names)]]))))], collapse = ",")
       }
       utils::write.csv(data, "group_by.csv", row.names = F)
       data
@@ -132,4 +134,5 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
 # mod_group_table_ui("group_table_ui_1")
 
 ## To be copied in the server
-# mod_group_table_server("group_table_ui_1", vals=vals, data_uploads = data_uploads, soft_names = soft_names, soft_namings = soft_namings, data_to_use = data_to_use, abbr = abbr)
+# mod_group_table_server("group_table_ui_1", vals=vals, data_uploads = data_uploads, 
+#soft_names = soft_names, soft_namings = soft_namings, data_to_use = data_to_use, abbr = abbr)
