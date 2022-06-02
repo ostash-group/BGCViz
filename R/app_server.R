@@ -22,7 +22,8 @@ app_server <- function( input, output, session ) {
     )
   })
   inputData <- shiny::reactive({
-    list( vals$sempi_data_input, vals$rre_data_input,  vals$anti_data_input, vals$prism_data_input, vals$prism_supp_data_input, vals$deep_data_input, vals$gecco_data_input
+    list( vals$sempi_data_input, vals$rre_data_input,  vals$anti_data_input, vals$prism_data_input, 
+          vals$prism_supp_data_input, vals$deep_data_input, vals$gecco_data_input,vals$arts_data_input
     )
   })
   dynamicInput <-  shiny::reactive({
@@ -31,7 +32,7 @@ app_server <- function( input, output, session ) {
   }) 
   deep_reference <- shiny::reactive({
     list( vals$inters_filtered, vals$rre_more, input$ref, input$arts_width, input$sempi_width, input$rre_width,
-          input$prism_supp_data_input_width, vals$anti_data, vals$prism_data, vals$sempi_data)
+          input$prism_supp_data_input_width, vals$anti_data, vals$prism_data, vals$sempi_data, vals$arts_data)
   })
   
   to_debounce <-  shiny::reactive({
@@ -56,7 +57,7 @@ app_server <- function( input, output, session ) {
                                 gecco_data_filtered = NULL, seg_df_ref_g = NULL, prism_supp_data_input = F, computed  = NULL,
                                 need_filter = F, filter_data = F, choices = list(ref=NULL, group_by=NULL, ref_col_biocircos=NULL, ref_comparison_gecco=NULL, ref_comparison = NULL),
                                 renamed = NULL, renaming_notification = list(), rename_y_axis = list(), can_plot_deep_ref_2 = F, can_plot_deep_ref = F,
-                                can_plot_biocircos = F, can_plot_barplot_rank = F, can_plot_group_table = F
+                                can_plot_biocircos = F, can_plot_barplot_rank = F, can_plot_group_table = F, prism_supp_plot = F
   )
   
   vals$computed <- list(
@@ -142,20 +143,12 @@ app_server <- function( input, output, session ) {
   # For now you just have duplicated the code. Specifically for ARTS!
   # Reading functions:
   
-  read_antismash <- function(data){
-    anti_data <- data
-    res_validation <- validate_basic_input(anti_data)
-    if (!(res_validation[[1]])){
-      anti_data <- NULL
-      return(NULL)
-    } else{
-      anti_data <- res_validation[[2]]
+  process_antismash <- function(data, example_data=F){
+    if (example_data==T) {
+      anti_data <- data
+    } else {
+      anti_data <- read_anti(data)
     }
-    # Add chromosome column
-    anti_data$chromosome <-  rep("A", length(anti_data$Cluster))
-    # Type magic
-    anti_data$Type <- stringr::str_trim(tolower(anti_data$Type))
-    anti_data['Type2'] <- stringr::str_trim(tolower(anti_data$Type))
     vals$anti_type <- anti_data$Type2
     vals$anti_data <- anti_data
     # Save file
@@ -182,37 +175,13 @@ app_server <- function( input, output, session ) {
                                selected = "Antismash")
       
     }
-    return(anti_data)
   }
-  read_gecco <- function(data){
-    # Silence R CMD note
-    polyketide_probability <- other_probability <- 
-      nrp_probability <- alkaloid_probability <- 
-      terpene_probability <- saccharide_probability <- 
-      ripp_probability <- NULL
-    # Add chromosome column
-    gecco_data <- data
-    
-    gecco_data$chromosome <-  rep("G", length(gecco_data$type))
-    # Type magic
-    gecco_data$Cluster <- seq(1:length(gecco_data$chromosome))
-    gecco_data$ID <- gecco_data$Cluster
-    gecco_data$Type <- stringr::str_trim(tolower(gecco_data$type))
-    gecco_data$Type <- gsub("polyketide", "pks", gecco_data$Type)
-    gecco_data$Type <- gsub("nrp", "nrps", gecco_data$Type)
-    gecco_data$Type <- gsub("unknown", "under_threshold", gecco_data$Type)
-    gecco_data['Type2'] <- stringr::str_trim(tolower(gecco_data$Type))
-    drop_cols <- c("alkaloid_probability" ,  "polyketide_probability", "ripp_probability",  "saccharide_probability",
-                   "terpene_probability",    "nrp_probability"  , "other_probability" )
-    # Read data
-    gecco_data <- gecco_data %>%
-      dplyr::mutate(pks=polyketide_probability, other = other_probability, nrps = nrp_probability, alkaloid = alkaloid_probability, 
-                    terpene = terpene_probability, saccharide = saccharide_probability, ripp = ripp_probability) %>%
-      dplyr::select(-dplyr::one_of(drop_cols))
-    gecco_data$num_prot <- sapply( stringr::str_split(as.character(gecco_data$proteins), ";"), length)
-    gecco_data$num_domains <- sapply( stringr::str_split(as.character(gecco_data$domains), ";"), length)
-    names(gecco_data)[names(gecco_data) == "start"] <- "Start"
-    names(gecco_data)[names(gecco_data) == "end"] <-  "Stop"
+  process_gecco <- function(data, example_data = F){
+    if (example_data==T) {
+      gecco_data <- data
+    } else {
+      gecco_data <- read_gecco(data)
+    }
     vals$gecco_data <- gecco_data
     vals$gecco_data_filtered <- filter_gecco(vals$gecco_data,vals$score_cluster_gecco,vals$score_average_gecco,vals$domains_filter_gecco,vals$prot_filter_gecco)
     # Save file
@@ -234,39 +203,36 @@ app_server <- function( input, output, session ) {
       
     }
   }
-  read_prism <- function(data, json=T, sco=F, supp=NULL){
-    if (json==T){
-      processed_data <- process_prism_json_suppl(data)
-      shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
-      prism_data <- processed_data[[1]]
-      vals$prism_supp_data_input = T
-      vals$prism_supp <- processed_data[[2]]
-      vals$prism_supp_data <- processed_data[[2]]
-      vals$prism_json = T 
-    } else {
-      if (sco==T){
-        prism_data <- data
-        shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
-        vals$prism_supp_data_input = T
-        vals$prism_supp <- supp
-        vals$prism_supp_data <- supp
-        vals$prism_json = T 
-      }
+  process_prism <- function(data, json=T, example_data=F){
+    if (example_data==T) {
       prism_data <- data
-    }
-    res_validation <- validate_basic_input(prism_data)
-    if (!(res_validation[[1]])){
-      prism_data <- NULL
-      return(NULL)
-    } else{
-      prism_data <- res_validation[[2]]
+      prism_data$Type <- stringr::str_trim(tolower(prism_data$Type))
+      prism_data['Type2'] <- stringr::str_trim(tolower(prism_data$Type))
+      vals$prism_supp_data_input = T
+      vals$prism_supp <- BGCViz:::prism_supp_data
+      vals$prism_supp_data <- BGCViz:::prism_supp_data
+      vals$prism_supp_plot <- T
+      vals$prism_json = T
+      shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
+    } else {
+      if (json == T){
+        processed <- read_prism(data, json=T)
+        prism_data <- processed[[1]]
+        vals$prism_supp_data_input = T
+        vals$prism_supp <- processed[[2]]
+        vals$prism_supp_data <- processed[[2]]
+        vals$prism_json = TT
+        vals$prism_supp_plot <- 
+        shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
+      } else {
+        processed <- read_prism(data, json=F)
+        prism_data <- processed[[1]]
+      }
     }
     vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
     vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PRISM-Supp")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "PRISM-Supp" = "PRISM-Supp")
     update_ui_with_data()
-    prism_data$Type <- stringr::str_trim(tolower(prism_data$Type))
-    prism_data['Type2'] <- stringr::str_trim(tolower(prism_data$Type))
     vals$prism_data <- prism_data
     vals$prism_type <- prism_data$Type2
     
@@ -298,43 +264,16 @@ app_server <- function( input, output, session ) {
                                selected = "PRISM")
     }
   }
-  read_sempi <- function(data, zip=T){
-    # Silence R CMD note
-    trackid <- NULL
-    if (zip==T){
-      utils::unzip(data, files = "genome_browser/main/Tracks.db", exdir =  "./SEMPI_TracksDB", junkpaths = T)
-      fl <- "./SEMPI_TracksDB/Tracks.db"
-      conn <- RSQLite::dbConnect(RSQLite::SQLite(),fl)
-      
-      data <- RSQLite::dbGetQuery(conn, "SELECT * FROM tbl_segments")
-      RSQLite::dbDisconnect(conn)
-      unlink("./SEMPI_TracksDB", recursive = T)
-      data <- data %>%
-        dplyr::filter(trackid==6)
-      
-      types <- sapply(data$name, function(x){
-        tmp <- stringr::str_trim(x)
-        tmp <- gsub(", ", "", tmp)
-        gsub(" ", "__", tmp)
-      })
-      
-      sempi_data <- data.frame(cbind(seq(1:length(data$trackid)),data$start, data$end,as.character(types)))
-      colnames(sempi_data) <- c("Cluster", "Start", "Stop", "Type")
-      sempi_data$Cluster <- as.numeric(sempi_data$Cluster)
-      sempi_data$Start <- as.numeric(sempi_data$Start)
-      sempi_data$Stop <- as.numeric(sempi_data$Stop)
-      sempi_data$Type <- stringr::str_trim(tolower(sempi_data$Type))
-    } else {
+  process_sempi <- function(data, zip=T, example_data = F){
+    if (example_data == T){
       sempi_data <- data
+    } else {
+      if (zip == T){
+        sempi_data <- read_sempi(data, zip=T)
+      } else {
+        sempi_data <- read_sempi(data, zip=F)
+      }
     }
-    res_validation <- validate_basic_input(sempi_data)
-    if (!(res_validation[[1]])){
-      sempi_data <- NULL
-      return(NULL)
-    } else{
-    sempi_data <- res_validation[[2]]
-    }
-    sempi_data['Type2'] <- stringr::str_trim(tolower(sempi_data$Type))
     vals$sempi_type <- sempi_data$Type2
     vals$sempi_data <- sempi_data
     # Add chromosome info column
@@ -365,89 +304,17 @@ app_server <- function( input, output, session ) {
                                selected = "SEMPI")
     }
   }
-  read_arts_archive <- function(archive, zip = T){
-    # Silence R CMD note
-    Start <- Core <- NULL
-    if (zip == T){
-      utils::unzip(archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = "./ARTS_tables", junkpaths = T)
-      known_hits <- utils::read.delim("./ARTS_tables/knownhits.tsv")
-      dupl_table <- utils::read.delim("./ARTS_tables/duptable.tsv")
-      unlink("./ARTS_tables", recursive = T)
-      locations <- sapply(known_hits$Sequence.description, function(x){
-        utils::tail(stringr::str_split(x , "\\|")[[1]], 1)
-      })
-      
-      start <- sapply(locations, function(x){
-        stringr::str_split(x, "_")[[1]][1]
-      })
-      stop <- sapply(locations, function(x){
-        stringr::str_split(x, "_")[[1]][2]
-      })
-      # Parse known_hits data
-      known_table <- data.frame(cbind(start, stop))
-      colnames(known_table) <- c("Start", "Stop")
-      rownames(known_table) <- seq(1:dim(known_table)[1])
-      known_table$Start <- as.numeric(known_table$Start )
-      known_table$Stop <- as.numeric(known_table$Stop)
-      known_table$Description <- known_hits$Description
-      known_table$Model <- known_hits$X.Model
-      known_table$Evalue <- known_hits$evalue
-      known_table$Bitscore <- known_hits$bitscore
-      known_table$ID <- seq(1:dim(known_table)[1])
-      known_table$Cluster <-known_table$ID
-      known_table$Type <- 'resistance'
-      known_table$Type2 <- known_table$Type
-      known_table$Hit <- NA
-      known_table$Core <- "Not_core"
-      known_table$Count <- 1
-      # Parse duplication data
-      get_location_duptable <- function(x, y){
-        test <- stringr::str_split(x, ";")
-        test2<- sub(".*loc\\|", "", test[[1]])
-        test3 <- stringr::str_split(test2, " ")
-        res <- list()
-        for (i in seq(1:length(test3))){
-          id <- paste('hit',as.character(i), sep = "_")
-          start <- test3[[i]][1]
-          stop <- test3[[i]][2]
-          res_1 <- list(id,start, stop)
-          res <- append(res, list(res_1))
-        }
-        return(res)
-        
-      }
-      
-      dup_table <- data.frame()
-      for (i in seq(1:dim(dupl_table)[1])){
-        lst <- get_location_duptable(dupl_table$X.Hits_listed.[i])
-        fin_data <- data.frame(do.call("rbind", lst))
-        fin_data$Core_gene <- dupl_table$X.Core_gene[i]
-        fin_data$Description <- dupl_table$Description[i]
-        fin_data$Count <- dupl_table$Count[i]
-        colnames(fin_data) <- c("Hit", "Start", "Stop", "Core", "Description", "Count")
-        dup_table <- rbind(dup_table, fin_data)
-      }
-      dup_table$Hit <- unlist(dup_table$Hit)
-      dup_table$Start <- unlist(dup_table$Start)
-      dup_table$Stop <- unlist(dup_table$Stop)
-      dup_table$Start <- as.numeric(dup_table$Start )
-      dup_table$Stop <- as.numeric(dup_table$Stop)
-      dup_table$ID <- seq(1: dim(dup_table)[1])
-      dup_table$Cluster <- dup_table$ID
-      dup_table$Type <- 'core'
-      dup_table$Type2 <- dup_table$Type
-      dup_table$Evalue <- NA 
-      dup_table$Bitscore <- NA 
-      dup_table$Model <- "Core" 
-      arts_data <- rbind(dup_table, known_table)
-      arts_data <- arts_data %>%
-        dplyr::arrange(Start)
-      arts_data$ID <- seq(1:dim(arts_data)[1])
-      arts_data$Cluster <- arts_data$ID
-      vals$arts_data <- arts_data
+  process_arts_archive <- function(archive, zip = T, example_data = F){
+    if (example_data == T){
+      arts_data <- BGCViz:::arts_data
     } else {
-      vals$arts_data <- archive
+      if (zip == T){
+        arts_data <- read_arts_archive(archive, zip=T)
+      } else {
+        arts_data <- utils::read.csv(archive)
+      }
     }
+    vals$arts_data <- arts_data
     vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
     vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "ARTS")
     vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
@@ -468,23 +335,12 @@ app_server <- function( input, output, session ) {
                                selected =  "ARTS")
     }
   }
-  read_deep <- function(data){
-    polyketide <- nrp <-  NULL # Silence R CMD error
-    # Fix colnames in deepbgc data
-    colnames(data) <- stringr::str_to_lower(colnames(data))
-    res_validation <- validate_deep_input(data)
-    if (!(res_validation[[1]])){
-      deep_data <- NULL
-      return(NULL)
-    } else{
-      deep_data <- res_validation[[2]]
+  process_deep <- function(data, example_data = F){
+    if (example_data == T){
+      deep_data <- data
+    } else {
+      deep_data <- read_deep(data)
     }
-    drop_cols <- c("nrp","polyketide")
-    # Read data
-    deep_data <- deep_data %>%
-      dplyr::mutate(pks=polyketide, nrps = nrp ) %>%
-      dplyr::select(-dplyr::one_of(drop_cols))
-    # Add chromosome info column
     vals$deep_data <- deep_data
     vals$deep_data$chromosome <-  rep("D", length(vals$deep_data$bgc_candidate_id))
     vals$deep_data$Start <- vals$deep_data$nucl_start
@@ -512,31 +368,13 @@ app_server <- function( input, output, session ) {
       
     }
   }
-  read_rre <- function(data){
-    Gene.name <- Coordinates <- NULL # Silence R CMD error
-    res_validation <- validate_rre_input(data)
-    if (!(res_validation[[1]])){
-      data <- NULL
-      return(NULL)
-    } else{
-      data <- res_validation[[2]]
+  process_rre <- function(data, example_data = F){
+    if (example_data == T){
+      rre_data <- data
+    } else {
+      rre_data <- read_rre(data)
     }
-    # Clean RRE data. Extract coordinates and Locus tag with double underscore delimiter (__)
-    vals$rre_data <- data %>%
-      tidyr::separate(Gene.name, c("Sequence","Coordinates","Locus_tag"),sep = "__") %>%
-      tidyr::separate(Coordinates, c("Start", "Stop"),sep = "-")
-    # Add chromosome info column
-    vals$rre_data$chromosome <- rep("RRE",length(vals$rre_data$Sequence))
-    # Add ID column
-    vals$rre_data$ID <- seq(1:length(vals$rre_data$Sequence))
-    vals$rre_data$Cluster <- vals$rre_data$ID
-    vals$rre_data <- data.frame(vals$rre_data)
-    vals$rre_data['Type'] <- 'ripp'
-    vals$rre_data['Type2'] <- 'ripp'
-    vals$rre_data$Start <- as.numeric(vals$rre_data$Start) 
-    vals$rre_data$Stop <- as.numeric(vals$rre_data$Stop)
-    # Store rre data into local variable
-    vals$rre_data <- data.frame(vals$rre_data)
+    vals$rre_data <- rre_data
     #write.csv(vals$rre_data, "rre_data.csv", row.names = F)
     
     vals$rre_data_input = TRUE
@@ -567,41 +405,31 @@ app_server <- function( input, output, session ) {
   ##            Loading and processing of example data             -
   ##----------------------------------------------------------------
   shiny::observeEvent(input$anti_sco,{
-    data("anti_data", package = "BGCViz")
-    read_antismash(anti_data)
+    process_antismash(BGCViz:::anti_data, example_data = T)
   })
   
   shiny::observeEvent(input$gecco_sco,{
-    data("gecco_data", package = "BGCViz")
-    read_gecco(gecco_data)
+    process_gecco(BGCViz:::gecco_data, example_data = T)
   })
   
   shiny::observeEvent(input$prism_sco,{
-    data("prism_data", package = "BGCViz")
-    data("prism_supp_data", package = "BGCViz")
-    read_prism(prism_data, sco=T, supp=prism_supp_data)
+    process_prism(BGCViz:::prism_data, example_data = T)
   })
   
   shiny::observeEvent(input$sempi_sco,{
-    data("sempi_data", package = "BGCViz")
-    read_sempi(sempi_data, zip = F)
+    process_sempi(BGCViz:::sempi_data, example_data = T)
   })
   
   shiny::observeEvent(input$arts_sco, {
-    data("arts_data", package = "BGCViz")
-    read_arts_archive(arts_data, zip=F)
-    disable_event_logic()
+    process_arts_archive(BGCViz:::arts_data, example_data = T)
   })
   
   shiny::observeEvent(input$deep_sco, {
-    data("deep_data", package = "BGCViz")
-    read_deep(deep_data)
+    process_deep(BGCViz:::deep_data, example_data = T)
   })
   
   shiny::observeEvent(input$rre_sco, {
-    # Read data
-    data <-  data("rre_data", package = "BGCViz")
-    read_rre(rre_data)
+    process_rre(BGCViz:::rre_data, example_data = T)
   })
   
   ##----------------------------------------------------------------
@@ -662,7 +490,7 @@ app_server <- function( input, output, session ) {
       
     }
     
-    read_antismash(anti_data)
+    process_antismash(anti_data)
     
   })
   
@@ -670,9 +498,9 @@ app_server <- function( input, output, session ) {
     
     if (input$sempi_data$type=="text/csv"){ 
       sempi_data <- utils::read.csv(input$sempi_data$datapath)
-      read_sempi(sempi_data, zip = F)
+      process_sempi(sempi_data, zip = F)
     } else {
-      read_sempi(input$sempi_data$datapath, zip = T)
+      process_sempi(input$sempi_data$datapath, zip = T)
     }
     
   })
@@ -680,7 +508,7 @@ app_server <- function( input, output, session ) {
   shiny::observeEvent(input$gecco_data,{
     
     gecco_data <- utils::read.delim(input$gecco_data$datapath)
-    read_gecco(gecco_data)
+    process_gecco(gecco_data)
     
   })
   
@@ -690,9 +518,9 @@ app_server <- function( input, output, session ) {
   shiny::observeEvent(input$arts_data, {
     disable_event_logic()
     if (input$arts_data$type=="text/csv"){
-      read_arts_archive(input$arts_data$datapath, zip = F)
+      process_arts_archive(input$arts_data$datapath, zip = F)
     } else {
-      read_arts_archive(input$arts_data$datapath, zip = T)
+      process_arts_archive(input$arts_data$datapath, zip = T)
     }
   })
   
@@ -702,10 +530,10 @@ app_server <- function( input, output, session ) {
     # Read data
     if (input$prism_data$type == "text/csv"){
       prism_data <- utils::read.csv(input$prism_data$datapath)
-      read_prism(prism_data, json=F)
+      process_prism(prism_data, json=F)
     } else{
       data <- rjson::fromJSON(file = input$prism_data$datapath)
-      read_prism(data)
+      process_prism(data)
     }
     
   })
@@ -713,14 +541,14 @@ app_server <- function( input, output, session ) {
   shiny::observeEvent(input$deep_data, {
     
     data <- utils::read.delim(input$deep_data$datapath)
-    read_deep(data)
+    process_deep(data)
   })
   
   shiny::observeEvent(input$rre_data, {
     
     # Read data
     rre_data <- utils::read.delim(input$rre_data$datapath)
-    read_rre(rre_data)
+    process_rre(rre_data)
   })
   
   ############################################################################
@@ -1233,6 +1061,7 @@ app_server <- function( input, output, session ) {
   shiny::observeEvent(input$prism_supp, ignoreInit = T,priority = 3,{
     if (input$prism_supp == T){
       vals$prism_supp_data_input = T
+      vals$prism_supp_plot <- T
       vals$need_filter <- T
       if (!("PRISM-Supp" %in% names(vals$choices$ref))){
         vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
@@ -1243,6 +1072,7 @@ app_server <- function( input, output, session ) {
     } else {
       vals$prism_supp_data_input = F
       vals$need_filter <- T
+      vals$prism_supp_plot <-  F
       vals$choices$ref <- vals$choices$ref[!(names(vals$choices$ref)%in%c("PRISM-Supp"))]
       vals$choices$group_by <- vals$choices$group_by[!(names(vals$choices$group_by)%in%c("PRISM-Supp"))]
       vals$choices$ref_col_biocircos <- vals$choices$ref_col_biocircos[!(names(vals$choices$ref_col_biocircos)%in%c("PRISM-Supp"))]

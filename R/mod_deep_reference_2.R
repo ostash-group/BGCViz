@@ -103,12 +103,10 @@ mod_deep_reference_2_server <- function(id, vals, data_uploads, data_to_use){
         
         
       }
-      if (!(is.null(input$prism_supp ))){
-      if (input$prism_supp == TRUE){
+      if (vals$prism_supp_plot == TRUE){
         plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_p_s, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, ID = ID,
                                                                                     Start = Start, Stop = Stop, Type = Type, Name = Name, Full_name = Full_name,
                                                                                     Score = Score), size = 3)
-      }
         }
       if (vals$arts_data_input == TRUE){
         plot <- plot + ggplot2::geom_segment(data=vals$seg_df_ref_ar, ggplot2::aes(x, y, xend=xend, yend=yend, color = Type2, Software = Software, 
