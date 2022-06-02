@@ -1360,7 +1360,6 @@ app_server <- function( input, output, session ) {
     soft_names_2 <- soft_names
     data_to_use_2 <- data_to_use
     index <- 1
-    print("____NEW____")
     for (upload in data_uploads){
       data_uploads_2 <- data_uploads_2[-1]
       soft_2 <- soft_2[-1]
@@ -1371,7 +1370,6 @@ app_server <- function( input, output, session ) {
         for (upload2 in data_uploads_2){
           if ((vals[[upload2]]==T) & (length(data_uploads_2) > 0) & (soft_namings[index] != soft_2[index2])){
             output <- add_biocircos_data(inters[[soft_names[index]]][[soft_names_2[index2]]]$from, inters[[soft_names[index]]][[soft_names_2[index2]]]$to, vals[[data_to_use_2[index2]]], vals[[data_to_use[index]]], soft_2[index2], soft_namings[index], rename_data, input$label_color_class, input$ref_col_biocircos, coloring_datatable)
-            print(output[[11]])
             chromosomes_start <- c(chromosomes_start, output[[3]])
             # Add link end. Just populate second output from the vectors, used above. 
             chromosomes_end <- c(chromosomes_end, output[[4]] )
