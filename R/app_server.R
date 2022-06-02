@@ -462,6 +462,8 @@ app_server <- function( input, output, session ) {
   }
   read_deep <- function(data){
     polyketide <- nrp <-  NULL # Silence R CMD error
+    # Fix colnames in deepbgc data
+    colnames(data) <- stringr::str_to_lower(colnames(data))
     res_validation <- validate_deep_input(data)
     if (!(res_validation[[1]])){
       deep_data <- NULL
