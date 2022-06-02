@@ -83,7 +83,7 @@ usethis::use_data_raw( name = "rre_data", open = FALSE )
 
 ## Tests ----
 ## Add one line by test you want to create
-usethis::use_test("fct_biocircos")
+usethis::use_test("utils_helpers")
 
 # Documentation
 
