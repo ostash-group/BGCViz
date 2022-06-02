@@ -41,8 +41,6 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
       shiny::req(vals$data_upload_count > 1)
       shiny::req(vals$need_filter == F)
       shiny::req(vals$can_plot_group_table == T)
-      print(paste0("input$count_all: ", input$count_all, ", input$group_by: ", input$group_by, ", "))
-      # source("src/group_table_functions.R")
       if (is.null(vals$inters_filtered)) {
         inters <- vals$inters
       } else {
