@@ -69,7 +69,7 @@
 #'   \item{nrps}{Score that cluster is nrps, filled by GECCO}
 #'   \item{alkaloid}{Score that cluster is alkaloid, filled by GECCO}
 #'   \item{terpene}{Score that cluster is terpene, filled by GECCO}
-#'   \item{sacharide}{Score that cluster is sacharide, filled by GECCO}
+#'   \item{saccharide}{Score that cluster is sacharide, filled by GECCO}
 #'   \item{ripp}{Score that cluster is ripp, filled by GECCO}
 #'   \item{num_prot}{Number of proteins in a cluster}
 #'   \item{num_domains}{Number of domains in a cluster}
