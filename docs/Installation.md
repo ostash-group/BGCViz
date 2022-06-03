@@ -1,35 +1,55 @@
 # Installation
 
-The app itself is written in R and is available as a [shiny app server](https://ostash-group.shinyapps.io/BGCViz/) with no istallation required. However local run have some advantages(See Why local run section) over remote one. Considering ease of installation and UI indentity, we are suggetting local installation
+The app itself is written in R and indented to be run locally, or on own server. Feel free to play with our demo version [shiny app server](https://ostash-group.shinyapps.io/BGCViz/) with no installation required. 
 
-## Base packages
-All packages can be installed via R console in Rstudio via:
+## Installation
+Install `remotes` package first with R console. (for example via Rstudio)
 ```R
-install.packages(c("BioCircos", "ggplot2", "plotly",  "plyr", "tidyverse", "shiny", "DT" ,"rjson", "stringr", "shinyjs" ))
+install.packages("remotes")
 ``` 
-After, to install GenomicRanges package please run
+After run the following command in R console:
 ```R
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install("GenomicRanges")
+remotes::install_github("ostash-group/BGCViz")
+```
+This will install BGCViz as an R package. Running an app is as easy as:
+```R
+BGCViz::run_app()
 ```
 
-If conda package manager is installed (see [Anaconda](https://www.anaconda.com) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html)) you can use the following command to install R and Rstudio:
+You computer should have [R](https://cloud.r-project.org) and [Rstudio](https://www.rstudio.com/products/rstudio/download/) installed
 
-`conda install r-base rstudio`
+If you have troubles with installation, do not hesitate to open an [issue](https://github.com/ostash-group/BGCViz/issues)
 
-## Packages for input files conversion
+## Hosting free version on shinyapps.io
 
-To covert input files from the program's native output format to BGCViz-compatible csv one, a set of R scripts in the /scripts folder is available. They depends on `rjson` library to convert antismash and PRISM data,  and `RSQLite` library to covert the SEMPI data. Also common libraries in all three scripts are: `dplyr`, `tidyr`, `stringr`. Therefore one line installation from R console is:
-```R
-install.packages(c("dplyr", "tidyr", "stringr", "RSQLite", "rjson" ))
+The BGCViz can also be hosted as usual shiny app, using any solution you like. This example uses free version of shinyapps.io (suitable for one user). 
+
+First you should clone the github repository:
+
+```bash
+git clone https://github.com/ostash-group/BGCViz
 ```
 
-## Why local run
-The local run of an app is identical to the website one, with the same UI in the browser. Howewer, it have several advantages:
-- Fast upload of files
-- Better response time
-- Control over execution. Quick modifications to the code.
+Then the hosting options are yours to choose. Use `app.R` as application file. Following this simple example you can open the file in Rstudio and run in R console:
 
-Besides speed and flexibility of a local run, ability of upload raw  json output files from PRISM and AntiSMASH is a big plus (more details [here](Input_files_options.md)). For server usage we are suggesting to convert the json files to the csv ones, using provided scripts (more details [here](Input_files_options.md)). 
+```R
+>install.packages('rsconnect')
+
+>options(repos = BiocManager::repositories())
+```
+Then, change the working directory to the one, app.R file is located and run:
+
+```R
+rsconnect::deployApp()
+```
+
+**In case you are jumped to Markers tab with warnings, return to the R console and respond to the "Filepaths are case-sensitive on deployment server. Do you want to proceed with deployment? [Y/n]:" -> Y**
+
+You can follow the same procedure with GUI. Just click the Rconnect button on right top corner of the script:
+
+
+![rconnect](/images/rconnect.png)
+
+
+Then follow the instructions [here](https://shiny.rstudio.com/articles/shinyapps.html)
+
