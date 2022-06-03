@@ -1,0 +1,13 @@
+name: BGCViz
+title: BGCViz
+username:
+account: ostash-group
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3755940
+bundleId: 5975302
+url: https://ostash-group.shinyapps.io/BGCViz/
+when: 1654271186.15009
+lastSyncTime: 1654271186.15013
+asMultiple: FALSE
+asStatic: FALSE
