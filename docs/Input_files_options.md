@@ -1,5 +1,5 @@
 # Input files
-We tried to make integration of various services as seemless as possible. However, this is comes with a cost of rather long uplod times of raw data. Therefore we suggest install an application locally (more [here](Installation.md))
+We tried to make integration of various services as seemless as possible. However, this is comes with a cost of rather long uplod times of raw data. In case any of the formats are unclear please consult [here](https://github.com/pavlohrab/BGCViz-datasets/tree/main/example_data) to see example data. Feel also free to post issue [here](https://github.com/ostash-group/BGCViz/issues). 
 # Antismash
 There are two options for antismash data upload:
 1. Raw output json file.  You should download all your antismash results from the server, if the run was remote, and in the root results directory find the json file. 
@@ -45,7 +45,7 @@ BGCViz::sempi_to_csv(project_archive="project.zip")
 ```
 SEMPI project archive can be downloaded from the site with "Project" button:
 
-![sempi_res_export](/images/sempi_res_export.png)
+![sempi_res_export](/images/sempi_res_web.png)
 
 **This field supports the csv file upload. It can be any csv file, as long as the format is the satisfied. Therefore you can upload any results in this field, in place of SEMPI, but the result plot will label these as "SEMPI"**
 # DeepBGC
@@ -79,6 +79,6 @@ BGCViz::arts_to_csv(project_archive="arts.zip")
 ```
 Zip archive should be downloaded from ARTS Export tab (Zip all files):
 
-![arts_res_server.png](/images/arts_res_export.png)
+![arts_res_server.png](/images/arts_res_server.png)
 # GECCO
-We are expecting the default GECCO tsv output file. Please see the example in inst/extdata folder
+We are expecting the default GECCO tsv output file. Please see the example [here](https://github.com/pavlohrab/BGCViz-datasets/tree/main/example_data).
