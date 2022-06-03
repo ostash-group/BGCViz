@@ -41,6 +41,19 @@ The "Vacant_color" column is not used in any analysis.  The logic behind it is t
 
 The "Hierarchy" column defines the order of the link coloring in the 'Hierarchy-based' mode. More on Biocircos link coloring is available [here](Logic_of_the_output.md#biocircos-plot)
 
+
+# Changing coloring and hierarchy for current session
+
+The colors for arcs and links can be changes for single session while program is running. The current coloring scheme is situated in "Biocircos plot" sidemenu. To see it first check the checkbox above Biocircos plot and then then scroll down:
+
+![bio_check](/images/biocircos_colot_check.png)
+
+![bio_scheme](/images/biocircos_dt.png)
+
+To edit the cell, just double click it. WHen you finish editing, press Ctrl+Enter.
+
+**Programs in Hierarchy column are written the same as on Biocircos chromosomes**
+
 # Changing default settings
 
 **Changing default settings is possible only with local [installation](Installation.md), with R console**
