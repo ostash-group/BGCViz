@@ -1,5 +1,5 @@
 # Additional analysis
-After the analysis is done the one can download uploaded data. This option is particularly valuable for DeepBGC data cleaning, whereas for other inputs the data remains unchanged.  Alongside the inputs, "group_by.csv" file is generated, which is the table from "Summarize interception" tab and group.py python script. 
+After the analysis is done the one can download uploaded data. This option is particularly valuable for DeepBGC and GECCO data cleaning, whereas for other inputs the data remains unchanged.  Alongside the inputs, "group_by.csv" file is generated, which is the table from "Summarize interception" tab and group.py python script. 
 
 Here we depend on the usage of a clinker software, which is an awesome app. Check out their GitHub [page](https://github.com/gamcil/clinker), or published [paper](
 https://doi.org/10.1093/bioinformatics/btab007) for more details.

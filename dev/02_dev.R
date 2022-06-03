@@ -85,6 +85,8 @@ usethis::use_data_raw( name = "rre_data", open = FALSE )
 ## Add one line by test you want to create
 usethis::use_test("utils_helpers")
 
+#shinyTest tests
+shinytest::recordTest()
 # Documentation
 
 ## Vignette ----
