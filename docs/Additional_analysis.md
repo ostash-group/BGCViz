@@ -74,7 +74,9 @@ clinker <Group-folder/*.gb> --plot
 
 Then, after the analysis is done, the default browser will open with the interactive visualization. For example, for the default S.coelicolor data, results for group 3 (grouped by antismash data) can be viewed as follows (while using antismash results GenBank file) :
 
+
 ![clinker](/images/clinker_example.png)
+
 
 This is a result of running clinker with the following command:
 
