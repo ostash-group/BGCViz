@@ -22,13 +22,13 @@ Currently, the app supports annotations from such sources:
 
 2. PRISM (both json and csv)
 
-3. SEMPI (only csv)
+3. SEMPI ( all results in zip archive and csv)
 
 4. DeepBGC (raw tsv file)
 
 5. RRE-Finder (modified txt file)
 
-6. ARTS (raw tsv files)
+6. ARTS (all results in zip archive and csv)
 
   
 
