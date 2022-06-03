@@ -25,8 +25,10 @@ aminocoumarin|other||||
 
 The data used for renaming is stored under "Code" and "Group" columns. The default file is available is the BGCViz directory or in the [Glossary](Glossary.md). The one is free to use any renaming scheme, but the whole csv file should be uploaded in the file input in BGCViz:
 
+
 ![rename](/images/rename.png)
  
+
 **After the renaming, "Rename" button will dissapear, and  only "Reset" will be available. After reseting, "Rename" button will exange it. This is made to indicate if the used is already renamed, or not. **
 
 **Please note: After "Rename" button is triggered, SEMPI, Antismash and PRISM data will be renamed prior to plotting automatically**
@@ -46,9 +48,12 @@ The "Hierarchy" column defines the order of the link coloring in the 'Hierarchy-
 
 The colors for arcs and links can be changes for single session while program is running. The current coloring scheme is situated in "Biocircos plot" sidemenu. To see it first check the checkbox above Biocircos plot and then then scroll down:
 
+
 ![bio_check](/images/biocircos_colot_check.png)
 
+
 ![bio_scheme](/images/biocircos_dt.png)
+
 
 To edit the cell, just double click it. WHen you finish editing, press Ctrl+Enter.
 
