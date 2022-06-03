@@ -1,0 +1,11 @@
+name: bgcviz
+title:
+username:
+account: pavloh
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6426702
+bundleId: 5975253
+url: https://pavloh.shinyapps.io/bgcviz/
+when: 1654270096.51746
+lastSyncTime: 1654270096.51749
