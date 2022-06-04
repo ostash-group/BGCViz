@@ -7,7 +7,10 @@
 #' @param write_to - path where to write generated csv file
 #'
 #' @return csv file in specified location
-#'
+#' @examples 
+#' \dontrun{
+#' sempi_to_csv(<zip-file>)
+#' }
 #' @export
 sempi_to_csv <- function(project_archive, write_to = getwd()) {
   trackid <- NULL # Silence R CMD note
@@ -44,7 +47,10 @@ sempi_to_csv <- function(project_archive, write_to = getwd()) {
 #' @param write_to - path where to write generated csv file
 #'
 #' @return csv file in specified location
-#'
+#' @examples 
+#' \dontrun{
+#' prism_to_csv(<json-file>)
+#' }
 #' @export
 prism_to_csv <- function(file, write_to = getwd()) {
   data <- rjson::fromJSON(file = file)
@@ -84,7 +90,10 @@ prism_to_csv <- function(file, write_to = getwd()) {
 #' @param write_to - path where to write generated csv file
 #'
 #' @return csv file in specified location
-#'
+#' @examples 
+#' \dontrun{
+#' antismash_to_csv(<json-file>)
+#' }
 #' @export
 antismash_to_csv <- function(file, write_to = getwd()) {
   Start <- Stop <- NULL # To silence R CMD notes
@@ -141,6 +150,10 @@ antismash_to_csv <- function(file, write_to = getwd()) {
 #' @param write_to - path where to write generated csv file
 #'
 #' @return csv file in specified location
+#' @examples 
+#' \dontrun{
+#' arts_to_csv(<zip-file>)
+#' }
 #'
 #' @export
 arts_to_csv <- function(project_archive, write_to = getwd()) {

@@ -9,7 +9,16 @@ set_defaults(csv_file)
 \arguments{
 \item{csv_file}{- path to csv file with default options.}
 }
+\value{
+csv file, written to package settings
+}
 \description{
 Function, which uploads default options csv file to the package.
 Use with `get_defaults` function to download currently used default options.
+}
+\examples{
+\dontrun{
+set_defaults(<csv-file>)
+}
+
 }

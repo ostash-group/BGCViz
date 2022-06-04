@@ -3,6 +3,12 @@
 #' @param ... arguments to pass to golem_opts.
 #' See `?golem::get_golem_options` for more details.
 #' @inheritParams shiny::shinyApp
+#' @return running shiny app
+#'
+#' @examples 
+#' \dontrun{
+#' run_app()
+#' }
 #'
 #' @export
 #' @importFrom shiny shinyApp

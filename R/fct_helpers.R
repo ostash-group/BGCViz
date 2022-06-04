@@ -85,6 +85,9 @@ hybrid_col <- function(data) {
 #'
 #' @return csv file in specified location
 #'
+#' @examples
+#' get_defaults()
+#'
 #' @export
 get_defaults <- function(write_to = getwd()) {
   rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
@@ -97,6 +100,13 @@ get_defaults <- function(write_to = getwd()) {
 #' Use with `get_defaults` function to download currently used default options.
 #'
 #' @param csv_file - path to csv file with default options.
+#'
+#' @return csv file, written to package settings
+#' 
+#' @examples 
+#' \dontrun{
+#' set_defaults(<csv-file>)
+#' }
 #'
 #' @export
 set_defaults <- function(csv_file) {
