@@ -18,3 +18,8 @@ csv file in specified location
 Function, which transforms Track.db file into dataframe, which could be then written to csv.
 Download project folder from SEMPI and supply as `project_archive` argument to a function
 }
+\examples{
+\dontrun{
+sempi_to_csv(<zip-file>)
+}
+}

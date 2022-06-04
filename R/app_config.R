@@ -2,7 +2,7 @@
 #'
 #' NOTE: If you manually change your package name in the DESCRIPTION,
 #' don't forget to change it here too, and in the config file.
-#' For a safer name change mechanism, use the `golem::set_golem_name()` 
+#' For a safer name change mechanism, use the `golem::set_golem_name()`
 #' function.
 #'
 #' @param ... character vectors, specifying subdirectory and file(s)
@@ -10,7 +10,7 @@
 #'
 #' @noRd
 app_sys <- function(...) {
-  system.file(..., package = "BGCViz")
+    system.file(..., package = "BGCViz")
 }
 
 
@@ -24,18 +24,18 @@ app_sys <- function(...) {
 #' @noRd
 get_golem_config <- function(value,
                              config = Sys.getenv(
-                               "GOLEM_CONFIG_ACTIVE",
-                               Sys.getenv(
-                                 "R_CONFIG_ACTIVE",
-                                 "default"
-                               )
+                                 "GOLEM_CONFIG_ACTIVE",
+                                 Sys.getenv(
+                                     "R_CONFIG_ACTIVE",
+                                     "default"
+                                 )
                              ),
                              use_parent = TRUE) {
-  config::get(
-    value = value,
-    config = config,
-    # Modify this if your config file is somewhere else:
-    file = app_sys("golem-config.yml"),
-    use_parent = use_parent
-  )
+    config::get(
+        value = value,
+        config = config,
+        # Modify this if your config file is somewhere else:
+        file = app_sys("golem-config.yml"),
+        use_parent = use_parent
+    )
 }
