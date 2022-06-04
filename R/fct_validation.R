@@ -40,11 +40,11 @@ validate_basic_input <- function(data) {
         shiny::showNotification(paste0("Cluster columns contains non unique values. It was regenerated"), type = "message")
         data$Cluster <- seq(1:dim(data)[1])
     }
-    if ((T %in% is.na(data$Start)) | (T %in% is.na(data$Stop))) {
+    if ((TRUE %in% is.na(data$Start)) | (TRUE %in% is.na(data$Stop))) {
         shiny::showNotification(paste0(" Start or Stop columns contain missing values. Please fix this and redownload dataframe"), type = "error")
         return(FALSE)
     }
-    if ((T %in% is.na(data$Type)) | ("" %in% data$Type)) {
+    if ((TRUE %in% is.na(data$Type)) | ("" %in% data$Type)) {
         shiny::showNotification(paste0("Type column contain empty data. It was populated with 'unknown' "), type = "warning")
         data$Type[is.na(data$Type)] <- "unknown"
         data$Type["" %in% data$Type] <- "unknown"
@@ -75,7 +75,7 @@ validate_rre_input <- function(data) {
     if (!(check_if_column_exists(data_names, "gene.name"))) {
         return(FALSE)
     }
-    if (F %in% grepl("__", data$Gene.name)) {
+    if (FALSE %in% grepl("__", data$Gene.name)) {
         return(FALSE)
     }
     if (!(check_if_column_exists(data_names, "e.value"))) {
@@ -138,7 +138,7 @@ validate_deep_input <- function(data) {
         if (!(check_if_column_exists(data_names, column_name))) {
             return(FALSE)
         }
-        if (T %in% is.na(data[[column_name]])) {
+        if (TRUE %in% is.na(data[[column_name]])) {
             return(FALSE)
         }
         if ("" %in% data[[column_name]]) {
@@ -177,7 +177,7 @@ validate_gecco_input <- function(data) {
         if (!(check_if_column_exists(data_names, column_name))) {
             return(FALSE)
         }
-        if (T %in% is.na(data[[column_name]])) {
+        if (TRUE %in% is.na(data[[column_name]])) {
             return(FALSE)
         }
         if ("" %in% data[[column_name]]) {

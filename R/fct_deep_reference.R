@@ -7,8 +7,8 @@
 #' used for coloring and legend), Software, ID (unique number), Start, Stop (of a cluster, to show on mouse hover)
 #'
 #' @noRd
-simple_seg <- function(df, letter, software, soft_name, soft_namings, inter = T, inters) {
-    if (inter == T) {
+simple_seg <- function(df, letter, software, soft_name, soft_namings, inter = TRUE, inters) {
+    if (inter == TRUE) {
         data <- df[df$Cluster %in% inters[[soft_namings]][[soft_name]]$from, ]
     } else {
         data <- df
@@ -37,8 +37,8 @@ simple_seg <- function(df, letter, software, soft_name, soft_namings, inter = T,
 #' @return dataframe with the fields, specified in simple_seg() + added Hit, Core, Count, E_value, Bitscore, Model.
 #'
 #' @noRd
-add_arts <- function(seg_df, soft_namings, df, inter = T, inters) {
-    if (inter == T) {
+add_arts <- function(seg_df, soft_namings, df, inter = TRUE, inters) {
+    if (inter == TRUE) {
         subset_df <- df[df$Cluster %in% inters[[soft_namings]]$arts$from, ]
     } else {
         subset_df <- df
@@ -59,8 +59,8 @@ add_arts <- function(seg_df, soft_namings, df, inter = T, inters) {
 #' @return dataframe with the fields, specified in simple_seg() + added Score, Name and Full_Name
 #'
 #' @noRd
-add_prism_supp <- function(seg_df, soft_namings, df, inter = T, inters) {
-    if (inter == T) {
+add_prism_supp <- function(seg_df, soft_namings, df, inter = TRUE, inters) {
+    if (inter == TRUE) {
         subset_df <- df[df$Cluster %in% inters[[soft_namings]]$prism_supp$from, ]
     } else {
         subset_df <- df
@@ -78,8 +78,8 @@ add_prism_supp <- function(seg_df, soft_namings, df, inter = T, inters) {
 #' @return dataframe with the fields, specified in simpl_seg() + added Num_domains, deepbgc_score, activity
 #'
 #' @noRd
-add_deep <- function(seg_df, soft_namings, df, inter = T, inters) {
-    if (inter == T) {
+add_deep <- function(seg_df, soft_namings, df, inter = TRUE, inters) {
+    if (inter == TRUE) {
         subset_df <- df[df$Cluster %in% inters[[soft_namings]]$deep$from, ]
     } else {
         subset_df <- df
@@ -98,13 +98,13 @@ add_deep <- function(seg_df, soft_namings, df, inter = T, inters) {
 #' P_value, RRE_Start, RRE_stop and Probability in long format
 #'
 #' @noRd
-add_rre <- function(seg_df, soft_namings, df, inter = T, rre_more, inters) {
-    if (inter == T) {
+add_rre <- function(seg_df, soft_namings, df, inter = TRUE, rre_more, inters) {
+    if (inter == TRUE) {
         subset_df <- df[df$Cluster %in% inters[[soft_namings]]$rre$from, ]
     } else {
         subset_df <- df
     }
-    if (rre_more == T) {
+    if (rre_more == TRUE) {
         seg_df$xend <- as.numeric(subset_df$Stop)
         seg_df$Score <- subset_df$Score
         seg_df$Stop <- subset_df$Stop
@@ -127,8 +127,8 @@ add_rre <- function(seg_df, soft_namings, df, inter = T, rre_more, inters) {
 #' @return dataframe with the fields, specified in simple_seg() + Num_proteins, Num_domains, Average_p, Max_p
 #'
 #' @noRd
-add_gecco <- function(seg_df, soft_namings, df, inter = T, inters) {
-    if (inter == T) {
+add_gecco <- function(seg_df, soft_namings, df, inter = TRUE, inters) {
+    if (inter == TRUE) {
         subset_df <- df[df$Cluster %in% inters[[soft_namings]]$gecco$from, ]
     } else {
         subset_df <- df
@@ -147,8 +147,8 @@ add_gecco <- function(seg_df, soft_namings, df, inter = T, inters) {
 #' @return dataframe with the fields, specified in simple_seg() + specific to the software.
 #'
 #' @noRd
-define_spec_seg_df <- function(soft_names, index, seg_df, soft_major, df, inter = T, rre_more, inters) {
-    if (inter == F) {
+define_spec_seg_df <- function(soft_names, index, seg_df, soft_major, df, inter = TRUE, rre_more, inters) {
+    if (inter == FALSE) {
         soft_major <- "Not applicable"
     }
     if ((soft_names[index] == "prism_supp") & (soft_names[index] != soft_major)) {

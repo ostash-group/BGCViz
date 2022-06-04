@@ -80,7 +80,7 @@ mod_biocircos_server <- function(id, vals) {
         })
 
         output$biocircos_coloring <- shiny::renderUI({
-            if (input$ShowBiocircosColoring == T) {
+            if (input$ShowBiocircosColoring == TRUE) {
                 shinydashboardPlus::box(
                     title = "Biocircos coloring scheme",
                     closable = TRUE,

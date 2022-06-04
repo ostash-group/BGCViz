@@ -46,13 +46,13 @@ rename_vector <- function(data, renamed_dataframe, renaming_notification) {
 #'
 #' @noRd
 correct_width <- function(data, label, sempi_width, prism_supp_data_input_width, arts_width, rre_width) {
-  if ((label == "SEMPI") & (sempi_width == T)) {
+  if ((label == "SEMPI") & (sempi_width == TRUE)) {
     data$Stop <- data$Stop + 30000
-  } else if ((label == "PRISM-Supp") & (prism_supp_data_input_width == T)) {
+  } else if ((label == "PRISM-Supp") & (prism_supp_data_input_width == TRUE)) {
     data$Stop <- data$Stop + 20000
-  } else if ((label == "ARTS") & (arts_width == T)) {
+  } else if ((label == "ARTS") & (arts_width == TRUE)) {
     data$Stop <- data$Stop + 30000
-  } else if ((label == "RRE-Finder") & (rre_width == T)) {
+  } else if ((label == "RRE-Finder") & (rre_width == TRUE)) {
     data$Stop <- data$Stop + 50000
   }
   return(data)

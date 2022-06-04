@@ -13,7 +13,7 @@ refine_unique <- function(data) {
         x %in% unlist(stringr::str_split(data, ","))
     })
     res <- sapply(out, function(x) {
-        if (x == F) {
+        if (x == FALSE) {
             x
         }
     })

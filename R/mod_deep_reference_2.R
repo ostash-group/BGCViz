@@ -46,15 +46,15 @@ mod_deep_reference_2_server <- function(id, vals, data_uploads, data_to_use) {
             Bitscore <- Count <- Model <- Num_proteins <-
             Num_domains <- Average_p <- Max_p <- NULL
         output$deep_reference_2 <- plotly::renderPlotly({
-            shiny::req(vals$can_plot_deep_ref_2 == T)
-            vals$can_plot_deep_ref_2 == F
+            shiny::req(vals$can_plot_deep_ref_2 == TRUE)
+            vals$can_plot_deep_ref_2 == FALSE
             rename_y_axis <- shiny::isolate(vals$rename_y_axis)
             data <- NULL
 
             index <- 1
             for (upload in data_uploads) {
                 if (is.null(data)) {
-                    if (vals[[upload]] == T) {
+                    if (vals[[upload]] == TRUE) {
                         if (dim(vals[[data_to_use[index]]])[1] != 0) {
                             data <- vals[[data_to_use[index]]]
                         }
@@ -89,7 +89,7 @@ mod_deep_reference_2_server <- function(id, vals, data_uploads, data_to_use) {
                 }
             }
             if (vals$rre_data_input == TRUE) {
-                if (vals$rre_more == T) {
+                if (vals$rre_more == TRUE) {
                     plot <- plot + suppressWarnings(ggplot2::geom_segment(data = vals$seg_df_ref_r, ggplot2::aes(x, y,
                         xend = xend, yend = yend, color = Type2, Score = Score, Software = Software,
                         ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,

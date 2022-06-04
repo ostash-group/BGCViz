@@ -40,8 +40,8 @@ mod_barplot_rank_server <- function(id, vals, data_uploads, soft_names, soft_nam
             Label <- NULL
         output$barplot_rank <- plotly::renderPlotly({
             shiny::req(vals$data_upload_count > 1)
-            shiny::req(vals$need_filter == F)
-            shiny::req(vals$can_plot_barplot_rank == T)
+            shiny::req(vals$need_filter == FALSE)
+            shiny::req(vals$can_plot_barplot_rank == TRUE)
 
             antismash_count <- NULL
             prism_count <- NULL
@@ -60,7 +60,7 @@ mod_barplot_rank_server <- function(id, vals, data_uploads, soft_names, soft_nam
             index <- 1
             ranking_data <- NULL
             for (upload in data_uploads) {
-                if (vals[[upload]] == T) {
+                if (vals[[upload]] == TRUE) {
                     counts_var <- plyr::count(as.factor(unlist(sapply(inters[[soft_names[index]]], function(x) {
                         x$to
                     }))))

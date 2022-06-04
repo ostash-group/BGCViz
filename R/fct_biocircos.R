@@ -16,7 +16,7 @@ initialize_biocircos <- function(biocircos_anti, name, Biocircos_chromosomes, ar
     arcs_end <- c(arcs_end, biocircos_anti$Stop)
     # Add Arcs labels. Can add only one label...
     arc_labels <- c(arc_labels, biocircos_anti$Type)
-    if ((biocircos_color == T)) {
+    if ((biocircos_color == TRUE)) {
         arc_colors <- sapply(biocircos_anti$Type2, function(x) {
             if (x %in% coloring_datatable$x$data$Name) {
                 coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == x]
@@ -74,7 +74,7 @@ add_biocircos_data <- function(data1_inter, data2_inter, data1, data2, data1_lab
             if (length(label_color) != 0) {
                 for (t in seq(1:length(label_color))) {
                     if (!is.null(subset_vec[t])) {
-                        if (subset_vec[t] == F) {
+                        if (subset_vec[t] == FALSE) {
                             label_color[t] <- as.character(coloring_datatable$x$data$Color[coloring_datatable$x$data$Name == "base"])
                         }
                     }

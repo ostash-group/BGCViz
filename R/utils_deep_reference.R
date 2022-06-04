@@ -65,7 +65,7 @@ geom_rre <- function(data, rre_more) {
         Score <- Software <- ID <- Start <-
         Stop <- Type <- E_value <- P_value <- RRE_start <-
         RRE_stop <- Probability <- NULL
-    if (rre_more == T) {
+    if (rre_more == TRUE) {
         ggplot2::geom_segment(data = data, ggplot2::aes(x, y,
             xend = xend, yend = yend, color = Type, Score = Score, Software = Software,
             ID = ID, Start = Start, Stop = Stop, Type = Type, E_value = E_value,

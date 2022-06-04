@@ -13,10 +13,10 @@ fix_duplicates <- function(test_score, order_vec, regul_genes_orfs, test_name) {
     to_add <- test_score[(which(duplicated(regul_genes_orfs[order_vec])))]
     test_score <- test_score[-(which(duplicated(regul_genes_orfs[order_vec])))]
     iterate_one_more_time <- c()
-    should_iterate <- F
+    should_iterate <- FALSE
     for (i in seq(1:length(test_name))) {
         if (length(dupl_names) == 0) {
-            should_iterate <- F
+            should_iterate <- FALSE
             break
         }
         if (test_name[i] == dupl_names[1]) {
@@ -27,9 +27,9 @@ fix_duplicates <- function(test_score, order_vec, regul_genes_orfs, test_name) {
         }
     }
     if ((length(iterate_one_more_time) > 1) && (length(dupl_names) != 0)) {
-        should_iterate <- T
+        should_iterate <- TRUE
     }
-    while (should_iterate == T) {
+    while (should_iterate == TRUE) {
         for (i in iterate_one_more_time) {
             if (test_name[i] == dupl_names[1]) {
                 dupl_names <- dupl_names[-1]
@@ -37,7 +37,7 @@ fix_duplicates <- function(test_score, order_vec, regul_genes_orfs, test_name) {
                 to_add <- to_add[-1]
             }
             if (length(dupl_names) == 0) {
-                should_iterate <- F
+                should_iterate <- FALSE
                 break
             }
         }

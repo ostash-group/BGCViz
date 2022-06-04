@@ -14,13 +14,13 @@
 #' @export
 sempi_to_csv <- function(project_archive, write_to = getwd()) {
     trackid <- NULL # Silence R CMD note
-    utils::unzip(project_archive, files = "genome_browser/main/Tracks.db", exdir = paste0(write_to, "/SEMPI_TracksDB"), junkpaths = T)
+    utils::unzip(project_archive, files = "genome_browser/main/Tracks.db", exdir = paste0(write_to, "/SEMPI_TracksDB"), junkpaths = TRUE)
     fl <- paste0(stringr::str_extract(write_to, ".*/"), "/SEMPI_TracksDB/Tracks.db")
     conn <- RSQLite::dbConnect(RSQLite::SQLite(), fl)
   
     data <- RSQLite::dbGetQuery(conn, "SELECT * FROM tbl_segments")
     RSQLite::dbDisconnect(conn)
-    unlink(paste0(stringr::str_extract(write_to, ".*/"), "/SEMPI_TracksDB"), recursive = T)
+    unlink(paste0(stringr::str_extract(write_to, ".*/"), "/SEMPI_TracksDB"), recursive = TRUE)
     data <- data %>%
         dplyr::filter(trackid == 6)
   
@@ -158,7 +158,7 @@ antismash_to_csv <- function(file, write_to = getwd()) {
 #' @export
 arts_to_csv <- function(project_archive, write_to = getwd()) {
     Start <- NULL # Silence R CMD note
-    utils::unzip(project_archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = paste0(write_to, "/ARTS_tables"), junkpaths = T)
+    utils::unzip(project_archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = paste0(write_to, "/ARTS_tables"), junkpaths = TRUE)
     known_hits <- utils::read.delim(paste0(stringr::str_extract(write_to, ".*/"), "/ARTS_tables/knownhits.tsv"))
     dupl_table <- utils::read.delim(paste0(stringr::str_extract(write_to, ".*/"), "/ARTS_tables/duptable.tsv"))
     locations <- sapply(known_hits$Sequence.description, function(x) {

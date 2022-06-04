@@ -78,7 +78,7 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
             Skip_rate <- Skip_rate <- Rates_data <-
             Rates <- NULL
         output$gecco_barplot <- shiny::renderPlot({
-            shiny::req((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T)))
+            shiny::req((vals$gecco_data_input == TRUE) & ((vals$anti_data_input == TRUE) | (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE)))
 
             # Create empty dataframe to populate later
             fullnes_of_annotation <- data.frame(NA, NA, NA)
@@ -163,7 +163,7 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
 
             # Store dataframe in reactive value for later use.
             vals$fullness_gecco <- data.frame(fullnes_of_annotation)
-            # write.csv(fullnes_of_annotation, "fullness.csv", row.names = F)
+            # write.csv(fullnes_of_annotation, "fullness.csv", row.names = FALSE)
 
             # Make text to show on a barplot to point on additional scores' thresholds
             annotateText <- paste("Applied additional thresholds", paste("Average p-value:", as.character(score_average_gecco)),
@@ -177,7 +177,7 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
                 ggplot2::geom_text(ggplot2::aes(label = Quantity), position = ggplot2::position_dodge(width = 0.9), vjust = -0.25) +
                 ggplot2::xlab(paste(input$score_type, "Score")) +
                 title +
-                ggplot2::geom_label(ggplot2::aes(x = Inf, y = Inf, hjust = 1, vjust = 1, label = annotateText), show.legend = F)
+                ggplot2::geom_label(ggplot2::aes(x = Inf, y = Inf, hjust = 1, vjust = 1, label = annotateText), show.legend = FALSE)
         })
 
         # Render interactive plot with plotly for rates of DeepBGC data in regards with antismash data

@@ -80,7 +80,7 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
             Annotation_rate <- Skip_rate <- Rates_data <-
             Rates <- NULL
         output$deep_barplot <- shiny::renderPlot({
-            shiny::req((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T)))
+            shiny::req((vals$deep_data_input == TRUE) & ((vals$anti_data_input == TRUE) | (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE)))
 
 
             # Create empty dataframe to populate later
@@ -163,7 +163,7 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
 
             # Store dataframe in reactive value for later use.
             vals$fullness_deep <- data.frame(fullnes_of_annotation)
-            # write.csv(fullnes_of_annotation, "fullness.csv", row.names = F)
+            # write.csv(fullnes_of_annotation, "fullness.csv", row.names = FALSE)
 
             # Make text to show on a barplot to point on additional scores' thresholds
             annotateText <- paste("Applied additional thresholds", paste("Activity score:", as.character(score_a)),
@@ -178,7 +178,7 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                 ggplot2::geom_text(ggplot2::aes(label = Quantity), position = ggplot2::position_dodge(width = 0.9), vjust = -0.25) +
                 ggplot2::xlab(paste(input$score_type, "Score")) +
                 title +
-                ggplot2::geom_label(ggplot2::aes(x = Inf, y = Inf, hjust = 1, vjust = 1, label = annotateText), show.legend = F)
+                ggplot2::geom_label(ggplot2::aes(x = Inf, y = Inf, hjust = 1, vjust = 1, label = annotateText), show.legend = FALSE)
         })
 
         output$deep_rate <- plotly::renderPlotly({

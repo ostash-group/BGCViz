@@ -42,7 +42,7 @@ mod_deep_reference_server <- function(id, vals) {
 
         output$deep_reference <- plotly::renderPlotly({
             shiny::req(vals$deep_reference_to_plot)
-            vals$can_plot_deep_ref_2 <- T
+            vals$can_plot_deep_ref_2 <- TRUE
             vals$deep_reference_to_plot
         })
     })

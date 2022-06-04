@@ -63,8 +63,8 @@ read_gecco <- function(data) {
     names(gecco_data)[names(gecco_data) == "end"] <- "Stop"
     return(gecco_data)
 }
-read_prism <- function(data, json = T) {
-    if (json == T) {
+read_prism <- function(data, json = TRUE) {
+    if (json == TRUE) {
         processed_data <- process_prism_json_suppl(data)
         prism_data <- processed_data[[1]]
         prism_supp_data <- processed_data[[2]]
@@ -83,17 +83,17 @@ read_prism <- function(data, json = T) {
     prism_data["Type2"] <- stringr::str_trim(tolower(prism_data$Type))
     return(list(prism_data, prism_supp_data))
 }
-read_sempi <- function(data, zip = T) {
+read_sempi <- function(data, zip = TRUE) {
     # Silence R CMD note
     trackid <- NULL
-    if (zip == T) {
-        utils::unzip(data, files = "genome_browser/main/Tracks.db", exdir = "./SEMPI_TracksDB", junkpaths = T)
+    if (zip == TRUE) {
+        utils::unzip(data, files = "genome_browser/main/Tracks.db", exdir = "./SEMPI_TracksDB", junkpaths = TRUE)
         fl <- "./SEMPI_TracksDB/Tracks.db"
         conn <- RSQLite::dbConnect(RSQLite::SQLite(), fl)
 
         data <- RSQLite::dbGetQuery(conn, "SELECT * FROM tbl_segments")
         RSQLite::dbDisconnect(conn)
-        unlink("./SEMPI_TracksDB", recursive = T)
+        unlink("./SEMPI_TracksDB", recursive = TRUE)
         data <- data %>%
             dplyr::filter(trackid == 6)
 
@@ -122,14 +122,14 @@ read_sempi <- function(data, zip = T) {
     sempi_data["Type2"] <- stringr::str_trim(tolower(sempi_data$Type))
     return(sempi_data)
 }
-read_arts_archive <- function(archive, zip = T) {
+read_arts_archive <- function(archive, zip = TRUE) {
     # Silence R CMD note
     Start <- Core <- NULL
-    if (zip == T) {
-        utils::unzip(archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = "./ARTS_tables", junkpaths = T)
+    if (zip == TRUE) {
+        utils::unzip(archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = "./ARTS_tables", junkpaths = TRUE)
         known_hits <- utils::read.delim("./ARTS_tables/knownhits.tsv")
         dupl_table <- utils::read.delim("./ARTS_tables/duptable.tsv")
-        unlink("./ARTS_tables", recursive = T)
+        unlink("./ARTS_tables", recursive = TRUE)
         locations <- sapply(known_hits$Sequence.description, function(x) {
             utils::tail(stringr::str_split(x, "\\|")[[1]], 1)
         })

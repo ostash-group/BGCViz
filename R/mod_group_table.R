@@ -39,8 +39,8 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
         ns <- session$ns
         output$group_table <- shiny::renderTable({
             shiny::req(vals$data_upload_count > 1)
-            shiny::req(vals$need_filter == F)
-            shiny::req(vals$can_plot_group_table == T)
+            shiny::req(vals$need_filter == FALSE)
+            shiny::req(vals$can_plot_group_table == TRUE)
             if (is.null(vals$inters_filtered)) {
                 inters <- vals$inters
             } else {
@@ -50,7 +50,7 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
             colnames(df_test) <- abbr
             added_inters <- c(soft_names[match(input$group_by, soft_namings)])
             add_inters <- list()
-            if (input$count_all == F) {
+            if (input$count_all == FALSE) {
                 df_test[nrow(df_test) + 1, ] <- NA
             } else {
                 selected_dataframe <- data_to_use[match(input$group_by, soft_namings)]
@@ -70,7 +70,7 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
                         for (h in seq(1:length(soft_n))) {
                             if (name == soft_names[match(soft_n, soft_names)][h]) {
                                 colnames(df_tmp) <- c(abbr[i], abbr[match(soft_n, soft_names)][h])
-                                df_test <- merge(df_test, df_tmp, all = T)
+                                df_test <- merge(df_test, df_tmp, all = TRUE)
                             }
                         }
 
@@ -122,7 +122,7 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
                     paste(data_to_add[!(data_to_add %in%
                         unique(unlist(c(data[soft_namings[match(name, soft_names)]]))))], collapse = ",")
             }
-            utils::write.csv(data, "group_by.csv", row.names = F)
+            utils::write.csv(data, "group_by.csv", row.names = FALSE)
             data
         })
     })

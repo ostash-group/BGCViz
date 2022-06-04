@@ -60,16 +60,16 @@ app_server <- function(input, output, session) {
         rre_interact = NULL, anti_interact = NULL, prism_interact = NULL, deep_interact = NULL,
         sempi_interact = NULL, df_a = NULL, df_d = NULL, df_p = NULL, df_r = NULL, prism_supp = NULL,
         prism_json = FALSE, df_s = NULL, prism_supp_interact = NULL, known_data = NULL, dup_data = NULL,
-        known_data_input = F, dup_data_input = F, arts_data = NULL, arts_data_input = F, seg_df_ref_ar = NULL,
+        known_data_input = FALSE, dup_data_input = FALSE, arts_data = NULL, arts_data_input = FALSE, seg_df_ref_ar = NULL,
         df_ps = NULL, arts_interact = NULL, rre_more = FALSE, gecco_data = NULL, gecco_data_input = FALSE,
-        gecco_data_filtered = NULL, seg_df_ref_g = NULL, prism_supp_data_input = F, computed = NULL,
-        need_filter = F, filter_data = F, choices = list(ref = NULL, group_by = NULL, ref_col_biocircos = NULL, ref_comparison_gecco = NULL, ref_comparison = NULL),
-        renamed = NULL, renaming_notification = list(), rename_y_axis = list(), can_plot_deep_ref_2 = F, can_plot_deep_ref = F,
-        can_plot_biocircos = F, can_plot_barplot_rank = F, can_plot_group_table = F, prism_supp_plot = F
+        gecco_data_filtered = NULL, seg_df_ref_g = NULL, prism_supp_data_input = FALSE, computed = NULL,
+        need_filter = FALSE, filter_data = FALSE, choices = list(ref = NULL, group_by = NULL, ref_col_biocircos = NULL, ref_comparison_gecco = NULL, ref_comparison = NULL),
+        renamed = NULL, renaming_notification = list(), rename_y_axis = list(), can_plot_deep_ref_2 = FALSE, can_plot_deep_ref = FALSE,
+        can_plot_biocircos = FALSE, can_plot_barplot_rank = FALSE, can_plot_group_table = FALSE, prism_supp_plot = FALSE
     )
 
     vals$computed <- list(
-        anti = F, deep = F, gecco = F, arts = F, prism = F, sempi = F, prism_supp = F, rre = F
+        anti = FALSE, deep = FALSE, gecco = FALSE, arts = FALSE, prism = FALSE, sempi = FALSE, prism_supp = FALSE, rre = FALSE
     )
     # Making coloring datatable
     rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
@@ -78,7 +78,7 @@ app_server <- function(input, output, session) {
     coloring_datatable <- data.frame(tidyr::drop_na(data.frame(cbind(as.character(rename_data$Group_color), as.character(rename_data$Color), rename_data$Hierarchy))))
     coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all), ]
     colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
-    vals$coloring_datatable <- DT::datatable(coloring_datatable, rownames = F, editable = "column", options = list(dom = "t", ordering = F))
+    vals$coloring_datatable <- DT::datatable(coloring_datatable, rownames = FALSE, editable = "column", options = list(dom = "t", ordering = FALSE))
     # Variables, that holds data uploads boolean (so if data is present or not)
     data_uploads <- c(
         "anti_data_input", "sempi_data_input", "prism_data_input", "prism_supp_data_input",
@@ -132,16 +132,16 @@ app_server <- function(input, output, session) {
     options(shiny.maxRequestSize = 100 * 1024^2)
 
     disable_event_logic <- function() {
-        vals$can_plot_deep_ref <- F
-        vals$can_plot_biocircos <- F
-        vals$can_plot_barplot_rank <- F
-        vals$can_plot_group_table <- F
+        vals$can_plot_deep_ref <- FALSE
+        vals$can_plot_biocircos <- FALSE
+        vals$can_plot_barplot_rank <- FALSE
+        vals$can_plot_group_table <- FALSE
     }
     enable_event_logic <- function() {
-        vals$can_plot_deep_ref <- T
-        vals$can_plot_biocircos <- T
-        vals$can_plot_barplot_rank <- T
-        vals$can_plot_group_table <- T
+        vals$can_plot_deep_ref <- TRUE
+        vals$can_plot_biocircos <- TRUE
+        vals$can_plot_barplot_rank <- TRUE
+        vals$can_plot_group_table <- TRUE
     }
 
     ###########################################################################
@@ -155,8 +155,8 @@ app_server <- function(input, output, session) {
     # For now you just have duplicated the code. Specifically for ARTS!
     # Reading functions:
 
-    process_antismash <- function(data, example_data = F) {
-        if (example_data == T) {
+    process_antismash <- function(data, example_data = FALSE) {
+        if (example_data == TRUE) {
             anti_data <- data
         } else {
             anti_data <- read_anti(data)
@@ -190,8 +190,8 @@ app_server <- function(input, output, session) {
             )
         }
     }
-    process_gecco <- function(data, example_data = F) {
-        if (example_data == T) {
+    process_gecco <- function(data, example_data = FALSE) {
+        if (example_data == TRUE) {
             gecco_data <- data
         } else {
             gecco_data <- read_gecco(data)
@@ -217,29 +217,29 @@ app_server <- function(input, output, session) {
             )
         }
     }
-    process_prism <- function(data, json = T, example_data = F) {
-        if (example_data == T) {
+    process_prism <- function(data, json = TRUE, example_data = FALSE) {
+        if (example_data == TRUE) {
             prism_data <- data
             prism_data$Type <- stringr::str_trim(tolower(prism_data$Type))
             prism_data["Type2"] <- stringr::str_trim(tolower(prism_data$Type))
-            vals$prism_supp_data_input <- T
+            vals$prism_supp_data_input <- TRUE
             vals$prism_supp <- BGCViz:::prism_supp_data
             vals$prism_supp_data <- BGCViz:::prism_supp_data
-            vals$prism_supp_plot <- T
-            vals$prism_json <- T
-            shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
+            vals$prism_supp_plot <- TRUE
+            vals$prism_json <- TRUE
+            shiny::updateCheckboxInput(inputId = "prism_supp", value = TRUE)
         } else {
-            if (json == T) {
-                processed <- read_prism(data, json = T)
+            if (json == TRUE) {
+                processed <- read_prism(data, json = TRUE)
                 prism_data <- processed[[1]]
-                vals$prism_supp_data_input <- T
+                vals$prism_supp_data_input <- TRUE
                 vals$prism_supp <- processed[[2]]
                 vals$prism_supp_data <- processed[[2]]
-                vals$prism_json <- T
-                vals$prism_supp_plot <- T
-                shiny::updateCheckboxInput(inputId = "prism_supp", value = T)
+                vals$prism_json <- TRUE
+                vals$prism_supp_plot <- TRUE
+                shiny::updateCheckboxInput(inputId = "prism_supp", value = TRUE)
             } else {
-                processed <- read_prism(data, json = F)
+                processed <- read_prism(data, json = FALSE)
                 prism_data <- processed[[1]]
             }
         }
@@ -281,14 +281,14 @@ app_server <- function(input, output, session) {
             )
         }
     }
-    process_sempi <- function(data, zip = T, example_data = F) {
-        if (example_data == T) {
+    process_sempi <- function(data, zip = TRUE, example_data = FALSE) {
+        if (example_data == TRUE) {
             sempi_data <- data
         } else {
-            if (zip == T) {
-                sempi_data <- read_sempi(data, zip = T)
+            if (zip == TRUE) {
+                sempi_data <- read_sempi(data, zip = TRUE)
             } else {
-                sempi_data <- read_sempi(data, zip = F)
+                sempi_data <- read_sempi(data, zip = FALSE)
             }
         }
         vals$sempi_type <- sempi_data$Type2
@@ -324,12 +324,12 @@ app_server <- function(input, output, session) {
             )
         }
     }
-    process_arts_archive <- function(archive, zip = T, example_data = F) {
-        if (example_data == T) {
+    process_arts_archive <- function(archive, zip = TRUE, example_data = FALSE) {
+        if (example_data == TRUE) {
             arts_data <- BGCViz:::arts_data
         } else {
-            if (zip == T) {
-                arts_data <- read_arts_archive(archive, zip = T)
+            if (zip == TRUE) {
+                arts_data <- read_arts_archive(archive, zip = TRUE)
             } else {
                 arts_data <- utils::read.csv(archive)
             }
@@ -340,7 +340,7 @@ app_server <- function(input, output, session) {
         vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
         update_ui_with_data()
         vals$data_upload_count <- vals$data_upload_count + 1
-        vals$arts_data_input <- T
+        vals$arts_data_input <- TRUE
         dup_table_id <- vals$arts_data %>%
             dplyr::filter(Core != "Not_core")
         shiny::updateSelectInput(session, "dup_choice",
@@ -359,8 +359,8 @@ app_server <- function(input, output, session) {
             )
         }
     }
-    process_deep <- function(data, example_data = F) {
-        if (example_data == T) {
+    process_deep <- function(data, example_data = FALSE) {
+        if (example_data == TRUE) {
             deep_data <- data
         } else {
             deep_data <- read_deep(data)
@@ -393,14 +393,14 @@ app_server <- function(input, output, session) {
             )
         }
     }
-    process_rre <- function(data, example_data = F) {
-        if (example_data == T) {
+    process_rre <- function(data, example_data = FALSE) {
+        if (example_data == TRUE) {
             rre_data <- data
         } else {
             rre_data <- read_rre(data)
         }
         vals$rre_data <- rre_data
-        # write.csv(vals$rre_data, "rre_data.csv", row.names = F)
+        # write.csv(vals$rre_data, "rre_data.csv", row.names = FALSE)
 
         vals$rre_data_input <- TRUE
         vals$data_upload_count <- vals$data_upload_count + 1
@@ -421,9 +421,9 @@ app_server <- function(input, output, session) {
             )
         }
         if (!is.null(vals$rre_data$Probability)) {
-            vals$rre_more <- T
+            vals$rre_more <- TRUE
         } else {
-            vals$rre_more <- F
+            vals$rre_more <- FALSE
         }
     }
 
@@ -432,31 +432,31 @@ app_server <- function(input, output, session) {
     ##            Loading and processing of example data             -
     ## ----------------------------------------------------------------
     shiny::observeEvent(input$anti_sco, {
-        process_antismash(BGCViz:::anti_data, example_data = T)
+        process_antismash(BGCViz:::anti_data, example_data = TRUE)
     })
 
     shiny::observeEvent(input$gecco_sco, {
-        process_gecco(BGCViz:::gecco_data, example_data = T)
+        process_gecco(BGCViz:::gecco_data, example_data = TRUE)
     })
 
     shiny::observeEvent(input$prism_sco, {
-        process_prism(BGCViz:::prism_data, example_data = T)
+        process_prism(BGCViz:::prism_data, example_data = TRUE)
     })
 
     shiny::observeEvent(input$sempi_sco, {
-        process_sempi(BGCViz:::sempi_data, example_data = T)
+        process_sempi(BGCViz:::sempi_data, example_data = TRUE)
     })
 
     shiny::observeEvent(input$arts_sco, {
-        process_arts_archive(BGCViz:::arts_data, example_data = T)
+        process_arts_archive(BGCViz:::arts_data, example_data = TRUE)
     })
 
     shiny::observeEvent(input$deep_sco, {
-        process_deep(BGCViz:::deep_data, example_data = T)
+        process_deep(BGCViz:::deep_data, example_data = TRUE)
     })
 
     shiny::observeEvent(input$rre_sco, {
-        process_rre(BGCViz:::rre_data, example_data = T)
+        process_rre(BGCViz:::rre_data, example_data = TRUE)
     })
 
     ## ----------------------------------------------------------------
@@ -520,9 +520,9 @@ app_server <- function(input, output, session) {
     shiny::observeEvent(input$sempi_data, {
         if (input$sempi_data$type == "text/csv") {
             sempi_data <- utils::read.csv(input$sempi_data$datapath)
-            process_sempi(sempi_data, zip = F)
+            process_sempi(sempi_data, zip = FALSE)
         } else {
-            process_sempi(input$sempi_data$datapath, zip = T)
+            process_sempi(input$sempi_data$datapath, zip = TRUE)
         }
     })
 
@@ -537,9 +537,9 @@ app_server <- function(input, output, session) {
     shiny::observeEvent(input$arts_data, {
         disable_event_logic()
         if (input$arts_data$type == "text/csv") {
-            process_arts_archive(input$arts_data$datapath, zip = F)
+            process_arts_archive(input$arts_data$datapath, zip = FALSE)
         } else {
-            process_arts_archive(input$arts_data$datapath, zip = T)
+            process_arts_archive(input$arts_data$datapath, zip = TRUE)
         }
     })
 
@@ -549,7 +549,7 @@ app_server <- function(input, output, session) {
         # Read data
         if (input$prism_data$type == "text/csv") {
             prism_data <- utils::read.csv(input$prism_data$datapath)
-            process_prism(prism_data, json = F)
+            process_prism(prism_data, json = FALSE)
         } else {
             data <- rjson::fromJSON(file = input$prism_data$datapath)
             process_prism(data)
@@ -601,9 +601,9 @@ app_server <- function(input, output, session) {
     ##    Simple options showing/hiding logic for every data input   -
     ## ----------------------------------------------------------------
     # SHOW rre_width parameter if data is available
-    # and hide_viz == F
+    # and hide_viz == FALSE
     shiny::observeEvent(vals$rre_data_input, {
-        if (vals$rre_data_input == T) {
+        if (vals$rre_data_input == TRUE) {
             shinyjs::showElement(selector = "#rre_width")
         } else {
             shinyjs::hideElement(selector = "#rre_width")
@@ -612,24 +612,24 @@ app_server <- function(input, output, session) {
     # Show anti_hybrid option if data is available
     # And checkbox is unchecked
     shiny::observeEvent(vals$anti_data_input, {
-        if (vals$anti_data_input == T) {
+        if (vals$anti_data_input == TRUE) {
             shinyjs::showElement(selector = "#anti_hybrid")
         } else {
             shinyjs::hideElement(selector = "#anti_hybrid")
         }
     })
     # Show prism options if data is available
-    # If hide anti is F (checkbox), then show them
+    # If hide anti is FALSE (checkbox), then show them
     # Only if prism_json file, then show Prism-Supp
-    # And if hide_viz == F, and prism_json, then
+    # And if hide_viz == FALSE, and prism_json, then
     # show width
     shiny::observeEvent(vals$prism_data_input, {
-        if (vals$prism_data_input == T) {
+        if (vals$prism_data_input == TRUE) {
             shinyjs::showElement(selector = "#prism_hybrid")
-            if (vals$prism_json == T) {
+            if (vals$prism_json == TRUE) {
                 shinyjs::showElement(selector = "#prism_supp")
             }
-            if (vals$prism_json == T) {
+            if (vals$prism_json == TRUE) {
                 shinyjs::showElement(selector = "#prism_supp_data_input_width")
             }
         } else {
@@ -641,7 +641,7 @@ app_server <- function(input, output, session) {
     })
     # Show SEMPI elements on data upload
     shiny::observeEvent(vals$sempi_data_input, {
-        if (vals$sempi_data_input == T) {
+        if (vals$sempi_data_input == TRUE) {
             shinyjs::showElement(selector = "#sempi_hybrid")
             shinyjs::showElement(selector = "#sempi_width")
         } else {
@@ -651,7 +651,7 @@ app_server <- function(input, output, session) {
     })
     # Ahow ARTS data options, if data is available
     shiny::observeEvent(vals$arts_data_input, {
-        if (vals$arts_data_input == T) {
+        if (vals$arts_data_input == TRUE) {
             shinyjs::showElement(selector = "#dup_choice")
             shinyjs::showElement(selector = "#arts_width")
         } else {
@@ -661,14 +661,14 @@ app_server <- function(input, output, session) {
     })
 
     shiny::observeEvent(vals$data_upload_count, {
-        if ((vals$arts_data_input == T) || (vals$sempi_data_input == T) || (vals$prism_supp_data_input == T) || (vals$rre_data_input == T)) {
+        if ((vals$arts_data_input == TRUE) || (vals$sempi_data_input == TRUE) || (vals$prism_supp_data_input == TRUE) || (vals$rre_data_input == TRUE)) {
             shinyjs::showElement(selector = "#improve_visualization_box")
         } else {
             shinyjs::hideElement(selector = "#improve_visualization_box")
         }
     })
     shiny::observeEvent(vals$data_upload_count, {
-        if ((vals$arts_data_input == T) || (vals$prism_json == T)) {
+        if ((vals$arts_data_input == TRUE) || (vals$prism_json == TRUE)) {
             shinyjs::showElement(selector = "#prism_supplement_arts_box")
         } else {
             shinyjs::hideElement(selector = "#prism_supplement_arts_box")
@@ -682,7 +682,7 @@ app_server <- function(input, output, session) {
 
     output$deep_sidemenu_out <- shinydashboard::renderMenu({
         if (vals$data_upload_count >= 2) {
-            if ((vals$deep_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T))) {
+            if ((vals$deep_data_input == TRUE) & ((vals$anti_data_input == TRUE) | (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE))) {
                 shinydashboard::menuItem("Compare data with DeepBGC",
                     tabName = "deep_sidemenu", icon = shiny::icon("dyalog"),
                     shinydashboard::menuItem("Compare with DeepBGC plots", tabName = "deep_sidemenu", icon = shiny::icon("chart-pie")),
@@ -696,7 +696,7 @@ app_server <- function(input, output, session) {
     })
     output$gecco_sidemenu_out <- shinydashboard::renderMenu({
         if (vals$data_upload_count >= 2) {
-            if ((vals$gecco_data_input == T) & ((vals$anti_data_input == T) | (vals$prism_data_input == T) | (vals$sempi_data_input == T))) {
+            if ((vals$gecco_data_input == TRUE) & ((vals$anti_data_input == TRUE) | (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE))) {
                 shinydashboard::menuItem("Compare data with GECCO",
                     tabName = "gecco", icon = icon("fas fa-dragon"),
                     shinydashboard::menuItem("Compare with GECCO plots", tabName = "gecco_sidemenu", icon = shiny::icon("chart-pie")),
@@ -725,8 +725,8 @@ app_server <- function(input, output, session) {
     })
 
     output$deep_filter_box <- shiny::renderUI({
-        if (vals$deep_data_input == T) {
-            vals$deep_global <- T
+        if (vals$deep_data_input == TRUE) {
+            vals$deep_global <- TRUE
             shinydashboardPlus::box(
                 title = "DeepBGC filtering",
                 id = "deep_filtering_box",
@@ -745,8 +745,8 @@ app_server <- function(input, output, session) {
         }
     })
     output$gecco_filter_box <- shiny::renderUI({
-        if (vals$gecco_data_input == T) {
-            vals$gecco_global <- T
+        if (vals$gecco_data_input == TRUE) {
+            vals$gecco_global <- TRUE
             shinydashboardPlus::box(
                 title = "GECCO filtering",
                 id = "gecco_filtering_box",
@@ -762,7 +762,7 @@ app_server <- function(input, output, session) {
     })
 
     output$deep_filter_UI_sidemenu <- shiny::renderUI({
-        vals$deep_sidebar <- T
+        vals$deep_sidebar <- TRUE
         shiny::tagList(
             shiny::sliderInput("score_a_sidemenu", "Activity score threshold for DeepBGC data", min = 0, max = 100, value = 50),
             shiny::sliderInput("score_d_sidemenu", "DeepBGC score threshold for DeepBGC data", min = 0, max = 100, value = 50),
@@ -775,7 +775,7 @@ app_server <- function(input, output, session) {
         )
     })
     output$gecco_filter_UI_sidemenu <- shiny::renderUI({
-        vals$gecco_sidebar <- T
+        vals$gecco_sidebar <- TRUE
         shiny::tagList(
             shiny::sliderInput("score_average_gecco_sidemenu", "Average p-value threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50),
             shiny::sliderInput("score_cluster_gecco_sidemenu", "Cluster type threshold for Gecco data (%, mapped from 0 to 1)", min = 0, max = 100, value = 50),
@@ -785,16 +785,16 @@ app_server <- function(input, output, session) {
     })
 
     update_filter_values <- function(listening_value, comparing_values, updating_value, rendering_check) {
-        if ((as.numeric(listening_value) != comparing_values) && (rendering_check == F)) {
+        if ((as.numeric(listening_value) != comparing_values) && (rendering_check == FALSE)) {
             shiny::updateSliderInput(session, updating_value, NULL, listening_value)
-            return(list(as.numeric(listening_value), F))
+            return(list(as.numeric(listening_value), FALSE))
         } else {
-            if (grepl("sidemenu", updating_value) == T) {
+            if (grepl("sidemenu", updating_value) == TRUE) {
                 shiny::updateSliderInput(session, stringr::str_split(updating_value, "_sidemenu")[[1]][1], NULL, comparing_values)
             } else {
                 shiny::updateSliderInput(session, paste0(updating_value, "_sidemenu")[[1]][1], NULL, comparing_values)
             }
-            return(list(comparing_values, F))
+            return(list(comparing_values, FALSE))
         }
     }
 
@@ -941,22 +941,22 @@ app_server <- function(input, output, session) {
     # Make hybrids from the data, if checkbox is checked
     # TODO Put the function to the root.
     # Tou have duplicated code
-    shiny::observeEvent(input$anti_hybrid, ignoreInit = T, {
-        if (input$anti_hybrid == T) {
+    shiny::observeEvent(input$anti_hybrid, ignoreInit = TRUE, {
+        if (input$anti_hybrid == TRUE) {
             vals$anti_data$Type2 <- hybrid_col(vals$anti_data)
         } else {
             vals$anti_data$Type2 <- vals$anti_type
         }
     })
-    shiny::observeEvent(input$prism_hybrid, ignoreInit = T, {
-        if (input$prism_hybrid == T) {
+    shiny::observeEvent(input$prism_hybrid, ignoreInit = TRUE, {
+        if (input$prism_hybrid == TRUE) {
             vals$prism_data$Type2 <- hybrid_col(vals$prism_data)
         } else {
             vals$prism_data$Type2 <- vals$prism_type
         }
     })
-    shiny::observeEvent(input$sempi_hybrid, ignoreInit = T, {
-        if (input$sempi_hybrid == T) {
+    shiny::observeEvent(input$sempi_hybrid, ignoreInit = TRUE, {
+        if (input$sempi_hybrid == TRUE) {
             vals$sempi_data$Type2 <- hybrid_col(vals$sempi_data)
         } else {
             vals$sempi_data$Type2 <- vals$sempi_type
@@ -965,7 +965,7 @@ app_server <- function(input, output, session) {
     # Rename the data, if button is clicked
     shiny::observeEvent(input$rename, {
         rename_data <- vals$rename_data
-        if (vals$anti_data_input == T) {
+        if (vals$anti_data_input == TRUE) {
             anti_data <- vals$anti_data
             res <- rename_vector(anti_data, rename_data, vals$renaming_notification)
             vals$anti_type <- res[[1]]
@@ -974,7 +974,7 @@ app_server <- function(input, output, session) {
             vals$anti_data <- anti_data
         }
 
-        if (vals$sempi_data_input == T) {
+        if (vals$sempi_data_input == TRUE) {
             sempi_data <- vals$sempi_data
             res <- rename_vector(sempi_data, rename_data, vals$renaming_notification)
             vals$sempi_type <- res[[1]]
@@ -983,7 +983,7 @@ app_server <- function(input, output, session) {
             vals$sempi_data <- sempi_data
         }
 
-        if (vals$prism_data_input == T) {
+        if (vals$prism_data_input == TRUE) {
             prism_data <- vals$prism_data
             res <- rename_vector(prism_data, rename_data, vals$renaming_notification)
             vals$prism_type <- res[[1]]
@@ -993,16 +993,16 @@ app_server <- function(input, output, session) {
         }
         shinyjs::showElement(selector = "#reset_name")
         shinyjs::hideElement(selector = "#rename")
-        vals$renamed <- T
+        vals$renamed <- TRUE
         shiny::showNotification(paste("Please note: SEMPI, PRISM and Antismash input data will be renamed on upload"), type = "warning", duration = 10)
     })
     # When the new data is uploaded and renamed
-    # is T, then rename data on upload
+    # is TRUE, then rename data on upload
     shiny::observeEvent(check_to_rename(), {
-        shiny::req(vals$renamed == T)
+        shiny::req(vals$renamed == TRUE)
 
         rename_data <- vals$rename_data
-        if (vals$anti_data_input == T) {
+        if (vals$anti_data_input == TRUE) {
             anti_data <- vals$anti_data
             res <- rename_vector(anti_data, rename_data, vals$renaming_notification)
             vals$anti_type <- res[[1]]
@@ -1011,7 +1011,7 @@ app_server <- function(input, output, session) {
             vals$anti_data <- anti_data
         }
 
-        if (vals$sempi_data_input == T) {
+        if (vals$sempi_data_input == TRUE) {
             sempi_data <- vals$sempi_data
             res <- rename_vector(sempi_data, rename_data, vals$renaming_notification)
             vals$sempi_type <- res[[1]]
@@ -1020,7 +1020,7 @@ app_server <- function(input, output, session) {
             vals$sempi_data <- sempi_data
         }
 
-        if (vals$prism_data_input == T) {
+        if (vals$prism_data_input == TRUE) {
             prism_data <- vals$prism_data
             res <- rename_vector(prism_data, rename_data, vals$renaming_notification)
             vals$prism_type <- res[[1]]
@@ -1034,21 +1034,21 @@ app_server <- function(input, output, session) {
         vals$anti_data["Type2"] <- vals$anti_data["Type"]
         vals$sempi_data["Type2"] <- vals$sempi_data["Type"]
         vals$ prism_data["Type2"] <- vals$ prism_data["Type"]
-        if (input$anti_hybrid == T) {
+        if (input$anti_hybrid == TRUE) {
             shiny::showNotification(paste("Antismash cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration = 10)
-            shiny::updateCheckboxInput(inputId = "anti_hybrid", value = F)
+            shiny::updateCheckboxInput(inputId = "anti_hybrid", value = FALSE)
         }
-        if (input$prism_hybrid == T) {
+        if (input$prism_hybrid == TRUE) {
             shiny::showNotification(paste("PRISM cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration = 10)
-            shiny::updateCheckboxInput(inputId = "prism_hybrid", value = F)
+            shiny::updateCheckboxInput(inputId = "prism_hybrid", value = FALSE)
         }
-        if (input$sempi_hybrid == T) {
+        if (input$sempi_hybrid == TRUE) {
             shiny::showNotification(paste("SEMPI cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration = 10)
-            shiny::updateCheckboxInput(inputId = "sempi_hybrid", value = F)
+            shiny::updateCheckboxInput(inputId = "sempi_hybrid", value = FALSE)
         }
         shinyjs::showElement(selector = "#rename")
         shinyjs::hideElement(selector = "#reset_name")
-        vals$renamed <- F
+        vals$renamed <- FALSE
     })
     # Read the uploaded renaming scheme csv
     shiny::observeEvent(input$rename_data, {
@@ -1057,7 +1057,7 @@ app_server <- function(input, output, session) {
         coloring_datatable <- data.frame(tidyr::drop_na(data.frame(cbind(as.character(rename_data$Group_color), as.character(rename_data$Color), rename_data$Hierarchy))))
         coloring_datatable <- coloring_datatable[!apply(coloring_datatable == "", 1, all), ]
         colnames(coloring_datatable) <- c("Name", "Color", "Hierarchy")
-        vals$coloring_datatable <- DT::datatable(coloring_datatable, rownames = F, editable = "column")
+        vals$coloring_datatable <- DT::datatable(coloring_datatable, rownames = FALSE, editable = "column")
     })
 
 
@@ -1071,11 +1071,11 @@ app_server <- function(input, output, session) {
     ###                                                                      ###
     ############################################################################
     ############################################################################
-    shiny::observeEvent(input$prism_supp, ignoreInit = T, priority = 3, {
-        if (input$prism_supp == T) {
-            vals$need_filter <- T
-            vals$prism_supp_data_input <- T
-            vals$prism_supp_plot <- T
+    shiny::observeEvent(input$prism_supp, ignoreInit = TRUE, priority = 3, {
+        if (input$prism_supp == TRUE) {
+            vals$need_filter <- TRUE
+            vals$prism_supp_data_input <- TRUE
+            vals$prism_supp_plot <- TRUE
             if (!("PRISM-Supp" %in% names(vals$choices$ref))) {
                 vals$choices$ref <- c(vals$choices$ref, "PRISM-Supp" = "PRISM-Supp")
                 vals$choices$group_by <- c(vals$choices$group_by, "PRISM-Supp" = "PRISM-Supp")
@@ -1083,9 +1083,9 @@ app_server <- function(input, output, session) {
                 update_ui_with_data()
             }
         } else {
-            vals$prism_supp_data_input <- F
-            vals$need_filter <- T
-            vals$prism_supp_plot <- F
+            vals$prism_supp_data_input <- FALSE
+            vals$need_filter <- TRUE
+            vals$prism_supp_plot <- FALSE
             vals$choices$ref <- vals$choices$ref[!(names(vals$choices$ref) %in% c("PRISM-Supp"))]
             vals$choices$group_by <- vals$choices$group_by[!(names(vals$choices$group_by) %in% c("PRISM-Supp"))]
             vals$choices$ref_col_biocircos <- vals$choices$ref_col_biocircos[!(names(vals$choices$ref_col_biocircos) %in% c("PRISM-Supp"))]
@@ -1095,7 +1095,7 @@ app_server <- function(input, output, session) {
 
     # Compute all interceptions on data upload.
     # dplyr::filter while ploting then.
-    shiny::observeEvent(inputData(), ignoreInit = T, priority = 5, {
+    shiny::observeEvent(inputData(), ignoreInit = TRUE, priority = 5, {
         # GENERATE DATA
         if (vals$anti_data_input == TRUE) {
             anti_data <- vals$anti_data
@@ -1137,13 +1137,13 @@ app_server <- function(input, output, session) {
                 dplyr::select(Start, Stop)
             sempi_inter$seqnames <- "chr"
         }
-        if (vals$prism_json == T) {
+        if (vals$prism_json == TRUE) {
             prism_supp_data <- vals$prism_supp_data
             prism_supp_inter <- vals$prism_supp_data %>%
                 dplyr::select(Start, Stop)
             prism_supp_inter$seqnames <- "chr"
         }
-        if (vals$arts_data_input == T) {
+        if (vals$arts_data_input == TRUE) {
             arts_data <- vals$arts_data
             arts_inter <- vals$arts_data %>%
                 dplyr::select(Start, Stop)
@@ -1173,7 +1173,7 @@ app_server <- function(input, output, session) {
             j <- soft_names[index]
             for (p in data_uploads_inter) {
                 x <- soft_names[index_2]
-                if ((vals[[i]] == TRUE) & (vals$computed[[j]] == F) & (j != x)) {
+                if ((vals[[i]] == TRUE) & (vals$computed[[j]] == FALSE) & (j != x)) {
                     if ((vals[[p]] == TRUE) & (j != soft_names[index_2])) {
                         res <- get_inter(eval(as.name(paste(j, "_inter", sep = ""))), eval(as.name(paste(x, "_inter", sep = ""))))
                         new_res <- list()
@@ -1192,12 +1192,12 @@ app_server <- function(input, output, session) {
         }
 
         vals$inters <- inters
-        if ((vals$deep_data_input == F) & (vals$gecco_data_input == F) & (vals$arts_data_input == F)) {
+        if ((vals$deep_data_input == FALSE) & (vals$gecco_data_input == FALSE) & (vals$arts_data_input == FALSE)) {
             vals$inters_filtered <- inters
             enable_event_logic()
         } else {
-            vals$need_filter <- T
-            vals$filter_data <- T
+            vals$need_filter <- TRUE
+            vals$filter_data <- TRUE
         }
     })
     # dplyr::filter ARTS, DeepBGC, GECCO interception data
@@ -1208,13 +1208,13 @@ app_server <- function(input, output, session) {
             dynamicInput()
             to_debounce()
         },
-        ignoreInit = T,
+        ignoreInit = TRUE,
         priority = 4,
         {
             shiny::req(vals$data_upload_count >= 1)
             inters <- vals$inters
             if (vals$deep_data_input == TRUE) {
-                if (vals$need_filter == F) {
+                if (vals$need_filter == FALSE) {
                     biocircos_deep <- filter_deepbgc(vals$deep_data, vals$cluster_type, vals$score_a, vals$score_c, vals$score_d, vals$domains_filter, vals$biodomain_filter, vals$gene_filter)
                     vals$deep_data_filtered <- biocircos_deep
                 } else {
@@ -1238,7 +1238,7 @@ app_server <- function(input, output, session) {
                 }
             }
             if (vals$gecco_data_input == TRUE) {
-                if (vals$need_filter == F) {
+                if (vals$need_filter == FALSE) {
                     gecco_data <- filter_gecco(vals$gecco_data, vals$score_cluster_gecco, vals$score_average_gecco, vals$domains_filter_gecco, vals$prot_filter_gecco)
                     vals$gecco_data_filtered <- gecco_data
                 } else {
@@ -1292,20 +1292,20 @@ app_server <- function(input, output, session) {
                     inters[[name]][which(names(inters[[name]]) %in% c("prism_supp"))] <- NULL
                 }
             }
-            if ((vals$gecco_data_input == F) & (vals$deep_data_input == F) & (vals$arts_data_input == F)) {
+            if ((vals$gecco_data_input == FALSE) & (vals$deep_data_input == FALSE) & (vals$arts_data_input == FALSE)) {
                 vals$inters_filtered <- inters
             }
-            vals$need_filter <- F
-            vals$filter_data <- F
-            vals$can_plot_deep_ref <- T
+            vals$need_filter <- FALSE
+            vals$filter_data <- FALSE
+            vals$can_plot_deep_ref <- TRUE
             enable_event_logic()
         }
     )
     # Compute the Biociros plot. Store information to plot later
-    shiny::observeEvent(biocircos_listen(), ignoreInit = T, priority = 3, {
+    shiny::observeEvent(biocircos_listen(), ignoreInit = TRUE, priority = 3, {
         shiny::req(vals$data_upload_count >= 2)
-        shiny::req(vals$need_filter == F)
-        shiny::req(vals$can_plot_biocircos == T)
+        shiny::req(vals$need_filter == FALSE)
+        shiny::req(vals$can_plot_biocircos == TRUE)
         ## source("src/biocircos_functions.R")
         # BioCircos!
         Biocircos_chromosomes <- list()
@@ -1328,7 +1328,7 @@ app_server <- function(input, output, session) {
         index <- 1
         # browser()
         for (upload in data_uploads) {
-            if (vals[[upload]] == T) {
+            if (vals[[upload]] == TRUE) {
                 # Store data in local variable
                 corrected_data <- correct_width(vals[[data_to_use[index]]], soft_namings[index], input$sempi_width, input$prism_supp_data_input_width, input$arts_width, input$rre_width)
                 init_data <- initialize_biocircos(corrected_data, soft_namings[index], Biocircos_chromosomes, arcs_chromosomes, arcs_begin, arcs_end, arc_labels, arc_col, rename_data, vals$chr_len, input$biocircos_color, coloring_datatable)
@@ -1379,9 +1379,9 @@ app_server <- function(input, output, session) {
             soft_names_2 <- soft_names_2[-1]
             data_to_use_2 <- data_to_use_2[-1]
             index2 <- 1
-            if (vals[[upload]] == T) {
+            if (vals[[upload]] == TRUE) {
                 for (upload2 in data_uploads_2) {
-                    if ((vals[[upload2]] == T) & (length(data_uploads_2) > 0) & (soft_namings[index] != soft_2[index2])) {
+                    if ((vals[[upload2]] == TRUE) & (length(data_uploads_2) > 0) & (soft_namings[index] != soft_2[index2])) {
                         output <- add_biocircos_data(inters[[soft_names[index]]][[soft_names_2[index2]]]$from, inters[[soft_names[index]]][[soft_names_2[index2]]]$to, vals[[data_to_use_2[index2]]], vals[[data_to_use[index]]], soft_2[index2], soft_namings[index], rename_data, input$label_color_class, input$ref_col_biocircos, coloring_datatable)
                         chromosomes_start <- c(chromosomes_start, output[[3]])
                         # Add link end. Just populate second output from the vectors, used above.
@@ -1400,7 +1400,7 @@ app_server <- function(input, output, session) {
                     }
                     index2 <- index2 + 1
                 }
-                utils::write.csv(vals[[data_to_use[index]]], paste0(soft_names[index], "_biocircos.csv"), row.names = F)
+                utils::write.csv(vals[[data_to_use[index]]], paste0(soft_names[index], "_biocircos.csv"), row.names = FALSE)
             }
             index <- index + 1
         }
@@ -1412,7 +1412,7 @@ app_server <- function(input, output, session) {
         link_labels <- mapply(function(x, y) paste(x, y, sep = " | "), label_1, label_2)
 
         # Add links and labels to the track list for subsequent visualization
-        if ((input$label_color == T) & (length(chromosomes_start) > 0)) {
+        if ((input$label_color == TRUE) & (length(chromosomes_start) > 0)) {
             group_colors <- plyr::count(unlist(label_color))
             for (i in seq(1:dim(group_colors)[1])) {
                 subset <- unname(which(label_color %in% group_colors$x[i]))
@@ -1423,7 +1423,7 @@ app_server <- function(input, output, session) {
                     displayLabel = FALSE, color = group_colors$x[i]
                 )
             }
-        } else if ((input$label_color == F) & (length(chromosomes_start) > 0)) {
+        } else if ((input$label_color == FALSE) & (length(chromosomes_start) > 0)) {
             tracklist <- tracklist + BioCircos::BioCircosLinkTrack("myLinkTrack_master", chromosomes_start, link_pos_start,
                 link_pos_start_1, chromosomes_end, link_pos_end,
                 link_pos_end_2,
@@ -1438,10 +1438,10 @@ app_server <- function(input, output, session) {
         vals$Biocircos_chromosomes <- Biocircos_chromosomes
     })
 
-    shiny::observeEvent(deep_reference(), ignoreInit = T, {
+    shiny::observeEvent(deep_reference(), ignoreInit = TRUE, {
         shiny::req(vals$data_upload_count >= 1)
-        shiny::req(vals$need_filter == F)
-        shiny::req(vals$can_plot_deep_ref == T)
+        shiny::req(vals$need_filter == FALSE)
+        shiny::req(vals$can_plot_deep_ref == TRUE)
         shiny::req(input$ref != "")
         shiny::req(vals$data_upload_count >= 1)
 
@@ -1454,7 +1454,7 @@ app_server <- function(input, output, session) {
         # GENERATE DATA
         index <- 1
         for (upload in data_uploads) {
-            if (vals[[upload]] == T) {
+            if (vals[[upload]] == TRUE) {
                 data <- vals[[data_to_use[index]]]
                 assign(paste0(soft_names[index], "_data"), correct_width(data, soft_namings[index], input$sempi_width, input$prism_supp_data_input_width, input$arts_width, input$rre_width))
             }
@@ -1484,10 +1484,10 @@ app_server <- function(input, output, session) {
         for (upload in data_uploads) {
             soft_lttr <- soft_lttrs[1]
             soft_lttrs <- soft_lttrs[-1]
-            if (vals[[upload]] == T) {
+            if (vals[[upload]] == TRUE) {
                 soft_major <- soft_names[sup_index]
-                seg_ref_g <- simple_seg(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), "Z", soft_namings[sup_index], soft_names[sup_index], soft_major, inter = F, inters)
-                seg_ref_g <- define_spec_seg_df(soft_names, sup_index, seg_ref_g, soft_major, eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), inter = F, vals$rre_more, inters)
+                seg_ref_g <- simple_seg(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), "Z", soft_namings[sup_index], soft_names[sup_index], soft_major, inter = FALSE, inters)
+                seg_ref_g <- define_spec_seg_df(soft_names, sup_index, seg_ref_g, soft_major, eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), inter = FALSE, vals$rre_more, inters)
                 seg_ref <- seg_ref_g
 
                 if (input$ref == soft_namings[sup_index]) {
@@ -1499,10 +1499,10 @@ app_server <- function(input, output, session) {
                     labels_1 <- list()
                     index <- 1
                     for (i in data_uploads) {
-                        if ((vals[[i]] == T) & (soft_names[index] != soft_major)) {
+                        if ((vals[[i]] == TRUE) & (soft_names[index] != soft_major)) {
                             df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
-                            seg_df <- simple_seg(df, lettrs[index], soft_namings[index], soft_names[index], soft_major, inter = T, inters)
-                            seg_df <- define_spec_seg_df(soft_names, index, seg_df, soft_major, df, inter = T, vals$rre_more, inters)
+                            seg_df <- simple_seg(df, lettrs[index], soft_namings[index], soft_names[index], soft_major, inter = TRUE, inters)
+                            seg_df <- define_spec_seg_df(soft_names, index, seg_df, soft_major, df, inter = TRUE, vals$rre_more, inters)
                             labels_1[[lettrs[index]]] <- (paste(abbr[index], "_vs_", soft_let, sep = ""))
                             plot <- suppressWarnings(add_more_annot(seg_df, plot, soft_names, index, vals$rre_more))
                         }
