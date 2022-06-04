@@ -4,9 +4,10 @@ Version: 0.99.0
 Authors@R: person('Pavlo', 'Hrab', email = 'pavlo.hrab@gmail.com', role = c('cre', 'aut'))
 Description: BGCViz is a shiny package, that aims to integrate BGC result 
     from different softwares for same genome sequence. On top of additional 
-    filtering of GECCO and DeepBGC data, package allows to form groups of
-    semi-identical BGCs, allowing better annotation and boundary resolution
-    of each one.
+    filtering of GECCO and DeepBGC data and choosing optimal thresholds for them,
+    package allows to form groups of semi-identical BGCs, allowing better 
+    annotation and boundary resolution of each one. The output of BGCViz can 
+    serve as input to clinker software.
 License: MIT + file LICENSE
 biocViews: Visualization, MultipleComparison, FunctionalGenomics, ShinyApps
 Imports: 

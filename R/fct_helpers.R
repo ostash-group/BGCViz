@@ -90,9 +90,9 @@ hybrid_col <- function(data) {
 #'
 #' @export
 get_defaults <- function(write_to = getwd()) {
-  rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
-  option_data <- utils::read.csv(rename_file)
-  utils::write.csv(option_data, paste0(write_to, "/BGCViz_options.csv"), row.names = FALSE)
+    rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
+    option_data <- utils::read.csv(rename_file)
+    utils::write.csv(option_data, paste0(write_to, "/BGCViz_options.csv"), row.names = FALSE)
 }
 #' set_defaults
 #'
@@ -102,15 +102,15 @@ get_defaults <- function(write_to = getwd()) {
 #' @param csv_file - path to csv file with default options.
 #'
 #' @return csv file, written to package settings
-#' 
-#' @examples 
+#'
+#' @examples
 #' \dontrun{
 #' set_defaults(<csv-file>)
 #' }
 #'
 #' @export
 set_defaults <- function(csv_file) {
-  rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
-  option_data <- utils::read.csv(csv_file)
-  utils::write.csv(option_data, rename_file, row.names = FALSE)
+    rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
+    option_data <- utils::read.csv(csv_file)
+    utils::write.csv(option_data, rename_file, row.names = FALSE)
 }
