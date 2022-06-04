@@ -17,3 +17,8 @@ csv file in specified location
 \description{
 Function, that transforms prism json object into dataframe, which could be written to the csv file
 }
+\examples{
+\dontrun{
+prism_to_csv(<json-file>)
+}
+}

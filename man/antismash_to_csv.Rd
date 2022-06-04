@@ -17,3 +17,8 @@ csv file in specified location
 \description{
 Function, that returns dataframe, out of supplied antismash json file
 }
+\examples{
+\dontrun{
+antismash_to_csv(<json-file>)
+}
+}
