@@ -34,10 +34,6 @@ Imports:
     stringr,
     tidyr
 Encoding: UTF-8
-<<<<<<< HEAD
-=======
-LazyData: true
->>>>>>> 4f2ceef3d1cbc9f1cb895f5edea8b180ad67ab94
 RoxygenNote: 7.2.0
 URL: https://github.com/ostash-group/BGCViz
 BugReports: https://github.com/ostash-group/BGCViz/issues
