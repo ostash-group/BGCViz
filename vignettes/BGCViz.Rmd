@@ -39,7 +39,7 @@ After the upload of the first input:
 
 
   
-![anti_upload](../docs/images/anti_upload.png)
+![anti_upload](anti_upload.png)
 
 
   
@@ -47,11 +47,11 @@ After the upload of the first input:
 
 ## Results with only one file upload
 
-1. The first two plots are available for the analysis on the "Annotation visualization and comparison" sidemenu. The first plot contains all the results for the antimash annotation. With more file uploaded, results for whole annotations will appear here, with respect to the chromosome position.
+1. The first two plots are available for the analysis on the "Annotation visualization and comparison" sidemenu. The first plot contains all the results for the antismash annotation. With more file uploaded, results for whole annotations will appear here, with respect to the chromosome position.
 
   
 
-![anti_all](../docs/images/anti_all.png)
+![anti_all](anti_all.png)
 
   
 
@@ -59,7 +59,7 @@ After the upload of the first input:
 
   
 
-![anti_one](../docs/images/anti_one.png)
+![anti_one](anti_one.png)
 
   
 
@@ -69,7 +69,7 @@ For now, this plot is the same as a plot above, due to lack of data.
 
 ### Controls
 
-"Visualize AntiSMASH BGC with several types as 'Hybrid'" check box is available under "Global options" sidemenu option. This will rename the multiple typer regions as "hybrid".
+"Visualize AntiSMASH BGC with several types as 'Hybrid'" check box is available under "Global options" sidemenu option. This will rename the multiple type regions as "hybrid".
 
   
 
@@ -93,7 +93,7 @@ Because we uploaded the json PRISM file (from PRISM 4.4.5), which also contains 
 
   
 
-![p-supp.png](../docs/images/p-supp.png)
+![p-supp.png](p-supp.png)
 
   
 
@@ -111,7 +111,7 @@ It is a good practice, to rename the type of clusters after uploading. Renaming 
 To rename the dataset you can press "Rename" button under "Improve visualization" menu.
 
 
-![rename](../docs/images/rename.png)
+![rename](rename.png)
 
   
 
@@ -119,10 +119,10 @@ The legend on the plots changes, but the "Type" field upon mouse cursor hovering
 
   
 
-![renamed](../docs/images/renamed.png)
+![renamed](renamed.png)
 
   
-So , the color indicates, that the product is ripp (on a legend), but Type field on hover indicates the true tyep (lanthipeptide-class-i)
+So , the color indicates, that the product is ripp (on a legend), but Type field on hover indicates the true type (lanthipeptide-class-i)
 
 The renaming scheme is available in the [Glossary](https://ostash-group.github.io/BGCViz/#/Glossary). Guide how to change it available [here](https://ostash-group.github.io/BGCViz/#/BGCViz_renaming_and_coloring_options).
 
@@ -134,7 +134,7 @@ By default, all hybrids remain intact after renaming. However, it is possible to
 
   
 
-![hybrids](../docs/images/hybrids.png)
+![hybrids](hybrids.png)
 
   
 
@@ -149,7 +149,7 @@ The first plot is a default circos plot with an all-vs-all interception. More in
 
   
 
-![biocircos_one](../docs/images/biocircos_one.png)
+![biocircos_one](biocircos_one.png)
 
   
 
@@ -157,7 +157,7 @@ The second plot is actually a legend for circos plot:
 
   
 
-![biocircos_legend](../docs/images/biocircos_dt.png)
+![biocircos_legend](biocircos_dt.png)
 
   
 
@@ -169,7 +169,7 @@ The coloring options for biocircos plot are available under "More" button at the
 
   
 
-![color_biocircos.png](../docs/images/biocircos_color.png)
+![color_biocircos.png](biocircos_color.png)
 
   
 
@@ -187,27 +187,27 @@ For our example, the barplot looks like this:
 
   
 
-![summarize_one.png](../docs/images/summarize_one.png)
+![summarize_one.png](summarize_one.png)
 
   
 
-From the chart we can see that cluster #10 from antismash and #9 from prism have pretty good amout of data supporting their annotation (let's take arbitrary clusters with high count). The group by table reveals, the intercepted clusters:
+From the chart we can see that cluster #10 from antismash and #9 from prism have pretty good amount of data supporting their annotation (let's take arbitrary clusters with high count). The group by table reveals, the intercepted clusters:
 
   
 
-![group_by_one.png](../docs/images/group_by_one.png)
+![group_by_one.png](group_by_one.png)
 
   
 
 We can conclude that cluster #10 from antismash, #9 from PRISM, #12 from SEMPI are the same one. Moreover, it contains 1 resistance genes (#54) and 3 regulatory genes (#51-53), as identified by PRISM. Types of clusters can be viewed with a pop-up with hover with a mouse:
 
-![hover](../docs/images/group_by_hover.png) 
+![hover](group_by_hover.png) 
 
 The interception of all named clusters can be confirmed in the Biocircos plot, or by reviewing PRISM and SEMPI data as a group_by columns:
 
   
 
-![change_summarize.png](../docs/images/change_summarize.png)
+![change_summarize.png](change_summarize.png)
 
   
 
@@ -231,7 +231,7 @@ The output tsv file is the standard input for BGCViz. After uploading several pl
 
   
 
-![deep_one](../docs/images/deep_one.png)
+![deep_one](deep_one.png)
 
   
 
@@ -245,13 +245,13 @@ The output tsv file is the standard input for BGCViz. After uploading several pl
 
 These rates are just the other way to visualize the bar plot
 
-![rates_one.png](../docs/images/rates_one.png)
+![rates_one.png](rates_one.png)
 
 The controls for the comparison plots looks like this:
 
   
 
-![deep_comparison](../docs/images/deep_comparison.png)
+![deep_comparison](deep_comparison.png)
 
   
 
@@ -261,11 +261,11 @@ The data cleaning options for DeepBGC are basically the columns of .tsv output f
 
   
 
-![deep_filters](../docs/images/deepbgc_filters.png)
+![deep_filters](deepbgc_filters.png)
 
 The filters are applied globally for DeepBGC data. For convenience you can use the filtering sliders on the sidebar, not the one under "Global options":
 
-![deep_sidebar](../docs/images/deep_sidebar.png)
+![deep_sidebar](deep_sidebar.png)
 
 Therefore, BGCViz can be used not only as an interception between annotated BGC visualization tool but also serves as a nice GUI for DeepBGC data cleaning. The results on the cleaning can be then downloaded for downstream analysis (Step 7)
 
@@ -284,7 +284,7 @@ After the analysis, you can download all the data as csv files (under Global opt
 
   
 
-![download_button.png](../docs/images/download.png)
+![download_button.png](download.png)
 
 
 ```{r}
