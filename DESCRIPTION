@@ -1,10 +1,14 @@
 Package: BGCViz
 Title: BGCViz
-Version: 0.0.0.9000
+Version: 0.99.0
 Authors@R: person('Pavlo', 'Hrab', email = 'pavlo.hrab@gmail.com', role = c('cre', 'aut'))
-Description: BGCViz is a shiny package, that aims to integrate BGC result from different softwares for same genome sequence.
+Description: BGCViz is a shiny package, that aims to integrate BGC result 
+    from different softwares for same genome sequence. On top of additional 
+    filtering of GECCO and DeepBGC data, package allows to form groups of
+    semi-identical BGCs, allowing better annotation and boundary resolution
+    of each one.
 License: MIT + file LICENSE
-biocViews: 
+biocViews: Visualization, MultipleComparison, FunctionalGenomics, ShinyApps
 Imports: 
     BioCircos,
     config (>= 0.3.1),
@@ -30,7 +34,10 @@ Imports:
     stringr,
     tidyr
 Encoding: UTF-8
+<<<<<<< HEAD
+=======
 LazyData: true
+>>>>>>> 4f2ceef3d1cbc9f1cb895f5edea8b180ad67ab94
 RoxygenNote: 7.2.0
 URL: https://github.com/ostash-group/BGCViz
 BugReports: https://github.com/ostash-group/BGCViz/issues
@@ -45,4 +52,4 @@ Config/testthat/edition: 3
 Language: en-US
 VignetteBuilder: knitr
 Depends: 
-    R (>= 2.10)
+    R (>= 4.2.0)
