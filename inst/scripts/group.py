@@ -39,16 +39,16 @@ def main():
 	seq_file = sys.argv[1]
 
 	print("Searching for antismash files...")
-	if os.path.exists("antismash_biocircos.csv"):
+	if os.path.exists("anti_biocircos.csv"):
 		print("Found!")
-		data = pd.read_csv("antismash_biocircos.csv")
+		data = pd.read_csv("anti_biocircos.csv")
 		label = "Antismash"
 		write_gbs(group_by, data, label, seq_file)
 
 	print("Searching for deepbcg files...")
-	if os.path.exists("deepbgc_biocircos.csv"):
+	if os.path.exists("deep_biocircos.csv"):
 		print("Found!")
-		data = pd.read_csv("deepbgc_biocircos.csv")
+		data = pd.read_csv("deep_biocircos.csv")
 		label = "DeepBGC"
 		write_gbs(group_by, data, label, seq_file)
 
