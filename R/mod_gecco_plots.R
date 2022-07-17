@@ -162,8 +162,8 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
             # Store dataframe in reactive value for later use.
             vals$fullness_gecco <- data.frame(fullnes_of_annotation)
             # Make text to show on a barplot to point on additional scores' thresholds
-            annotateText <- paste("Applied additional thresholds", paste("Average p-value:", shiny::isolate(as.character(input$score_average_gecco))),
-                paste("Cluster type score:", shiny::isolate(as.character(input$score_cluster_gecco))),
+            annotateText <- paste("Applied additional thresholds", paste("Average p-value:", shiny::isolate(as.character(vals$score_average_gecco))),
+                paste("Cluster type score:", shiny::isolate(as.character(vals$score_cluster_gecco))),
                 sep = "\n"
             )
 
