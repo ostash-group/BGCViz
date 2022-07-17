@@ -88,11 +88,10 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
             gecco_inter_1 <- vals$gecco_data_filtered
             # Decide which score to use for basic thresholds on x axis
             if (input$score_type_gecco == "avg_p") {
-                score <- "score_a"
+              gecco_inter_1$score <- gecco_inter_1$score_a
             } else if (input$score_type_gecco == "Cluster_Type") {
-                score <- "score_c"
+              gecco_inter_1$score <- gecco_inter_1$score_c
             }
-            gecco_inter_1$score <- gecco_inter_1[[score]]
 
             # Loop over thresholds with given step. Get the interception of antismash data with DeepBGC one at given x axis thresholds with additionsl ones
             for (dataframe_1 in seq(input$plot_start_gecco, 99, input$plot_step_gecco)) {
@@ -129,14 +128,13 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
                     query <- GenomicRanges::makeGRangesFromDataFrame(gecco_inter)
                     subject <- GenomicRanges::makeGRangesFromDataFrame(anti_inter)
                     interseption <- GenomicRanges::findOverlaps(query, subject)
-                    inter_bgc <- length(interseption@from)
+                    inter_bgc <- length(unique(interseption@from))
                     len_new <- length(gecco_inter$seqnames) - inter_bgc
                 } else {
                     inter_bgc <- 0
                     len_new <- 0
                 }
-
-
+               
                 if (input$ref_comparison_gecco == "Antismash") {
                     used_antismash <- length(vals$anti_data$Cluster) - inter_bgc
                     cols <- c("Only Antismash", "GECCO+Antismash", "Only GECCO")
@@ -163,11 +161,9 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
 
             # Store dataframe in reactive value for later use.
             vals$fullness_gecco <- data.frame(fullnes_of_annotation)
-            # write.csv(fullnes_of_annotation, "fullness.csv", row.names = FALSE)
-
             # Make text to show on a barplot to point on additional scores' thresholds
-            annotateText <- paste("Applied additional thresholds", paste("Average p-value:", as.character(score_average_gecco)),
-                paste("Cluster type score:", as.character(score_cluster_gecco)),
+            annotateText <- paste("Applied additional thresholds", paste("Average p-value:", shiny::isolate(as.character(input$score_average_gecco))),
+                paste("Cluster type score:", shiny::isolate(as.character(input$score_cluster_gecco))),
                 sep = "\n"
             )
 
