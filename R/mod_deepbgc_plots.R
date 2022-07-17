@@ -128,15 +128,12 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                     query <- GenomicRanges::makeGRangesFromDataFrame(deep_inter)
                     subject <- GenomicRanges::makeGRangesFromDataFrame(anti_inter)
                     interseption <- GenomicRanges::findOverlaps(query, subject)
-                    inter_bgc <- length(interseption@from)
+                    inter_bgc <- length(unique(interseption@from))
                     len_new <- length(deep_inter$seqnames) - inter_bgc
                 } else {
                     inter_bgc <- 0
                     len_new <- 0
                 }
-                print(deep_inter)
-                print(inter_bgc)
-                print(len_new)
                 if (input$ref_comparison == "Antismash") {
                     used_antismash <- length(shiny::isolate(vals$anti_data$Cluster)) - inter_bgc
                     cols <- c("Only Antismash", "DeepBGC+Antismash", "Only DeepBGC")
@@ -160,16 +157,14 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                 # Combine previously created empty dataframe with this one to store results
                 fullnes_of_annotation <- rbind(fullnes_of_annotation, fullnes_of_annotation_1)
             }
-            print(data.frame(fullnes_of_annotation))
 
             # Store dataframe in reactive value for later use.
             vals$fullness_deep <- data.frame(fullnes_of_annotation)
-            # write.csv(fullnes_of_annotation, "fullness.csv", row.names = FALSE)
 
             # Make text to show on a barplot to point on additional scores' thresholds
-            annotateText <- paste("Applied additional thresholds", paste("Activity score:", as.character(score_a)),
-                paste("DeepBGC score:", as.character(score_d)),
-                paste("Cluster type score:", as.character(score_c)),
+            annotateText <- paste("Applied additional thresholds", paste("Activity score:", shiny::isolate(as.character(vals$score_a))),
+                paste("DeepBGC score:", shiny::isolate(as.character(vals$score_d))),
+                paste("Cluster type score:", shiny::isolate(as.character(vals$score_c))),
                 sep = "\n"
             )
 
