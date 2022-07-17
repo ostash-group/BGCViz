@@ -79,7 +79,7 @@ def main():
   if os.path.exists("prism_supp_biocircos.csv"):
     print("Found!")
     data = pd.read_csv("prism_supp_biocircos.csv")
-    label = "PRISM-supp"
+    label = "PRISM-Supp"
     write_gbs(group_by, data, label, seq_file)
 
   print("Searching for GECCO files...")
