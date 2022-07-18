@@ -2,6 +2,8 @@ from Bio import SeqIO
 import sys
 import os
 import pandas as pd
+import argparse
+
 
 
 def convert_gbff(seq_file):
@@ -22,7 +24,7 @@ def convert_gbff(seq_file):
 		converted = seq_file
 	return converted
 
-def write_gbs(group_by, data, label, seq_file):
+def write_gbs(group_by, data, label, seq_file, args):
 	counter = 0 
 	fl = convert_gbff(seq_file)
 	with open(fl, "r") as handle:
@@ -45,7 +47,9 @@ def write_gbs(group_by, data, label, seq_file):
 					else:
 						os.mkdir(group)
 					print("Working on: "+ label+"_"+"cluster_"+str(list_l[i])+"_"+str(group))
-
+					if os.path.exists(group+"/"+label+"_"+"cluster_"+str(list_l[i])+"_"+str(group)+".gb") and not args.force:
+						print("Files exist! Please use --force option to override them")
+						continue
 					loci = [feat for feat in record.features if feat.type == "CDS"]
 					start_new = int(start[i])
 					end_new = int(stop[i])
@@ -54,66 +58,57 @@ def write_gbs(group_by, data, label, seq_file):
 					subrecord.annotations = annotation
 					SeqIO.write(subrecord, group+"/"+label+"_"+"cluster_"+str(list_l[i])+"_"+str(group)+".gb", "genbank")
 
+					
+def group_gb_files(group_by, seq_file, args):
+	data_to_search = {
+		"antiSMASH" : ("anti_biocircos.csv", "Antismash"),
+		"DeepBGC" : ("deep_biocircos.csv","DeepBGC" ),
+		"PRISM" : ("prism_biocircos.csv", "PRISM"),
+		"RREfinder" : ("rre_biocircos.csv", "RRE-Finder"),
+		"SEMPI" : ("sempi_biocircos.csv", "SEMPI"),
+		"ARTS" : ("arts_biocircos.csv", "ARTS"),
+		"PRISM supplement" : ("prism_supp_biocircos.csv", "PRISM-Supp"),
+		"GECCO" : ("gecco_biocircos.csv", "GECCO")
+	}
+	for k,v in data_to_search.items():
+		print("Searching for "+str(k)+" files...")
+		if os.path.exists(v[0]):
+			print("Found!")
+			data = pd.read_csv(v[0])
+			label = v[1]
+			write_gbs(group_by, data, label, seq_file, args)
+
+
+def run_clinker(group_by):
+	for  index, row in pd.DataFrame(group_by["Group"]).iterrows():
+		group = group_by.Group[index]
+		if os.path.isdir("clinker_plots"):
+			pass
+		else:
+			os.mkdir("clinker_plots")
+		os.system(f"clinker {group} --plot clinker_plots/{group}.html ")
+
 def main():
+	# Reading data
 	group_by = pd.read_csv("group_by.csv", dtype = str)
-	seq_file = sys.argv[1]
 
-	print("Searching for antismash files...")
-	if os.path.exists("anti_biocircos.csv"):
-		print("Found!")
-		data = pd.read_csv("anti_biocircos.csv")
-		label = "Antismash"
-		write_gbs(group_by, data, label, seq_file)
+	# Parsing arguments
+	parser = argparse.ArgumentParser(description='Small helper script for BGCViz')
+	parser.add_argument("-i", "--input", help="Input .gb/.gbk/.gbff file. One record per file will be used (as one genome)")
+	parser.add_argument("--force", help="Force overwrite calculated results",action=argparse.BooleanOptionalAction)
+	parser.add_argument("-cl", "--run_clinker", help="Automatically runs clinker on groups. Results are stored in 'clinker_plots' folder", 
+	action=argparse.BooleanOptionalAction)
+	args = parser.parse_args()
 
-	print("Searching for deepbcg files...")
-	if os.path.exists("deep_biocircos.csv"):
-		print("Found!")
-		data = pd.read_csv("deep_biocircos.csv")
-		label = "DeepBGC"
-		write_gbs(group_by, data, label, seq_file)
+	# Run grouping for gb files
+	group_gb_files(group_by, args.input, args)
 
-	print("Searching for prism files...")
-	if os.path.exists("prism_biocircos.csv"):
-		print("Found!")
-		data = pd.read_csv("prism_biocircos.csv")
-		label = "PRISM"
-		write_gbs(group_by, data, label, seq_file)
+	#Run clinker
+	if args.run_clinker:
+		run_clinker(group_by)
 
-	print("Searching for rre-finder files...")
-	if os.path.exists("rre_biocircos.csv"):
-		print("Found!")
-		data = pd.read_csv("rre_biocircos.csv")
-		label = "RRE-Finder"
-		write_gbs(group_by, data, label, seq_file)
-
-	print("Searching for sempi files...")
-	if os.path.exists("sempi_biocircos.csv"):
-		print("Found!")
-		data = pd.read_csv("sempi_biocircos.csv")
-		label = "SEMPI"
-		write_gbs(group_by, data, label, seq_file)
-
-	print("Searching for ARTS files...")
-	if os.path.exists("arts_biocircos.csv"):
-		print("Found!")
-		data = pd.read_csv("arts_biocircos.csv")
-		label = "ARTS"
-		write_gbs(group_by, data, label, seq_file)
-
-	print("Searching for PRISM supplement files...")
-	if os.path.exists("prism_supp_biocircos.csv"):
-		print("Found!")
-		data = pd.read_csv("prism_supp_biocircos.csv")
-		label = "PRISM-Supp"
-		write_gbs(group_by, data, label, seq_file)
-
-	print("Searching for GECCO files...")
-	if os.path.exists("gecco_biocircos.csv"):
-		print("Found!")
-		data = pd.read_csv("gecco_biocircos.csv")
-		label = "GECCO"
-		write_gbs(group_by, data, label, seq_file)
-
+	# Bye message
+	print("Analysis finished successfuly!")
 
 
 if __name__ == "__main__":
