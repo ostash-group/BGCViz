@@ -44,6 +44,7 @@ pip install biopython pandas clinker
 
 Pip should be already installed if you have [Python](https://www.python.org) installed in your system
 # Step 1. Group the GenBank records
+
 ## Inputs
 
 There is one input -> genome sequence, which was used for BCG annotations in GenBank format. 
@@ -52,11 +53,19 @@ There is one input -> genome sequence, which was used for BCG annotations in Gen
 The usage is pretty straightforward - you need to specify only one input - master GenBank file :
 
 ```bash
-python group.py <location-of-your-gb-file>
+python group.py -i <location-of-your-gb-file>
 ```
+Or if you would like to run clinker as well:
+
+```bash
+python group.py -i <location-of-your-gb-file> -cl
+```
+The last will run clinker automatically. 
+
+**Note** It can take a while for clinker to run. Also all results will be saved into `clinker_plots` folder as `.html` files. But everytime when the file is created clinker would also open browser window with plot. This behaviour cannot be changed... 
 
 ## Results
-The script is working rather slow. The grouping can take up to 20-30 min. The result of the grouping is several folders, which are named as "group_1", "group_2", etc. These folders hold extracted records in GenBank format.
+The result of the grouping is several folders, which are named as "group_1", "group_2", etc. These folders hold extracted records in GenBank format.
 
 # Step 2. Run clinker
 
@@ -83,3 +92,5 @@ This is a result of running clinker with the following command:
 ```bash
 clinker group_3/*.gb --plot
 ```
+
+**You can also generate clinker plots automatically in group.py script for all groups. See Step 1**

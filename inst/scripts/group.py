@@ -24,11 +24,20 @@ def convert_gbff(seq_file):
 		converted = seq_file
 	return converted
 
+def solve_incomplete_CDS(start_new, end_new, loci):
+	for feat in loci:
+		if feat.location.start.position <= start_new and feat.location.end.position > start_new:
+			start_new = feat.location._start.position
+		if feat.location.start.position <= end_new and feat.location.end.position > end_new:
+			end_new = feat.location.end.position
+	return start_new, end_new
+
 def write_gbs(group_by, data, label, seq_file, args):
 	counter = 0 
 	fl = convert_gbff(seq_file)
 	with open(fl, "r") as handle:
 		record =  SeqIO.read(handle, "genbank")
+		loci = [feat for feat in record.features if feat.type == "CDS"]
 		for  index, row in pd.DataFrame(group_by[label].dropna()).iterrows():
 			counter += 1
 			if (counter >= len(pd.DataFrame(group_by[label].dropna()).index)):
@@ -50,9 +59,7 @@ def write_gbs(group_by, data, label, seq_file, args):
 					if os.path.exists(group+"/"+label+"_"+"cluster_"+str(list_l[i])+"_"+str(group)+".gb") and not args.force:
 						print("Files exist! Please use --force option to override them")
 						continue
-					loci = [feat for feat in record.features if feat.type == "CDS"]
-					start_new = int(start[i])
-					end_new = int(stop[i])
+					start_new, end_new = solve_incomplete_CDS(int(start[i]), int(stop[i]), loci)
 					subrecord = record[start_new:end_new]
 					annotation={"molecule_type":"DNA"}
 					subrecord.annotations = annotation
@@ -86,7 +93,7 @@ def run_clinker(group_by):
 			pass
 		else:
 			os.mkdir("clinker_plots")
-		os.system(f"clinker {group} --plot clinker_plots/{group}.html ")
+		os.system(f"clinker {group} --plot clinker_plots/{group}.html  -i 0.9")
 
 def main():
 	# Reading data
