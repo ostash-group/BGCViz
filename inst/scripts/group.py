@@ -55,9 +55,11 @@ def write_gbs(group_by, data, label, seq_file, args):
 						pass
 					else:
 						os.mkdir(group)
-					print("Working on: "+ label+"_"+"cluster_"+str(list_l[i])+"_"+str(group))
+					if not args.quiet:
+						print("Working on: "+ label+"_"+"cluster_"+str(list_l[i])+"_"+str(group))
 					if os.path.exists(group+"/"+label+"_"+"cluster_"+str(list_l[i])+"_"+str(group)+".gb") and not args.force:
-						print("Files exist! Please use --force option to override them")
+						if counter <=1: 
+							print("Files exist! Please use --force option to override them")
 						continue
 					start_new, end_new = solve_incomplete_CDS(int(start[i]), int(stop[i]), loci)
 					subrecord = record[start_new:end_new]
@@ -78,9 +80,11 @@ def group_gb_files(group_by, seq_file, args):
 		"GECCO" : ("gecco_biocircos.csv", "GECCO")
 	}
 	for k,v in data_to_search.items():
-		print("Searching for "+str(k)+" files...")
+		if not args.quiet:
+			print("Searching for "+str(k)+" files...")
 		if os.path.exists(v[0]):
-			print("Found!")
+			if not args.quiet:
+				print("Found!")
 			data = pd.read_csv(v[0])
 			label = v[1]
 			write_gbs(group_by, data, label, seq_file, args)
@@ -103,6 +107,7 @@ def main():
 	parser = argparse.ArgumentParser(description='Small helper script for BGCViz')
 	parser.add_argument("-i", "--input", help="Input .gb/.gbk/.gbff file. One record per file will be used (as one genome)")
 	parser.add_argument("--force", help="Force overwrite calculated results",action=argparse.BooleanOptionalAction)
+	parser.add_argument("--quiet", help="Run silently. Clinker will run as usual",action=argparse.BooleanOptionalAction)
 	parser.add_argument("-cl", "--run_clinker", help="Automatically runs clinker on groups. Results are stored in 'clinker_plots' folder", 
 	action=argparse.BooleanOptionalAction)
 	args = parser.parse_args()
