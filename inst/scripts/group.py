@@ -89,14 +89,14 @@ def group_gb_files(group_by, seq_file, args):
 			write_gbs(group_by, data, label, seq_file, args)
 
 
-def run_clinker(group_by):
+def run_clinker(group_by, args):
 	for  index, row in pd.DataFrame(group_by["Group"]).iterrows():
 		group = group_by.Group[index]
 		if os.path.isdir("clinker_plots"):
 			pass
 		else:
 			os.mkdir("clinker_plots")
-		os.system(f"clinker {group} --plot clinker_plots/{group}.html  -i 0.9")
+		os.system(f"clinker {group} --plot clinker_plots/{group}.html  -i 0.9 -j {args.jobs}")
 
 def main():
 	# Reading data
@@ -104,11 +104,12 @@ def main():
 
 	# Parsing arguments
 	parser = argparse.ArgumentParser(description='Small helper script for BGCViz')
-	parser.add_argument("-i", "--input", help="Input .gb/.gbk/.gbff file. One record per file will be used (as one genome)")
-	parser.add_argument("--force", help="Force overwrite calculated results",action=argparse.BooleanOptionalAction)
-	parser.add_argument("--quiet", help="Run silently. Clinker will run as usual",action=argparse.BooleanOptionalAction)
-	parser.add_argument("-cl", "--run_clinker", help="Automatically runs clinker on groups. Results are stored in 'clinker_plots' folder", 
+	parser.add_argument("-i", "--input", help="Input .gb/.gbk/.gbff file. One record per file will be used (as one genome). Required")
+	parser.add_argument("--force", help="Force overwrite calculated results. [default = False]",action=argparse.BooleanOptionalAction)
+	parser.add_argument("--quiet", help="Run silently. Clinker will run as usual. [default = False]",action=argparse.BooleanOptionalAction)
+	parser.add_argument("-cl", "--run_clinker", help="Automatically runs clinker on groups. Results are stored in 'clinker_plots' folder. [default = False]", 
 	action=argparse.BooleanOptionalAction)
+	parser.add_argument("-j", "--jobs", help="Number of threads for clinker analysis (0=all). [default = 0] ", default=0)
 	args = parser.parse_args()
 
 	# Run grouping for gb files
@@ -116,7 +117,7 @@ def main():
 
 	#Run clinker
 	if args.run_clinker:
-		run_clinker(group_by)
+		run_clinker(group_by, args)
 
 	# Bye message
 	print("Analysis finished successfuly!")
