@@ -4,28 +4,48 @@ import os
 import pandas as pd
 
 
-def write_gbs(group_by, data, label, seq_file):
-	counter = 0
-	for  index, row in pd.DataFrame(group_by[label].dropna()).iterrows():
-		counter += 1
-		if (counter >= len(pd.DataFrame(group_by[label].dropna()).index)):
-				break
+def convert_gbff(seq_file):
+	if seq_file.split('.')[-1] == 'gbff':
+		if os.path.exists(os.path.splitext(os.path.basename(seq_file))[0]+'.gbk'):
+			converted = os.path.splitext(os.path.basename(seq_file))[0]+'.gbk'
 		else:
-			start = []
-			stop = []
-			list_l = row[label].split(",")
-			for i in range(len(list_l)):
-				list_l[i] = int(list_l[i])
-				start.append(data[list_l[i] == data['Cluster']].Start.item())
-				stop.append(data[list_l[i] == data['Cluster']].Stop.item())
-				group = group_by.Group[index]
-				if os.path.isdir(group):
-					pass
-				else:
-					os.mkdir(group)
-				file =  SeqIO.parse(open(seq_file), "genbank")
-				print("Working on: "+ label+"_"+"cluster_"+str(list_l[i])+"_"+str(group))
-				for record in file:
+			file_name = os.path.basename(seq_file)
+			with open(seq_file, "r") as f:
+				for index, record in enumerate(SeqIO.parse(f, "genbank")):
+					print(index)
+					if index > 0:
+						break
+					else:
+						SeqIO.write(record, os.path.splitext(os.path.basename(seq_file))[0]+'.gbk', "genbank")
+			converted = os.path.splitext(os.path.basename(seq_file))[0]+'.gbk'
+	else:
+		converted = seq_file
+	return converted
+
+def write_gbs(group_by, data, label, seq_file):
+	counter = 0 
+	fl = convert_gbff(seq_file)
+	with open(fl, "r") as handle:
+		record =  SeqIO.read(handle, "genbank")
+		for  index, row in pd.DataFrame(group_by[label].dropna()).iterrows():
+			counter += 1
+			if (counter >= len(pd.DataFrame(group_by[label].dropna()).index)):
+					break
+			else:
+				start = []
+				stop = []
+				list_l = row[label].split(",")
+				for i in range(len(list_l)):
+					list_l[i] = int(list_l[i])
+					start.append(data[list_l[i] == data['Cluster']].Start.item())
+					stop.append(data[list_l[i] == data['Cluster']].Stop.item())
+					group = group_by.Group[index]
+					if os.path.isdir(group):
+						pass
+					else:
+						os.mkdir(group)
+					print("Working on: "+ label+"_"+"cluster_"+str(list_l[i])+"_"+str(group))
+
 					loci = [feat for feat in record.features if feat.type == "CDS"]
 					start_new = int(start[i])
 					end_new = int(stop[i])
@@ -98,4 +118,5 @@ def main():
 
 if __name__ == "__main__":
 	main()
+
 
