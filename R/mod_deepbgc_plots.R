@@ -91,13 +91,12 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
             deep_inter_1 <- vals$deep_data_filtered
             # Decide which score to use for basic thresholds on x axis
             if (input$score_type == "Activity") {
-                score <- "score_a"
+              deep_inter_1$score <- deep_inter_1$score_a
             } else if (input$score_type == "DeepBGC") {
-                score <- "score_d"
+              deep_inter_1$score <- deep_inter_1$score_d 
             } else if (input$score_type == "Cluster_Type") {
-                score <- "score_c"
+              deep_inter_1$score <- deep_inter_1$score_c 
             }
-            deep_inter_1$score <- deep_inter_1[[score]]
             # Loop over thresholds with given step. Get the interception of antismash data with DeepBGC one at given x axis thresholds with additionsl ones
             for (dataframe_1 in seq(input$plot_start, 99, input$plot_step)) {
                 deep_inter <- deep_inter_1 %>%
@@ -124,19 +123,17 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                 }
 
 
-
                 # Get the interception of two matrices
                 if (length(deep_inter$Start) > 0) {
                     query <- GenomicRanges::makeGRangesFromDataFrame(deep_inter)
                     subject <- GenomicRanges::makeGRangesFromDataFrame(anti_inter)
                     interseption <- GenomicRanges::findOverlaps(query, subject)
-                    inter_bgc <- length(interseption@from)
+                    inter_bgc <- length(unique(interseption@from))
                     len_new <- length(deep_inter$seqnames) - inter_bgc
                 } else {
                     inter_bgc <- 0
                     len_new <- 0
                 }
-
                 if (input$ref_comparison == "Antismash") {
                     used_antismash <- length(shiny::isolate(vals$anti_data$Cluster)) - inter_bgc
                     cols <- c("Only Antismash", "DeepBGC+Antismash", "Only DeepBGC")
@@ -163,12 +160,11 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
 
             # Store dataframe in reactive value for later use.
             vals$fullness_deep <- data.frame(fullnes_of_annotation)
-            # write.csv(fullnes_of_annotation, "fullness.csv", row.names = FALSE)
 
             # Make text to show on a barplot to point on additional scores' thresholds
-            annotateText <- paste("Applied additional thresholds", paste("Activity score:", as.character(score_a)),
-                paste("DeepBGC score:", as.character(score_d)),
-                paste("Cluster type score:", as.character(score_c)),
+            annotateText <- paste("Applied additional thresholds", paste("Activity score:", shiny::isolate(as.character(vals$score_a))),
+                paste("DeepBGC score:", shiny::isolate(as.character(vals$score_d))),
+                paste("Cluster type score:", shiny::isolate(as.character(vals$score_c))),
                 sep = "\n"
             )
 
