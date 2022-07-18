@@ -14,7 +14,6 @@ def convert_gbff(seq_file):
 			file_name = os.path.basename(seq_file)
 			with open(seq_file, "r") as f:
 				for index, record in enumerate(SeqIO.parse(f, "genbank")):
-					print(index)
 					if index > 0:
 						break
 					else:
