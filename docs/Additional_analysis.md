@@ -62,7 +62,7 @@ python group.py -i <location-of-your-gb-file> -cl
 ```
 The last will run clinker automatically. 
 
-**Note** It can take a while for clinker to run. Also all results will be saved into `clinker_plots` folder as `.html` files. But everytime when the file is created clinker would also open browser window with plot. This behaviour cannot be changed... 
+**Note** It can take a while for clinker to run. Also all results will be saved into `clinker_plots` folder as `.html` files.
 
 ## Results
 The result of the grouping is several folders, which are named as "group_1", "group_2", etc. These folders hold extracted records in GenBank format.
@@ -94,3 +94,25 @@ clinker group_3/*.gb --plot
 ```
 
 **You can also generate clinker plots automatically in group.py script for all groups. See Step 1**
+
+Script options:
+```bash
+ $ python group.py -h
+usage: group.py [-h] -i INPUT [--force | --no-force] [--quiet | --no-quiet]
+                [-cl | --run_clinker | --no-run_clinker] [-j JOBS]
+
+Small helper script for BGCViz
+
+options:
+  -h, --help            show this help message and exit
+  --force, --no-force   Force overwrite calculated results. [default = False]
+  --quiet, --no-quiet   Run silently. Clinker will run as usual. [default = False]
+  -cl, --run_clinker, --no-run_clinker
+                        Automatically runs clinker on groups. Results are stored in 'clinker_plots'
+                        folder. [default = False]
+  -j JOBS, --jobs JOBS  Number of threads for clinker analysis (0=all). [default = 0]
+
+Required arguments:
+  -i INPUT, --input INPUT
+                        Input .gb/.gbk/.gbff file. One record per file will be used (as one genome)
+```
