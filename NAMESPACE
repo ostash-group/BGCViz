@@ -3,6 +3,7 @@
 export(antismash_to_csv)
 export(arts_to_csv)
 export(get_defaults)
+export(get_dissect_example)
 export(prism_to_csv)
 export(run_app)
 export(sempi_to_csv)

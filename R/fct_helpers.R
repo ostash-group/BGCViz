@@ -114,3 +114,23 @@ set_defaults <- function(csv_file) {
     option_data <- utils::read.csv(csv_file)
     utils::write.csv(option_data, rename_file, row.names = FALSE)
 }
+#' get_dissect_example
+#'
+#' @description Function, which downloads a csv file for dissect.py into specified path.
+#' Use to separate regions into separate clusters
+#'
+#' @param write_to - path to write csv file to.
+#'
+#' @return csv file, written to package settings
+#'
+#' @examples
+#' \dontrun{
+#' get_dissect_example(write_to)
+#' }
+#'
+#' @export
+get_dissect_example <- function(write_to = getwd()) {
+  rename_file <- system.file("extdata", "dissect.csv", package = "BGCViz")
+  option_data <- utils::read.csv(rename_file)
+  utils::write.csv(option_data, paste0(write_to, "/dissect.csv"), row.names = FALSE)
+}
