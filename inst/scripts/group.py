@@ -104,7 +104,8 @@ def main():
 
 	# Parsing arguments
 	parser = argparse.ArgumentParser(description='Small helper script for BGCViz')
-	parser.add_argument("-i", "--input", help="Input .gb/.gbk/.gbff file. One record per file will be used (as one genome). Required")
+	required = parser.add_argument_group('Required arguments')
+	required.add_argument("-i", "--input", help="Input .gb/.gbk/.gbff file. One record per file will be used (as one genome)", required = True)
 	parser.add_argument("--force", help="Force overwrite calculated results. [default = False]",action=argparse.BooleanOptionalAction)
 	parser.add_argument("--quiet", help="Run silently. Clinker will run as usual. [default = False]",action=argparse.BooleanOptionalAction)
 	parser.add_argument("-cl", "--run_clinker", help="Automatically runs clinker on groups. Results are stored in 'clinker_plots' folder. [default = False]", 

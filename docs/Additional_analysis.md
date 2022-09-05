@@ -95,6 +95,7 @@ clinker group_3/*.gb --plot
 
 **You can also generate clinker plots automatically in group.py script for all groups. See Step 1**
 
+# Group_by.py options
 Script options:
 ```bash
  $ python group.py -h
@@ -115,4 +116,45 @@ options:
 Required arguments:
   -i INPUT, --input INPUT
                         Input .gb/.gbk/.gbff file. One record per file will be used (as one genome)
+```
+
+
+# Step 3. Separate Antismash regions into separate clusters
+
+Often, antiSMASH annotates closely related clusters as one region. Therefore, if you would like to re-analyse those regions as separate clusters, you can separate them using our `dissect.py` scriptinto separate GenBank files.
+
+## Input
+Script takes as input a csv file with the following format:
+
+group|separate_before|by_software
+| ----------- | ----------- |  ----------- |
+1|locus_tag_1 (will separate cluster into 2, locus_tag_1 will go into second half)|antismash, gecco, deepbgc, prism, sempi (select one of the following)
+3|locus_tag_1, locus_tag_2 (will separate cluster into 3, specified genes goes to next cluster (2nd and 3rd in this example))|antismash
+
+This exact example can be downloaded as a csv file, using `BGCViz::get_dissect_example(<write_to>)` command, which takes one argument - where to write csv file.
+
+## Usage
+
+The script should be run after `group_by.py` (See [Step # 1](#step-1-group-the-genbank-records)) in the folder it was downloaded to.
+
+```
+python dissect.py -i dissect.csv
+```
+## Output
+
+Script output are GenBank files in `dessected` folder.
+
+## Dissect.py options
+
+```bash
+usage: dissect.py [-h] -i INPUT
+
+Small helper script for BGCViz
+
+options:
+  -h, --help            show this help message and exit
+
+Required arguments:
+  -i INPUT, --input INPUT
+                        .csv file with clusters to separate
 ```
