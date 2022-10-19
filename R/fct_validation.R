@@ -163,12 +163,12 @@ validate_gecco_input <- function(data) {
     data_names <- names(data)
     col_names <- c(
         "start", "end", "average_p", "max_p", "type", "alkaloid_probability", "polyketide_probability",
-        "ripp_probability", "saccharide_probability", "terpene_probability", "nrp_probability", "other_probability",
+        "ripp_probability", "saccharide_probability", "terpene_probability", "nrp_probability",
         "proteins", "domains"
     )
     num_columns <- c(
         "start", "end", "average_p", "max_p", "alkaloid_probability", "polyketide_probability",
-        "ripp_probability", "saccharide_probability", "terpene_probability", "nrp_probability", "other_probability"
+        "ripp_probability", "saccharide_probability", "terpene_probability", "nrp_probability"
     )
     if (!("cluster" %in% stringr::str_to_lower(data_names))) {
         data$Cluster <- seq(1:dim(data)[1])

@@ -67,17 +67,17 @@ filter_deepbgc <- function(deep_data, cluster_type, score_a_input, score_c_input
 #' @noRd
 filter_gecco <- function(gecco_data, score_cluster_gecco, score_average_gecco, domains_filter_gecco, prot_filter_gecco) {
     # Silence R CMD note
-    alkaloid <- nrps <- other <-
+    alkaloid <- nrps <-
         pks <- ripp <- saccharide <-
         terpene <- score <- Type2 <-
         Cluster_type <- score_a <- score_c <-
         num_domains <- num_prot <- NULL
     score_a_gecco <- apply(gecco_data %>% dplyr::select(c("average_p")), 1, function(x) max(x))
-    score_c_gecco <- apply(gecco_data %>% dplyr::select(c("alkaloid", "nrps", "other", "pks", "ripp", "saccharide", "terpene")), 1, function(x) max(x))
+    score_c_gecco <- apply(gecco_data %>% dplyr::select(c("alkaloid", "nrps", "pks", "ripp", "saccharide", "terpene")), 1, function(x) max(x))
     if (is.null(score_cluster_gecco)) {
         gecco_data <- gecco_data %>%
             dplyr::mutate(score = apply(gecco_data %>%
-                dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene), 1, function(x) max(x))) %>%
+              dplyr::select(alkaloid, nrps, pks, ripp, saccharide, terpene), 1, function(x) max(x))) %>%
             dplyr::mutate(Cluster_type = ifelse(score > 50 / 100, Type2, "under_threshold")) %>%
             dplyr::mutate(Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
             dplyr::filter(
@@ -87,7 +87,7 @@ filter_gecco <- function(gecco_data, score_cluster_gecco, score_average_gecco, d
     } else {
         gecco_data <- gecco_data %>%
             dplyr::mutate(score = apply(gecco_data %>%
-                dplyr::select(alkaloid, nrps, other, pks, ripp, saccharide, terpene), 1, function(x) max(x))) %>%
+                dplyr::select(alkaloid, nrps, pks, ripp, saccharide, terpene), 1, function(x) max(x))) %>%
             dplyr::mutate(Cluster_type = ifelse(score > as.numeric(score_cluster_gecco) / 100, Type2, "under_threshold")) %>%
             dplyr::mutate(Type2 = Cluster_type, score_a = score_a_gecco, score_c = score_c_gecco) %>%
             dplyr::filter(

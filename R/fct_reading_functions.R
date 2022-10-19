@@ -48,12 +48,12 @@ read_gecco <- function(data) {
     gecco_data["Type2"] <- stringr::str_trim(tolower(gecco_data$Type))
     drop_cols <- c(
         "alkaloid_probability", "polyketide_probability", "ripp_probability", "saccharide_probability",
-        "terpene_probability", "nrp_probability", "other_probability"
+        "terpene_probability", "nrp_probability"
     )
     # Read data
     gecco_data <- gecco_data %>%
         dplyr::mutate(
-            pks = polyketide_probability, other = other_probability, nrps = nrp_probability, alkaloid = alkaloid_probability,
+            pks = polyketide_probability,  nrps = nrp_probability, alkaloid = alkaloid_probability,
             terpene = terpene_probability, saccharide = saccharide_probability, ripp = ripp_probability
         ) %>%
         dplyr::select(-dplyr::one_of(drop_cols))
