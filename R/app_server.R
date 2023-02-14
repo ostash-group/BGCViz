@@ -14,7 +14,8 @@ app_server <- function(input, output, session) {
     check_to_rename <- shiny::reactive({
         list(
             input$sempi_data, input$anti_data, input$prism_data,
-            input$sempi_sco, input$anti_sco, input$prism_sco
+            input$sempi_sco, input$anti_sco, input$prism_sco,
+            input$ripp_sco, input$ripp_data
         )
     })
     biocircos_listen <- shiny::reactive({
@@ -22,13 +23,15 @@ app_server <- function(input, output, session) {
             input$biocircos_color, vals$need_filter, input$label_color, input$label_color_class,
             input$ref_col_biocircos, vals$inters_filtered, input$prism_supp_data_input_width, vals$prism_supp_data_input,
             input$arts_width, input$sempi_width, input$rre_width, vals$anti_data, vals$sempi_data, vals$prism_data,
-            vals$coloring_datatable
+            vals$coloring_datatable,
+            vals$ripp_data
         )
     })
     inputData <- shiny::reactive({
         list(
             vals$sempi_data_input, vals$rre_data_input, vals$anti_data_input, vals$prism_data_input,
-            vals$prism_supp_data_input, vals$deep_data_input, vals$gecco_data_input, vals$arts_data_input
+            vals$prism_supp_data_input, vals$deep_data_input, vals$gecco_data_input, vals$arts_data_input,
+            vals$ripp_data_input
         )
     })
     dynamicInput <- shiny::reactive({
@@ -37,7 +40,8 @@ app_server <- function(input, output, session) {
     deep_reference <- shiny::reactive({
         list(
             vals$inters_filtered, vals$rre_more, input$ref, input$arts_width, input$sempi_width, input$rre_width,
-            input$prism_supp_data_input_width, vals$anti_data, vals$prism_data, vals$sempi_data, vals$arts_data
+            input$prism_supp_data_input_width, vals$anti_data, vals$prism_data, vals$sempi_data, vals$arts_data,
+            vals$ripp_data
         )
     })
 
@@ -65,11 +69,12 @@ app_server <- function(input, output, session) {
         gecco_data_filtered = NULL, seg_df_ref_g = NULL, prism_supp_data_input = FALSE, computed = NULL,
         need_filter = FALSE, filter_data = FALSE, choices = list(ref = NULL, group_by = NULL, ref_col_biocircos = NULL, ref_comparison_gecco = NULL, ref_comparison = NULL),
         renamed = NULL, renaming_notification = list(), rename_y_axis = list(), can_plot_deep_ref_2 = FALSE, can_plot_deep_ref = FALSE,
-        can_plot_biocircos = FALSE, can_plot_barplot_rank = FALSE, can_plot_group_table = FALSE, prism_supp_plot = FALSE
+        can_plot_biocircos = FALSE, can_plot_barplot_rank = FALSE, can_plot_group_table = FALSE, prism_supp_plot = FALSE,
+        ripp_data = NULL, ripp_data_input = FALSE, ripp_type = NULL, ripp_interact = NULL
     )
 
     vals$computed <- list(
-        anti = FALSE, deep = FALSE, gecco = FALSE, arts = FALSE, prism = FALSE, sempi = FALSE, prism_supp = FALSE, rre = FALSE
+        anti = FALSE, deep = FALSE, gecco = FALSE, arts = FALSE, prism = FALSE, sempi = FALSE, prism_supp = FALSE, rre = FALSE, ripp = FALSE
     )
     # Making coloring datatable
     rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
@@ -82,24 +87,26 @@ app_server <- function(input, output, session) {
     # Variables, that holds data uploads boolean (so if data is present or not)
     data_uploads <- c(
         "anti_data_input", "sempi_data_input", "prism_data_input", "prism_supp_data_input",
-        "arts_data_input", "deep_data_input", "gecco_data_input", "rre_data_input"
+        "arts_data_input", "deep_data_input", "gecco_data_input", "rre_data_input",
+        "ripp_data_input"
     )
     data_uploads_inter <- c(
         "anti_data_input", "sempi_data_input", "prism_data_input", "prism_json",
-        "arts_data_input", "deep_data_input", "gecco_data_input", "rre_data_input"
+        "arts_data_input", "deep_data_input", "gecco_data_input", "rre_data_input",
+        "ripp_data_input"
     )
     # Universal beginings for variables, used in the app for different data
-    soft_names <- c("anti", "sempi", "prism", "prism_supp", "arts", "deep", "gecco", "rre")
+    soft_names <- c("anti", "sempi", "prism", "prism_supp", "arts", "deep", "gecco", "rre", "ripp")
     # The Namings, meaning how to label the data on the plots
-    soft_namings <- c("Antismash", "SEMPI", "PRISM", "PRISM-Supp", "ARTS", "DeepBGC", "GECCO", "RRE-Finder")
+    soft_namings <- c("Antismash", "SEMPI", "PRISM", "PRISM-Supp", "ARTS", "DeepBGC", "GECCO", "RRE-Finder","RiPPMiner-Genome")
     # Dataframes undes vals$list, that stored the data
-    data_to_use <- c("anti_data", "sempi_data", "prism_data", "prism_supp_data", "arts_data_filtered", "deep_data_filtered", "gecco_data_filtered", "rre_data")
+    data_to_use <- c("anti_data", "sempi_data", "prism_data", "prism_supp_data", "arts_data_filtered", "deep_data_filtered", "gecco_data_filtered", "rre_data","ripp_data")
     # Used in barplot on summarise tab + Annotation on chromosome plots
-    abbr <- c("A", "S", "P", "P-Supp", "AR", "D", "G", "RRE")
+    abbr <- c("A", "S", "P", "P-Supp", "AR", "D", "G", "RRE", "RiPP")
     # Used for deep reference 2 plot
     soft_datafr <- c(
         "seg_df_ref_a", "seg_df_ref_s", "seg_df_ref_p", "seg_df_ref_p_s", "seg_df_ref_ar", "seg_df_ref_d",
-        "seg_df_ref_g", "seg_df_ref_r"
+        "seg_df_ref_g", "seg_df_ref_r", "seg_df_ref_ri"
     )
 
     vals$score_a <- 50
@@ -154,7 +161,42 @@ app_server <- function(input, output, session) {
     # TODO Make tidyr::separate functions for different data types.
     # For now you just have duplicated the code. Specifically for ARTS!
     # Reading functions:
-
+    process_rippminer <- function(data, example_data = FALSE) {
+      if (example_data == TRUE) {
+        ripp_data <- data
+      } else {
+        ripp_data <- read_ripp(data)
+      }
+      vals$ripp_type <- ripp_data$Type2
+      vals$ripp_data <- ripp_data
+      vals$ripp_data_input <- TRUE
+      vals$data_upload_count <- vals$data_upload_count + 1
+      vals$choices$ref <- c(vals$choices$ref, "RippMiner" = "RippMiner")
+      vals$choices$group_by <- c(vals$choices$group_by, "RippMiner" = "RippMiner")
+      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "RippMiner" = "RippMiner")
+      vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "RippMiner" = "RippMiner")
+      vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "RippMiner" = "RippMiner")
+      update_ui_with_data()
+      disable_event_logic()
+      if (vals$data_upload_count == 1) {
+        shiny::updateSelectInput(session, "ref",
+                                 selected = "RippMiner"
+        )
+        shiny::updateSelectInput(session, "group_table_ui_1-group_by",
+                                 selected = "RippMiner"
+        )
+        shiny::updateSelectInput(session, "deep_barplot_ui_1-ref_comparison",
+                                 selected = "RippMiner"
+        )
+        shiny::updateSelectInput(session, "ref_col_biocircos",
+                                 selected = "RippMiner"
+        )
+        shiny::updateSelectInput(session, "gecco_plots_ui_1-ref_comparison_gecco",
+                                 selected = "RippMiner"
+        )
+      }
+    }
+    
     process_antismash <- function(data, example_data = FALSE) {
         if (example_data == TRUE) {
             anti_data <- data
@@ -431,6 +473,10 @@ app_server <- function(input, output, session) {
     #----------------------------------------------------------------
     ##            Loading and processing of example data             -
     ## ----------------------------------------------------------------
+    shiny::observeEvent(input$ripp_sco, {
+      process_rippminer(BGCViz:::ripp_data, example_data = TRUE)
+    })
+    
     shiny::observeEvent(input$anti_sco, {
         process_antismash(BGCViz:::anti_data, example_data = TRUE)
     })
@@ -1097,6 +1143,13 @@ app_server <- function(input, output, session) {
     # dplyr::filter while ploting then.
     shiny::observeEvent(inputData(), ignoreInit = TRUE, priority = 5, {
         # GENERATE DATA
+        if (vals$ripp_data_input == TRUE) {
+          ripp_data <- vals$ripp_data
+          anti_inter <- vals$ripp_data %>%
+            dplyr::select(Start, Stop)
+          anti_inter$seqnames <- "chr"
+        }
+      
         if (vals$anti_data_input == TRUE) {
             anti_data <- vals$anti_data
             anti_inter <- vals$anti_data %>%

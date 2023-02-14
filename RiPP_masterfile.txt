@@ -1,0 +1,5 @@
+#ClusterNo.	ClusterType	From	To
+contig_1_Cluster1	LanthipeptideA	246868	272469
+contig_1_Cluster2	Linaridin	4886990	4940861
+contig_1_Cluster3	LanthipeptideC_D	7407798	7459926
+contig_1_Cluster4	LanthipeptideA	7681180	7705273

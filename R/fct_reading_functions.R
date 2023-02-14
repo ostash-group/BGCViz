@@ -1,6 +1,39 @@
+
+#' #' @description A function, that reads RiPPMiner-Genome file txt
+#' #'
+#' #' @return csv file
+#' #'
+#' #' @noRd
+
+read_ripp <- function(data) {
+    ripp_data <- data
+    # CHANGING COLNAMES -- temporary
+    colnames(ripp_data) <-c("Cluster", "Type", "Start", "Stop")
+    #Validation of input
+    res_validation <- validate_basic_input(ripp_data)
+    if (!(res_validation[[1]])) {
+      ripp_data <- NULL
+      return(NULL)
+    } else {
+      ripp_data <- res_validation[[2]]
+    }
+    #ADDING CHROMOSOME COLUMN
+    ripp_data$Chromosome <- rep("GF", length(ripp_data$Cluster))
+    #Type magic
+    ripp_data$Type <- stringr::str_trim(tolower(ripp_data$Type))
+    ripp_data["Type2"] <- stringr::str_trim(tolower(ripp_data$Type))
+    #Mutate NAs
+    ripp_data <- mutate(ripp_data, Cluster = 1:length(ripp_data$Type))
+
+  return(ripp_data)
+  
+}
+
+
+
 #' read_anti
 #'
-#' @description A function, that reads antismash file
+#' @description A function, that reads RRE-finder file
 #'
 #' @return csv file
 #'
