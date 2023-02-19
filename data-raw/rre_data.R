@@ -1,7 +1,7 @@
 ## code to prepare `rre_data` dataset goes here
 library(magrittr)
 Gene.name <- Coordinates <- NULL # Silence R CMD error
-rre_data <- utils::read.delim("https://raw.githubusercontent.com/pavlohrab/BGCViz-datasets/main/example_data/sco_rre.txt")
+rre_data <- utils::read.delim("https://github.com/ostash-group/BGCViz-datasets/blob/main/example_data/sco_rre.txt")
 # Clean RRE data. Extract coordinates and Locus tag with double underscore delimiter (__)
 rre_data <- rre_data %>%
     tidyr::separate(Gene.name, c("Sequence", "Coordinates", "Locus_tag"), sep = "__") %>%
@@ -18,4 +18,6 @@ rre_data$Start <- as.numeric(rre_data$Start)
 rre_data$Stop <- as.numeric(rre_data$Stop)
 # Store rre data into local variable
 rre_data <- data.frame(rre_data)
-usethis::use_data(rre_data, overwrite = TRUE)
+# usethis::use_data(rre_data, overwrite = TRUE)
+## Look at use_data_internally.R file!
+

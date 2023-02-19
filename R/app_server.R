@@ -1145,9 +1145,9 @@ app_server <- function(input, output, session) {
         # GENERATE DATA
         if (vals$ripp_data_input == TRUE) {
           ripp_data <- vals$ripp_data
-          anti_inter <- vals$ripp_data %>%
+          ripp_inter <- vals$ripp_data %>%
             dplyr::select(Start, Stop)
-          anti_inter$seqnames <- "chr"
+          ripp_inter$seqnames <- "chr"
         }
       
         if (vals$anti_data_input == TRUE) {

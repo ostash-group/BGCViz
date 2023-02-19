@@ -1,5 +1,5 @@
 ## code to prepare `gecco_data` dataset goes here
-gecco_data <- utils::read.delim("https://raw.githubusercontent.com/pavlohrab/BGCViz-datasets/main/example_data/sco_gecco.tsv")
+gecco_data <- utils::read.delim("https://raw.githubusercontent.com/ostash-group/BGCViz-datasets/main/example_data/sco_gecco.tsv")
 # Silence R CMD note
 polyketide_probability <- other_probability <-
     nrp_probability <- alkaloid_probability <-
@@ -29,4 +29,5 @@ gecco_data$num_prot <- sapply(stringr::str_split(as.character(gecco_data$protein
 gecco_data$num_domains <- sapply(stringr::str_split(as.character(gecco_data$domains), ";"), length)
 names(gecco_data)[names(gecco_data) == "start"] <- "Start"
 names(gecco_data)[names(gecco_data) == "end"] <- "Stop"
-usethis::use_data(gecco_data, overwrite = TRUE)
+# usethis::use_data(gecco_data, overwrite = TRUE)
+## Look at use_data_internally.R file!

@@ -18,12 +18,12 @@ read_ripp <- function(data) {
       ripp_data <- res_validation[[2]]
     }
     #ADDING CHROMOSOME COLUMN
-    ripp_data$Chromosome <- rep("GF", length(ripp_data$Cluster))
+    ripp_data$chromosome <- rep("GF", length(ripp_data$Cluster))
     #Type magic
     ripp_data$Type <- stringr::str_trim(tolower(ripp_data$Type))
     ripp_data["Type2"] <- stringr::str_trim(tolower(ripp_data$Type))
     #Mutate NAs
-    ripp_data <- mutate(ripp_data, Cluster = 1:length(ripp_data$Type))
+    ripp_data <- dplyr::mutate(ripp_data, Cluster = 1:length(ripp_data$Type))
 
   return(ripp_data)
   
