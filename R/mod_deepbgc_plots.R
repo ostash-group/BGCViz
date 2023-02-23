@@ -80,7 +80,7 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
             Annotation_rate <- Skip_rate <- Rates_data <-
             Rates <- NULL
         output$deep_barplot <- shiny::renderPlot({
-            shiny::req((vals$deep_data_input == TRUE) & ((vals$anti_data_input == TRUE) | (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE)))
+            shiny::req((vals$deep_data_input == TRUE) & ((vals$anti_data_input == TRUE) | (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE) | (vals$ripp_data_input == TRUE)))
 
 
             # Create empty dataframe to populate later
@@ -120,7 +120,12 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                     anti_inter <- shiny::isolate(vals$sempi_data) %>%
                         dplyr::select(Start, Stop)
                     anti_inter$seqnames <- "chr"
-                }
+                } else if (input$ref_comparison == "RIPP"){
+                    ripp_inter <- shiny::isolate(vals$sempi_data) %>%
+                        dplyr::select(Start, Stop)
+                    ripp_inter$seqnames <- "chr"
+                  }
+                
 
 
                 # Get the interception of two matrices
@@ -146,6 +151,10 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                     used_antismash <- length(shiny::isolate(vals$sempi_data$Cluster)) - inter_bgc
                     cols <- c("Only SEMPI", "DeepBGC+SEMPI", "Only DeepBGC")
                     title <- ggplot2::ggtitle("Comparison of SEMPI and DeepBGC annotations at given score threshold")
+                } else if (input$ref_comparsion == "RIPP"){
+                    used_antismash <- length(shiny::isolate(vals$ripp_data$Cluster)) - inter_bgc
+                    cols <-c("Only RIPP", "DeepBGC+RIPP", "Only DeepBGC")
+                    title <- ggplot2::ggtitle("Comparsion of RIPP and DeepBGC annotations at given score threshold")
                 }
 
                 # Combine all vectors into one dataframe
@@ -207,9 +216,9 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                 test <- test %>%
                     dplyr::mutate(
                         Novelty_rate = test$`Only DeepBGC` / (test$`DeepBGC+PRISM` + test$`Only PRISM`),
-                        # Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+                        # Annotation rate = clusters, annotated by PRISM+deepBGC/ clusters annotated only by prism (We assume that prism annotation is full and reference)
                         Annotation_rate = test$`DeepBGC+PRISM` / length(data$Cluster),
-                        # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+                        # Skip rate = clusters, annotated only by PRISM/ all prism clusters. Points to how much clusters DeepBGC missed
                         Skip_rate = test$`Only PRISM` / length(data$Cluster)
                     )
             } else if (input$ref_comparison == "SEMPI") {
@@ -218,11 +227,22 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                 test <- test %>%
                     dplyr::mutate(
                         Novelty_rate = test$`Only DeepBGC` / (test$`DeepBGC+SEMPI` + test$`Only SEMPI`),
-                        # Annotation rate = clusters, annotated by antismash+deepBGC/ clusters annotated only by antismash (We assume that antismash annotation is full and reference)
+                        # Annotation rate = clusters, annotated by SEMPI+deepBGC/ clusters annotated only by sempi (We assume that sempi annotation is full and reference)
                         Annotation_rate = test$`DeepBGC+SEMPI` / length(data$Cluster),
-                        # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
+                        # Skip rate = clusters, annotated only by SEMPI/ all sempi clusters. Points to how much clusters DeepBGC missed
                         Skip_rate = test$`Only SEMPI` / length(data$Cluster)
                     )
+            } else if (input$ref_comparsion == "RIPP"){
+              data <- vals$ripp_data
+              title <- ggplot2::ggtitle("Rates of DeepBGC/RIPP data annotation")
+              test <- test %>% 
+                  dplyr::mutate(
+                    Novelty_rate = test$`Only DeepBGC` / (test$`DeepBGC+RIPP` + test$`Only SEMPI`),
+                    
+                    Annotation_rate = test$`DeepBGC+RIPP` / length(data$Cluster),
+                    
+                    Skip_rate = test$`Only RIPP`/ length(data$CLuster)
+                  )
             }
 
             # Calculate rates and plot interactive plot with plotly

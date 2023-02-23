@@ -70,7 +70,7 @@ app_server <- function(input, output, session) {
         need_filter = FALSE, filter_data = FALSE, choices = list(ref = NULL, group_by = NULL, ref_col_biocircos = NULL, ref_comparison_gecco = NULL, ref_comparison = NULL),
         renamed = NULL, renaming_notification = list(), rename_y_axis = list(), can_plot_deep_ref_2 = FALSE, can_plot_deep_ref = FALSE,
         can_plot_biocircos = FALSE, can_plot_barplot_rank = FALSE, can_plot_group_table = FALSE, prism_supp_plot = FALSE,
-        ripp_data = NULL, ripp_data_input = FALSE, ripp_type = NULL, ripp_interact = NULL
+        ripp_data = NULL, ripp_data_input = FALSE, ripp_type = NULL, ripp_interact = NULL, seg_df_ref_ri = NULL
     )
 
     vals$computed <- list(
@@ -98,7 +98,7 @@ app_server <- function(input, output, session) {
     # Universal beginings for variables, used in the app for different data
     soft_names <- c("anti", "sempi", "prism", "prism_supp", "arts", "deep", "gecco", "rre", "ripp")
     # The Namings, meaning how to label the data on the plots
-    soft_namings <- c("Antismash", "SEMPI", "PRISM", "PRISM-Supp", "ARTS", "DeepBGC", "GECCO", "RRE-Finder","RiPPMiner-Genome")
+    soft_namings <- c("Antismash", "SEMPI", "PRISM", "PRISM-Supp", "ARTS", "DeepBGC", "GECCO", "RRE-Finder","RippMiner")
     # Dataframes undes vals$list, that stored the data
     data_to_use <- c("anti_data", "sempi_data", "prism_data", "prism_supp_data", "arts_data_filtered", "deep_data_filtered", "gecco_data_filtered", "rre_data","ripp_data")
     # Used in barplot on summarise tab + Annotation on chromosome plots
@@ -664,6 +664,15 @@ app_server <- function(input, output, session) {
             shinyjs::hideElement(selector = "#anti_hybrid")
         }
     })
+    
+    # Show ripp_hybrid options
+    shiny::observeEvent(vals$ripp_data_input, {
+      if (vals$ripp_data_input == TRUE){
+        shinyjs::showElement(selector = "#ripp_hybrid")
+      } else {
+        shinyjs::hideElement(selector = "#ripp_hybrid")
+      }
+    })
     # Show prism options if data is available
     # If hide anti is FALSE (checkbox), then show them
     # Only if prism_json file, then show Prism-Supp
@@ -1160,7 +1169,6 @@ app_server <- function(input, output, session) {
             deep_data <- vals$deep_data
             deep_inter <- vals$deep_data %>%
                 dplyr::select(Start, Stop)
-
             deep_inter$seqnames <- "chr"
         }
         if (vals$rre_data_input == TRUE) {

@@ -15,6 +15,23 @@ geom_anti <- function(data, rre_more) {
         ID = ID, Start = Start, Stop = Stop, Type = Type
     ), size = 3)
 }
+#' geom_anti
+#'
+#' @description A function, that returns rippminer-genome geom with the legend,
+#' specific to this software (to show on mouse hover).
+#'
+#' @return geom_segment with specific fields
+#'
+#' @noRd
+geom_ripp <- function(data, rre_more) {
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type2 <-
+    Software <- ID <- Start <- Stop <- Type <- NULL
+  ggplot2::geom_segment(data = data, ggplot2::aes(x, y,
+      xend = xend, yend = yend, color = Type2, Software = Software,
+      ID = ID, Start = Start, Stop = Stop, Type = Type
+  ), size = 3)
+}
 #' geom_prism
 #'
 #' @description A function, that returns prism geom with the legend, specific to this software (to show on mouse hover).
