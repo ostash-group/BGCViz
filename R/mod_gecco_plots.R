@@ -78,7 +78,7 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
             Skip_rate <- Skip_rate <- Rates_data <-
             Rates <- NULL
         output$gecco_barplot <- shiny::renderPlot({
-            shiny::req((vals$gecco_data_input == TRUE) & ((vals$anti_data_input == TRUE) | (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE)))
+            shiny::req((vals$gecco_data_input == TRUE) & ((vals$anti_data_input == TRUE) |(vals$ripp_data_input == TRUE)| (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE)))
 
             # Create empty dataframe to populate later
             fullnes_of_annotation <- data.frame(NA, NA, NA)
@@ -118,6 +118,10 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
                     anti_inter <- vals$sempi_data %>%
                         dplyr::select(Start, Stop)
                     anti_inter$seqnames <- "chr"
+                } else if(input$ref_comparison_ripp == "RippMiner") {
+                  anti_inter <- vals$ripp_data %>%
+                      dplyr::select(Start, Stop)
+                    anti_inter$seqnames <-"chr"
                 }
 
 
@@ -147,6 +151,10 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
                     used_antismash <- length(vals$sempi_data$Cluster) - inter_bgc
                     cols <- c("Only SEMPI", "GECCO+SEMPI", "Only GECCO")
                     title <- ggplot2::ggtitle("Comparison of SEMPI and GECCO annotations at given score threshold")
+                } else if (input$ref_comparison_gecco == "RippMiner") {
+                    used_antismash <- lenghth(vals$anti_data$Cluster) - inter_bgc
+                    cols <- c("Only RippMiner", "GECCO+RippMiner", "Only RippMiner")
+                    title <- ggplot2::ggtitle("Comparsion of RippMiner-genome  and GECCO annotations at given score threshold")
                 }
 
                 # Combine all vectors into one dataframe
@@ -222,6 +230,17 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
                         # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
                         Skip_rate = test$`Only SEMPI` / length(data$Cluster)
                     )
+            } else if (input$ref_comparison_ripp == "RippMiner"){
+              data <- vals$ripp_data
+              title <- ggplot2::ggtitle("Rates of GECCO/RippMinner data annotation")
+              test <- test %>%
+                dplyr::mutate(
+                  Novelty_rate = test$`Only GECCO`/ (test$`GECCO+RippMinner` + test$`Only RippMiner`),
+                  #
+                  Annotation_rate = test$`GECCO+RippMiner`/ length(data$Cluster),
+                  #
+                  Skip_rate = test$`Only RippMiner`/length(data$Cluster)
+                )
             }
 
             # Calculate rates and plot interactive plot with plotly
