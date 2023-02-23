@@ -195,6 +195,8 @@ add_more_annot <- function(seg_df, plot, soft_names, index, rre_more) {
             plot <- plot + geom_rre(seg_df, rre_more)
         } else if (soft_names[index] == "gecco") {
             plot <- plot + geom_gecco(seg_df)
+        } else if (soft_names[index] == "ripp"){
+            plot <- plot + geom_gecco(seg_df)
         }
         return(plot)
     } else {

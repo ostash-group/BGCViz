@@ -120,7 +120,7 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                     anti_inter <- shiny::isolate(vals$sempi_data) %>%
                         dplyr::select(Start, Stop)
                     anti_inter$seqnames <- "chr"
-                } else if (input$ref_comparison == "RIPP"){
+                } else if (input$ref_comparison == "RippMiner"){
                     ripp_inter <- shiny::isolate(vals$sempi_data) %>%
                         dplyr::select(Start, Stop)
                     ripp_inter$seqnames <- "chr"
@@ -151,9 +151,9 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                     used_antismash <- length(shiny::isolate(vals$sempi_data$Cluster)) - inter_bgc
                     cols <- c("Only SEMPI", "DeepBGC+SEMPI", "Only DeepBGC")
                     title <- ggplot2::ggtitle("Comparison of SEMPI and DeepBGC annotations at given score threshold")
-                } else if (input$ref_comparsion == "RIPP"){
+                } else if (input$ref_comparsion == "RipMiner"){
                     used_antismash <- length(shiny::isolate(vals$ripp_data$Cluster)) - inter_bgc
-                    cols <-c("Only RIPP", "DeepBGC+RIPP", "Only DeepBGC")
+                    cols <-c("Only RippMiner", "DeepBGC+RippMiner", "Only DeepBGC")
                     title <- ggplot2::ggtitle("Comparsion of RIPP and DeepBGC annotations at given score threshold")
                 }
 
@@ -232,16 +232,16 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                         # Skip rate = clusters, annotated only by SEMPI/ all sempi clusters. Points to how much clusters DeepBGC missed
                         Skip_rate = test$`Only SEMPI` / length(data$Cluster)
                     )
-            } else if (input$ref_comparsion == "RIPP"){
+            } else if (input$ref_comparsion == "RippMiner"){
               data <- vals$ripp_data
-              title <- ggplot2::ggtitle("Rates of DeepBGC/RIPP data annotation")
+              title <- ggplot2::ggtitle("Rates of DeepBGC/RippMiner data annotation")
               test <- test %>% 
                   dplyr::mutate(
-                    Novelty_rate = test$`Only DeepBGC` / (test$`DeepBGC+RIPP` + test$`Only SEMPI`),
+                    Novelty_rate = test$`Only DeepBGC` / (test$`DeepBGC+RippMiner` + test$`Only SEMPI`),
                     
-                    Annotation_rate = test$`DeepBGC+RIPP` / length(data$Cluster),
+                    Annotation_rate = test$`DeepBGC+RippMiner` / length(data$Cluster),
                     
-                    Skip_rate = test$`Only RIPP`/ length(data$CLuster)
+                    Skip_rate = test$`Only RippMiner`/ length(data$CLuster)
                   )
             }
 
