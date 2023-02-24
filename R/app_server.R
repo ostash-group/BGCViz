@@ -102,7 +102,7 @@ app_server <- function(input, output, session) {
     # Dataframes undes vals$list, that stored the data
     data_to_use <- c("anti_data", "sempi_data", "prism_data", "prism_supp_data", "arts_data_filtered", "deep_data_filtered", "gecco_data_filtered", "rre_data","ripp_data")
     # Used in barplot on summarise tab + Annotation on chromosome plots
-    abbr <- c("A", "S", "P", "P-Supp", "AR", "D", "G", "RRE", "RiPP")
+    abbr <- c("A", "S", "P", "P-Supp", "AR", "D", "G", "RRE", "Ripp")
     # Used for deep reference 2 plot
     soft_datafr <- c(
         "seg_df_ref_a", "seg_df_ref_s", "seg_df_ref_p", "seg_df_ref_p_s", "seg_df_ref_ar", "seg_df_ref_d",
@@ -508,6 +508,14 @@ app_server <- function(input, output, session) {
     ## ----------------------------------------------------------------
     ##                Loading and processing user data               -
     ## ----------------------------------------------------------------
+    
+    shiny::observeEvent(input$ripp_data, {
+      
+      # Read data
+      ripp_data <- utils::read.delim(input$ripp_data$datapath)
+      process_rippminer(ripp_data)
+    })
+    
     shiny::observeEvent(input$anti_data, {
         disable_event_logic()
         # Read data
@@ -973,7 +981,7 @@ app_server <- function(input, output, session) {
             "deep_comparison_box", "deep_rate_box", "deep_comparison_controls_box", "gecco_comparison_box",
             "gecco_rate_box", "gecco_comparison_controls_box", "annotation_reference_box", "annotation_reference_comparison_box",
             "annotation_reference_comparison_controls_box", "biocircos_plot_box", "biocircos_controls_box",
-            "ranking_barplot_box", "group_table_box", "upload_anti_box", "upload_prism_box",
+            "ranking_barplot_box", "group_table_box", "upload_anti_box","upload_ripp_box", "upload_prism_box",
             "upload_sempi_box", "upload_deep_box", "upload_gecco_box", "upload_rre_box", "upload_arts_box",
             "use_example_data_box", "rename_box", "prism_supplement_arts_box", "improve_visualization_box",
             "download_data_box", "gecco_filtering_box", "deep_filtering_box"
@@ -996,6 +1004,13 @@ app_server <- function(input, output, session) {
     # Make hybrids from the data, if checkbox is checked
     # TODO Put the function to the root.
     # Tou have duplicated code
+    shiny::observeEvent(input$ripp_hybrid, ignoreInit = TRUE, {
+      if (input$ripp_hybrid == TRUE) {
+        vals$ripp_data$Type2 <- hybrid_col(vals$ripp_data)
+      } else {
+        vals$ripp_data$Type2 <- vals$ripp_type
+      }
+    })
     shiny::observeEvent(input$anti_hybrid, ignoreInit = TRUE, {
         if (input$anti_hybrid == TRUE) {
             vals$anti_data$Type2 <- hybrid_col(vals$anti_data)
@@ -1046,6 +1061,14 @@ app_server <- function(input, output, session) {
             prism_data["Type2"] <- vals$prism_type
             vals$prism_data <- prism_data
         }
+        if (vals$ripp_data_input == TRUE) {
+            ripp_data <- vals$ripp_data
+            res <- rename_vector(ripp_data, rename_data, vals$renaming_notification)
+            vals$ripp_type <- res[[1]]
+            vals$renaming_notification <-res[[2]]
+            ripp_data["Type2"] <- vals$ripp_data
+            vals$ripp_data <- ripp_data
+        }
         shinyjs::showElement(selector = "#reset_name")
         shinyjs::hideElement(selector = "#rename")
         vals$renamed <- TRUE
@@ -1083,12 +1106,25 @@ app_server <- function(input, output, session) {
             prism_data["Type2"] <- vals$prism_type
             vals$prism_data <- prism_data
         }
+        if (vals$ripp_data_input == TRUE) {
+            ripp_data <- vals$ripp_data
+            res <- rename_vector(ripp_data, rename_data, vals$renaming_notification)
+            vals$ripp_type <- res[[1]]
+            vals$renaming_notification <-res[[2]]
+            ripp_data["Type2"] <- vals$ripp_data
+            vals$ripp_data <- ripp_data
+        }
     })
     # Reset the renaming. Uncheck the hybrid checkboxes
     shiny::observeEvent(input$reset_name, {
         vals$anti_data["Type2"] <- vals$anti_data["Type"]
         vals$sempi_data["Type2"] <- vals$sempi_data["Type"]
         vals$ prism_data["Type2"] <- vals$ prism_data["Type"]
+        vals$ripp_data["Type2"] <- vals$ripp_data["Type"]
+        if (input$ripp_hybrid == TRUE) {
+            shiny::showNotification(paste("RippMiner cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration = 10 )
+            shiny::showNotification(inputId ="ripp_hybrid", value = FALSE)
+        }
         if (input$anti_hybrid == TRUE) {
             shiny::showNotification(paste("Antismash cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration = 10)
             shiny::updateCheckboxInput(inputId = "anti_hybrid", value = FALSE)

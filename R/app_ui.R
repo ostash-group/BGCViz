@@ -156,8 +156,8 @@ app_ui <- function(request) {
                                     id = "upload_ripp_box",
                                     collapsible = TRUE,
                                     closable = TRUE,
-                                    shiny::fileInput("gene_data",
-                                                     "Upload RippMiner-Genome data data",
+                                    shiny::fileInput("ripp_data",
+                                                     "Upload RippMiner-Genome data",
                                                      accept = ".txt"
                                     )
                                 )
