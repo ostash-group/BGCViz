@@ -98,7 +98,7 @@ app_server <- function(input, output, session) {
     # Universal beginings for variables, used in the app for different data
     soft_names <- c("anti", "sempi", "prism", "prism_supp", "arts", "deep", "gecco", "rre", "ripp")
     # The Namings, meaning how to label the data on the plots
-    soft_namings <- c("Antismash", "SEMPI", "PRISM", "PRISM-Supp", "ARTS", "DeepBGC", "GECCO", "RRE-Finder","RippMiner")
+    soft_namings <- c("Antismash", "SEMPI", "PRISM", "PRISM-Supp", "ARTS", "DeepBGC", "GECCO", "RRE-Finder", "RippMiner")
     # Dataframes undes vals$list, that stored the data
     data_to_use <- c("anti_data", "sempi_data", "prism_data", "prism_supp_data", "arts_data_filtered", "deep_data_filtered", "gecco_data_filtered", "rre_data","ripp_data")
     # Used in barplot on summarise tab + Annotation on chromosome plots
@@ -1558,8 +1558,8 @@ app_server <- function(input, output, session) {
             index <- index + 1
         }
 
-
-        lett <- rev(LETTERS)[1:9]
+        lett <- rev(LETTERS)[1:(length(data_uploads)+1)]
+        
 
         tooltip <- c(
             "Software", "ID", "Start", "Stop", "Type", "num_domains", "deepbgc_score", "activity", "Score", "E_value",
