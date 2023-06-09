@@ -8,6 +8,9 @@
 #' @noRd
 fix_duplicates <- function(test_score, order_vec, regul_genes_orfs, test_name) {
     dupl_names <- regul_genes_orfs[duplicated(regul_genes_orfs)]
+    if (length(dupl_names) == 0){
+      return(test_score)
+    }
     duplicated_values <- which(duplicated(regul_genes_orfs[order_vec]))
     test_score <- test_score[order_vec]
     to_add <- test_score[(which(duplicated(regul_genes_orfs[order_vec])))]
