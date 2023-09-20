@@ -23,6 +23,7 @@ app_ui <- function(request) {
                     shinydashboard::menuItemOutput("anno_sidemenu_out"),
                     shinydashboard::menuItemOutput("biocircos_sidemenu_out"),
                     shinydashboard::menuItemOutput("summarize_sidemenu_out"),
+                    shinydashboard::menuItemOutput("arts_tree_sidemenu_out"),
                     shinydashboard::menuItem(
                         tabName = "restore_boxes",
                         actionButton("restore_box", "Restore all boxes", class = "bg-success")
@@ -52,7 +53,6 @@ app_ui <- function(request) {
                         tabName = "deep_sidemenu",
                         mod_deepbgc_plots_ui("deep_barplot_ui_1"),
                         sortable::sortable_js("deep_data1", options = sortable::sortable_options(swap = TRUE, group = "deep_data")),
-                        sortable::sortable_js("deep_data2", options = sortable::sortable_options(swap = TRUE, group = "deep_data"))
                     ),
                     shinydashboard::tabItem(
                         tabName = "gecco_sidemenu",
@@ -80,6 +80,13 @@ app_ui <- function(request) {
                         mod_biocircos_ui("biocircos_ui_1"),
                         sortable::sortable_js("biocircos_data1", options = sortable::sortable_options(swap = TRUE, group = "biocircos_data")),
                         sortable::sortable_js("biocircos_data2", options = sortable::sortable_options(swap = TRUE, group = "biocircos_data"))
+                    ),
+                    shinydashboard::tabItem(
+                      tabName = "arts_tree_sidemenu",
+                      mod_arts_tree_ui("arts_tree_1"),
+                      sortable::sortable_js("arts_tree_data1", options = sortable::sortable_options(swap = TRUE, group = "arts_tree_data")),
+                      sortable::sortable_js("arts_tree_data2", options = sortable::sortable_options(swap = TRUE, group = "arts_tree_data")),
+                      
                     ),
                     shinydashboard::tabItem(
                         tabName = "summarize_sidemenu",

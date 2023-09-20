@@ -786,6 +786,13 @@ app_server <- function(input, output, session) {
             shinydashboard::menuItem("Summarize interception", tabName = "summarize_sidemenu", icon = icon("fas fa-chart-bar"))
         }
     })
+    output$arts_tree_sidemenu_out <- shinydashboard::renderMenu(
+      {
+        if (vals$arts_data_input == TRUE){
+            shinydashboard::menuItem('ARTS tree', tabName = "arts_tree_sidemenu", icon = icon("tree")) 
+        }
+      }
+    )
 
     output$deep_filter_box <- shiny::renderUI({
         if (vals$deep_data_input == TRUE) {
