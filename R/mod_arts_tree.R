@@ -19,11 +19,14 @@ mod_arts_tree_ui <- function(id)
         div(
           id = "id1",
           shinydashboardPlus::box(
-            title = "ARTS tree",
+            title = "Select a tree of interest",
             id = "arts_tree_box",
             collapsible = TRUE,
             closable = TRUE,
-            width = 12
+            width = 12,
+            shiny::selectInput(ns("group_by"), "Group data by", choices = c(), selected = ""),
+            shiny::plotOutput(ns("arts_tree"),height = "1000px") %>%
+              shinycssloaders::withSpinner()
           )
           
         )
@@ -32,4 +35,11 @@ mod_arts_tree_ui <- function(id)
     )
       
     )
+}
+
+#'arts_tree server function
+#'
+#' @noRd
+mod_arts_tree_server <- function(id,path){
+  
 }

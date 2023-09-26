@@ -83,7 +83,15 @@ app_ui <- function(request) {
                     ),
                     shinydashboard::tabItem(
                       tabName = "arts_tree_sidemenu",
-                      mod_arts_tree_ui("arts_tree_1"),
+                      shiny::fluidRow(
+                        tags$div(
+                          id = "arts_tree",
+                          shiny::column(
+                            width = 12,
+                            mod_arts_tree_ui("arts_tree_1"),
+                          )
+                        )
+                      ),
                       sortable::sortable_js("arts_tree_data1", options = sortable::sortable_options(swap = TRUE, group = "arts_tree_data")),
                       sortable::sortable_js("arts_tree_data2", options = sortable::sortable_options(swap = TRUE, group = "arts_tree_data")),
                       

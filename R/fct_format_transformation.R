@@ -233,3 +233,11 @@ arts_to_csv <- function(project_archive, write_to = getwd()) {
     arts_data$Cluster <- arts_data$ID
     utils::write.csv(arts_data, paste0(write_to, "/arts.csv"), row.names = FALSE)
 }
+
+arts_to_nevik <- function(file, write_to = getwd())
+{
+  utils::unzip(project_archive, files = c("trees/*"), exdir = paste0(write_to, "/ARTS_tables"), junkpaths = TRUE)
+  lists <- list.files("/ARTS_tables", full.names = TRUE, recursive = TRUE)
+  return(lists)
+}
+

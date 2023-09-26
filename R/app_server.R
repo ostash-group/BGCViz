@@ -789,7 +789,7 @@ app_server <- function(input, output, session) {
     output$arts_tree_sidemenu_out <- shinydashboard::renderMenu(
       {
         if (vals$arts_data_input == TRUE){
-            shinydashboard::menuItem('ARTS tree', tabName = "arts_tree_sidemenu", icon = icon("tree")) 
+            shinydashboard::menuItem('ARTS phylogeny', tabName = "arts_tree_sidemenu", icon = icon("tree")) 
         }
       }
     )

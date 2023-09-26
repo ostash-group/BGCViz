@@ -1,8 +1,7 @@
 ## code to prepare `ripp_data` dataset goes here
-ripp_data <- utils::read.table("https://raw.githubusercontent.com/2061Tsarin/BGCViz-datasets/main/example_data/sco_ripp.txt", header = FALSE)
+ripp_data <- utils::read.table("https://raw.githubusercontent.com/2061Tsarin/BGCViz-datasets/main/example_data/sco_ripp.txt")
 
 colnames(ripp_data) <-c("Cluster", "Type", "Start", "Stop")
-
 
 #ADDING CHROMOSOME COLUMN
 ripp_data$chromosome <- rep("GF", length(ripp_data$Cluster))
