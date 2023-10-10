@@ -159,10 +159,11 @@ read_arts_archive <- function(archive, zip = TRUE) {
     # Silence R CMD note
     Start <- Core <- NULL
     if (zip == TRUE) {
-        utils::unzip(archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv"), exdir = "./ARTS_tables", junkpaths = TRUE)
+        utils::unzip(archive, files = c("tables/duptable.tsv", "tables/knownhits.tsv", "alltrees.zip"), exdir = "./ARTS_tables", junkpaths = TRUE)
         known_hits <- utils::read.delim("./ARTS_tables/knownhits.tsv")
         dupl_table <- utils::read.delim("./ARTS_tables/duptable.tsv")
-        unlink("./ARTS_tables", recursive = TRUE)
+        utils::unzip("./ARTS_tables/alltrees.zip",exdir = "./ARTS_tables/trees", junkpaths = TRUE)
+        trees_id_list <- list.files("./ARTS_tables/trees/")
         locations <- sapply(known_hits$Sequence.description, function(x) {
             utils::tail(stringr::str_split(x, "\\|")[[1]], 1)
         })
@@ -233,6 +234,22 @@ read_arts_archive <- function(archive, zip = TRUE) {
             dplyr::arrange(Start)
         arts_data$ID <- seq(1:dim(arts_data)[1])
         arts_data$Cluster <- arts_data$ID
+        num_rows <- nrow(arts_data)
+        extended_trees_list <- lapply(seq_len(num_rows), function(i) {
+          trees_id_list[i %% length(trees_id_list) + 1]
+        })
+        arts_data$TreesFiles <- extended_trees_list
+        # unsure about the efficacy of this, since unlinking was crucial here...
+        actual_trees_list = list()
+        for (tree in arts_data$TreesFiles){
+          tree <- ggtree::read.tree(file = paste0("./ARTS_tables/trees/", tree))
+          actual_trees_list <- append(actual_trees_list,list(tree))
+        }
+        unlink("./ARTS_tables", recursive = TRUE)
+  
+        arts_data$Trees <- actual_trees_list
+        
+        
     } else {
         arts_data <- archive
     }

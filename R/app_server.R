@@ -35,7 +35,7 @@ app_server <- function(input, output, session) {
         )
     })
     dynamicInput <- shiny::reactive({
-        list(input$dup_choice, vals$need_filter, input$prism_supp)
+        list(input$dup_choice, vals$need_filter, input$prism_supp, input$phylo_file)
     })
     deep_reference <- shiny::reactive({
         list(
@@ -389,6 +389,13 @@ app_server <- function(input, output, session) {
             choices = c("All", paste0("ID:", dup_table_id$ID, " ,Core:", dup_table_id$Core)),
             selected = "All"
         )
+        shiny::updateSelectInput(
+          session,
+          'phylo_file',             
+          choices = paste0(vals$arts_data$TreesFiles),
+          selected = vals$arts_data$TreesFiles[1]       
+        )
+        
         if (vals$data_upload_count == 1) {
             shiny::updateSelectInput(session, "ref",
                 selected = "ARTS"
@@ -717,9 +724,11 @@ app_server <- function(input, output, session) {
         if (vals$arts_data_input == TRUE) {
             shinyjs::showElement(selector = "#dup_choice")
             shinyjs::showElement(selector = "#arts_width")
+            shinyjs::showElement(selector = "#phylo_file")
         } else {
             shinyjs::hideElement(selector = "#dup_choice")
             shinyjs::hideElement(selector = "#arts_width")
+            shinyjs::hideElement(selector = "#phylo_file")
         }
     })
 
@@ -991,7 +1000,7 @@ app_server <- function(input, output, session) {
             "ranking_barplot_box", "group_table_box", "upload_anti_box","upload_ripp_box", "upload_prism_box",
             "upload_sempi_box", "upload_deep_box", "upload_gecco_box", "upload_rre_box", "upload_arts_box",
             "use_example_data_box", "rename_box", "prism_supplement_arts_box", "improve_visualization_box",
-            "download_data_box", "gecco_filtering_box", "deep_filtering_box"
+            "download_data_box", "gecco_filtering_box", "deep_filtering_box", "arts_tree_box"
         )
         for (id in box_ids) {
             shinydashboardPlus::updateBox(id, action = "restore")
@@ -1651,6 +1660,13 @@ app_server <- function(input, output, session) {
     ############################################################################
     ############################################################################
 
+    ## ----------------------------------------------------------------
+    ##                          ARTS phylogenetic tree                  -
+    ## ----------------------------------------------------------------
+    # Plot tree
+    
+    mod_arts_tree_server("arts_tree_1",vals = vals)
+    
     ## ----------------------------------------------------------------
     ##                    DeepBGC Comparison tab                     -
     ## ----------------------------------------------------------------
