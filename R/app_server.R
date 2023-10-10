@@ -389,12 +389,8 @@ app_server <- function(input, output, session) {
             choices = c("All", paste0("ID:", dup_table_id$ID, " ,Core:", dup_table_id$Core)),
             selected = "All"
         )
-        shiny::updateSelectInput(
-          session,
-          'phylo_file',             
-          choices = paste0(vals$arts_data$TreesFiles),
-          selected = vals$arts_data$TreesFiles[1]       
-        )
+        
+
         
         if (vals$data_upload_count == 1) {
             shiny::updateSelectInput(session, "ref",

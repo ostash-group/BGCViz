@@ -15,10 +15,10 @@ mod_arts_tree_ui <- function(id) {
             collapsible = TRUE,
             closable = TRUE,
             width = 12,
-            shiny::selectInput("phylo_file", "Choose a file to build a tree", choices = c(), selected = ""),
+            shiny::selectInput(ns("phylo_file"), "Choose a file to build a tree", choices = c(), selected = ""),
             div(
-              style = "height: 600px; overflow-y: scroll",  # Adjust height as needed, may be needed indeed
-              shiny::plotOutput(ns("arts_tree"), height = "2000px") %>%
+              style = "height: 600px; overflow-y: scroll; overflow-x: scroll",  # Adjust height as needed, may be needed indeed
+              shiny::plotOutput(ns("arts_tree"), height = "2000px",width = "1500px") %>%
                 shinycssloaders::withSpinner()
             )
           )
@@ -35,17 +35,21 @@ mod_arts_tree_server <- function(id, vals) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
+    # observing changes of input for tree plot
+    observe({
+      shiny::updateSelectInput(
+        session,
+        'phylo_file',             
+        choices = paste0(vals$arts_data$TreesFiles),
+        selected = vals$arts_data$TreesFiles[1]       
+      )
+    })
+    
     # Define a reactive expression for the tree
     tree_data <- reactive({
-      tree <- vals$arts_data$Trees[[1]]
-      
-    ### IF YOU WANT TO SHORTER STRAINS ID UNCOMENT CODE BELOW  ###
-    
-      # tree$tip.label <- sapply(tree$tip.label, function(x) {
-      #   split_string <- unlist(strsplit(x, "_"))
-      #   return(paste(split_string[2], split_string[3], sep = " "))
-      # })
-      
+      # Create the tree object
+      tree$core <- vals$arts_data$Trees[vals$arts_data$TreesFiles == input$phylo_file][[1]]
+      tree$type <- "rectangular"
       return(tree)
     })
     
@@ -54,7 +58,7 @@ mod_arts_tree_server <- function(id, vals) {
       req(vals$arts_data_input == TRUE)  
       
       # Create and render the plot
-      tree_plot <- ggtree::ggtree(tree_data()) +
+      tree_plot <- ggtree::ggtree(tree_data()$core, layout = tree_data()$type) +
         ggtree::geom_tree() +
         ggtree::theme_tree() +
         ggtree::geom_tiplab(size = 2.2, color = 'firebrick')
