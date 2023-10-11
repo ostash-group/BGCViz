@@ -40,15 +40,15 @@ mod_arts_tree_server <- function(id, vals) {
       shiny::updateSelectInput(
         session,
         'phylo_file',             
-        choices = paste0(vals$arts_data$TreesFiles),
-        selected = vals$arts_data$TreesFiles[1]       
+        choices = paste0(vals$arts_tree_data$TreesFiles),
+        selected = vals$arts_tree_data$TreesFiles[1]       
       )
     })
     
     # Define a reactive expression for the tree
     tree_data <- reactive({
       # Create the tree object
-      tree$core <- vals$arts_data$Trees[vals$arts_data$TreesFiles == input$phylo_file][[1]]
+      tree$core <- vals$arts_tree_data$Trees[vals$arts_tree_data$TreesFiles == input$phylo_file][[1]]
       tree$type <- "rectangular"
       return(tree)
     })

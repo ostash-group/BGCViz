@@ -238,7 +238,7 @@ read_arts_archive <- function(archive, zip = TRUE) {
         extended_trees_list <- lapply(seq_len(num_rows), function(i) {
           trees_id_list[i %% length(trees_id_list) + 1]
         })
-        arts_data$TreesFiles <- extended_trees_list
+        arts_data$TreesFiles <- unlist(extended_trees_list)
         # unsure about the efficacy of this, since unlinking was crucial here...
         actual_trees_list = list()
         for (tree in arts_data$TreesFiles){

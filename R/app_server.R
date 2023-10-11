@@ -41,7 +41,7 @@ app_server <- function(input, output, session) {
         list(
             vals$inters_filtered, vals$rre_more, input$ref, input$arts_width, input$sempi_width, input$rre_width,
             input$prism_supp_data_input_width, vals$anti_data, vals$prism_data, vals$sempi_data, vals$arts_data,
-            vals$ripp_data
+            vals$ripp_data, vals$arts_tree_data
         )
     })
 
@@ -64,7 +64,7 @@ app_server <- function(input, output, session) {
         rre_interact = NULL, anti_interact = NULL, prism_interact = NULL, deep_interact = NULL,
         sempi_interact = NULL, df_a = NULL, df_d = NULL, df_p = NULL, df_r = NULL, prism_supp = NULL,
         prism_json = FALSE, df_s = NULL, prism_supp_interact = NULL, known_data = NULL, dup_data = NULL,
-        known_data_input = FALSE, dup_data_input = FALSE, arts_data = NULL, arts_data_input = FALSE, seg_df_ref_ar = NULL,
+        known_data_input = FALSE, dup_data_input = FALSE, arts_data = NULL, arts_tree_data = NULL, arts_data_input = FALSE, seg_df_ref_ar = NULL,
         df_ps = NULL, arts_interact = NULL, rre_more = FALSE, gecco_data = NULL, gecco_data_input = FALSE,
         gecco_data_filtered = NULL, seg_df_ref_g = NULL, prism_supp_data_input = FALSE, computed = NULL,
         need_filter = FALSE, filter_data = FALSE, choices = list(ref = NULL, group_by = NULL, ref_col_biocircos = NULL, ref_comparison_gecco = NULL, ref_comparison = NULL),
@@ -376,7 +376,8 @@ app_server <- function(input, output, session) {
                 arts_data <- utils::read.csv(archive)
             }
         }
-        vals$arts_data <- arts_data
+        vals$arts_tree_data <- arts_data
+        vals$arts_data <- arts_data[,!(names(arts_data) %in% c("Trees", "TreesFiles"))]
         vals$choices$ref <- c(vals$choices$ref, "ARTS" = "ARTS")
         vals$choices$group_by <- c(vals$choices$group_by, "ARTS" = "ARTS")
         vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "ARTS" = "ARTS")
