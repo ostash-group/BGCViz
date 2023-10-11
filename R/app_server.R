@@ -516,8 +516,8 @@ app_server <- function(input, output, session) {
     shiny::observeEvent(input$ripp_data, {
       
       # Read data
-      ripp_data <- utils::read.delim(input$ripp_data$datapath)
-      process_rippminer(ripp_data)
+
+      process_rippminer(input$ripp_data$datapath)
     })
     
     shiny::observeEvent(input$anti_data, {

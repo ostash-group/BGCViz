@@ -6,9 +6,14 @@
 #' #' @noRd
 
 read_ripp <- function(data) {
-    ripp_data <- data
-    # CHANGING COLNAMES -- temporary
-    colnames(ripp_data) <-c("Cluster", "Type", "Start", "Stop")
+    all <- readLines(data)
+    filtered_lines <- all[!grepl("^#|^$", all)]
+    print(filtered_lines)
+    data <- paste(filtered_lines, collapse = "\n")
+    data_connection <- textConnection(data)
+    ripp_data <- read.table(data_connection, header = FALSE, sep = "\t", col.names = c("Cluster", "Type", "Start", "Stop"))
+    close(data_connection)
+    print(ripp_data)
     #Validation of input
     res_validation <- validate_basic_input(ripp_data)
     if (!(res_validation[[1]])) {
