@@ -5,10 +5,12 @@
 #' #'
 #' #' @noRd
 
+
+
+
 read_ripp <- function(data) {
     all <- readLines(data)
     filtered_lines <- all[!grepl("^#|^$", all)]
-    print(filtered_lines)
     data <- paste(filtered_lines, collapse = "\n")
     data_connection <- textConnection(data)
     ripp_data <- read.table(data_connection, header = FALSE, sep = "\t", col.names = c("Cluster", "Type", "Start", "Stop"))

@@ -221,7 +221,19 @@ app_ui <- function(request) {
                                         )
                                     )
                                 ),
-                                
+                                div(
+                                  id = "id5",
+                                  shinydashboardPlus::box(
+                                    title = "Upload EmeraldBGC data",
+                                    id = "emerald_arts_box",
+                                    collapsible = TRUE,
+                                    closable = TRUE,
+                                    shiny::fileInput("emerald_data",
+                                                     "Upload EmeraldBGC data",
+                                                     accept = list(".gff", ".gff3")
+                                    )
+                                  )
+                                ),
                                 div(
                                     id = "id4",
                                     shinydashboardPlus::box(
@@ -237,6 +249,8 @@ app_ui <- function(request) {
                                         shiny::actionButton("rre_sco", "Use RRE-Finder example data from S.coelicolor"),
                                         shiny::actionButton("arts_sco", "Use ARTS example data from S.coelicolor"),
                                         shiny::actionButton("ripp_sco","Use RippMiner-Genome data example data from S.coelicolor"),
+                                        shiny::actionButton("emerald_sco","Use EmeraldBGC data example data from S.coelicolor"),
+                                        
                                         shiny::numericInput("chr_len", "Please type chr len of an organism", value = 10000000)
                                     )
                                 )

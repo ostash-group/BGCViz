@@ -1,4 +1,4 @@
-#' rename_vector
+ #' rename_vector
 #'
 #' @description Function, that given the dataframe, and renaming dataframe, returns renamed vector.
 #'

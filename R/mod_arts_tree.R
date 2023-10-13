@@ -47,6 +47,7 @@ mod_arts_tree_server <- function(id, vals) {
     
     # Define a reactive expression for the tree
     tree_data <- reactive({
+      tree <- list()
       # Create the tree object
       tree$core <- vals$arts_tree_data$Trees[vals$arts_tree_data$TreesFiles == input$phylo_file][[1]]
       tree$type <- "rectangular"
