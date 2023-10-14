@@ -15,7 +15,7 @@ app_server <- function(input, output, session) {
         list(
             input$sempi_data, input$anti_data, input$prism_data,
             input$sempi_sco, input$anti_sco, input$prism_sco,
-            input$ripp_sco, input$ripp_data, emerald_data, input$reference_data
+            input$ripp_sco, input$ripp_data, input$emerald_data, input$reference_data
         )
     })
     biocircos_listen <- shiny::reactive({
@@ -1258,7 +1258,6 @@ app_server <- function(input, output, session) {
             prism_data["Type2"] <- vals$prism_type
             vals$prism_data <- prism_data
         }
-        ###HEERE I STOPED###
         if (vals$ripp_data_input == TRUE) {
             ripp_data <- vals$ripp_data
             res <- rename_vector(ripp_data, rename_data, vals$renaming_notification)
@@ -1267,13 +1266,41 @@ app_server <- function(input, output, session) {
             ripp_data["Type2"] <- vals$ripp_data
             vals$ripp_data <- ripp_data
         }
-    })
+        if (vals$emerald_data_input == TRUE) {
+          emerald_data <- vals$emerald_data
+          res <- rename_vector(emerald_data, rename_data, vals$renaming_notification)
+          vals$emerald_type <- res[[1]]
+          vals$renaming_notification <-res[[2]]
+          emerald_data["Type2"] <- vals$emerald_data
+          vals$emerald_data <- emerald_data
+        }
+        if (vals$reference_data_input == TRUE) {
+          reference_data <- vals$reference_data
+          res <- rename_vector(reference_data, rename_data, vals$renaming_notification)
+          vals$reference_type <- res[[1]]
+          vals$renaming_notification <-res[[2]]
+          reference_data["Type2"] <- vals$reference_data
+          vals$reference_data <- reference_data
+        }
+    }
+
+    )
     # Reset the renaming. Uncheck the hybrid checkboxes
     shiny::observeEvent(input$reset_name, {
         vals$anti_data["Type2"] <- vals$anti_data["Type"]
         vals$sempi_data["Type2"] <- vals$sempi_data["Type"]
-        vals$ prism_data["Type2"] <- vals$ prism_data["Type"]
+        vals$prism_data["Type2"] <- vals$prism_data["Type"]
         vals$ripp_data["Type2"] <- vals$ripp_data["Type"]
+        vals$emerald_data["Type2"] <- vals$emerald_data["Type"]
+        vals$reference_data["Type2"] <- vals$reference_data["Type"]
+        if (input$reference_hybrid == TRUE) {
+          shiny::showNotification(paste("Reference cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration = 10 )
+          shiny::showNotification(inputId ="reference_hybrid", value = FALSE)
+        }
+        if (input$emerald_hybrid == TRUE) {
+          shiny::showNotification(paste("Emerald/SanntiS cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration = 10 )
+          shiny::showNotification(inputId ="emerald_hybrid", value = FALSE)
+        }
         if (input$ripp_hybrid == TRUE) {
             shiny::showNotification(paste("RippMiner cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration = 10 )
             shiny::showNotification(inputId ="ripp_hybrid", value = FALSE)
@@ -1341,13 +1368,24 @@ app_server <- function(input, output, session) {
     # dplyr::filter while ploting then.
     shiny::observeEvent(inputData(), ignoreInit = TRUE, priority = 5, {
         # GENERATE DATA
+        if (vals$reference_data_input == TRUE) {
+          reference_data <- vals$reference_data
+          reference_inter <- vals$reference_data %>%
+            dplyr::select(Start, Stop)
+          reference_inter$seqnames <- "chr"
+        }
+        if (vals$emerald_data_input == TRUE) {
+          emerald_data <- vals$emerald_data
+          emerald_inter <- vals$emerald_data %>%
+            dplyr::select(Start, Stop)
+          emerald_inter$seqnames <- "chr"
+        }
         if (vals$ripp_data_input == TRUE) {
           ripp_data <- vals$ripp_data
           ripp_inter <- vals$ripp_data %>%
             dplyr::select(Start, Stop)
           ripp_inter$seqnames <- "chr"
         }
-      
         if (vals$anti_data_input == TRUE) {
             anti_data <- vals$anti_data
             anti_inter <- vals$anti_data %>%
@@ -1719,9 +1757,6 @@ app_server <- function(input, output, session) {
             "P_value", "RRE_start", "RRE_stop", "Probability", "Name", "Full_name", "Hit", "Core", "Count", "Bitscore", "Model",
             "Num_domains", "Num_proteins", "Average_p", "Max_p"
         )
-
-
-
 
         # MAKE COMPUTATIONS
         sup_index <- 1

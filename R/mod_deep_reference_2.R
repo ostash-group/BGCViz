@@ -71,6 +71,20 @@ mod_deep_reference_2_server <- function(id, vals, data_uploads, data_to_use) {
             )
 
             plot <- ggplot2::ggplot(data, ggplot2::aes(x = vals$chr_len, y = Chr))
+            if (vals$reference_data_input == TRUE){
+              plot <- plot +
+                suppressWarnings(ggplot2::geom_segment(data = vals$seg_df_ref_refer, ggplot2::aes(x, y,
+                                                                                               xend = xend, yend = yend, color = Type2, Software = Software,
+                                                                                               ID = ID, Start = Start, Stop = Stop, Type = Type
+                ), size = 3))
+            }
+            if (vals$emerald_data_input == TRUE){
+              plot <- plot +
+                suppressWarnings(ggplot2::geom_segment(data = vals$seg_df_ref_emer, ggplot2::aes(x, y,
+                                                                                               xend = xend, yend = yend, color = Type2, Software = Software,
+                                                                                               ID = ID, Start = Start, Stop = Stop, Type = Type
+                ), size = 3))
+            }
             if (vals$ripp_data_input == TRUE){
               plot <- plot +
                       suppressWarnings(ggplot2::geom_segment(data = vals$seg_df_ref_ri, ggplot2::aes(x, y,
