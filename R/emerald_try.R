@@ -20,5 +20,3 @@ read_emerald <- function(data) {
   return (emerald_data)
 }
 
-data <- read_emerald("/Users/levchik/Downloads/streptomyces_coelicolor.gff") 
-data

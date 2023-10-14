@@ -6,6 +6,27 @@
 #' #' @noRd
 
 
+read_reference <- function(data){
+  reference_data <- data
+  res_validation <- validate_basic_input(reference_data)
+  if (!(res_validation[[1]])) {
+    reference_data <- NULL
+    return(NULL)
+  } else {
+    reference_data <- res_validation[[2]]
+  }
+  reference_data$chromosome <- rep("GF", length(ripp_data$Cluster))
+  #Type magic
+  reference_data$Type <- stringr::str_trim(tolower(ripp_data$Type))
+  reference_data["Type2"] <- stringr::str_trim(tolower(ripp_data$Type))
+  #Mutate NAs
+  reference_data <- dplyr::mutate(ripp_data, Cluster = 1:length(ripp_data$Type))
+  
+  return(reference_data)
+}
+
+
+
 
 
 read_ripp <- function(data) {
