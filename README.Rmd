@@ -62,7 +62,7 @@ Currently, the app supports annotations from such sources:
 
 7. Gecco ()
 
-7. RiPPMiner-genome (cured txt file)
+7. RiPPMiner-genome (txt file)
 
 
 

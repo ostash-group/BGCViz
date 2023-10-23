@@ -78,7 +78,7 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
             Skip_rate <- Skip_rate <- Rates_data <-
             Rates <- NULL
         output$gecco_barplot <- shiny::renderPlot({
-            shiny::req((vals$gecco_data_input == TRUE) & ((vals$anti_data_input == TRUE) |(vals$ripp_data_input == TRUE)| (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE)))
+            shiny::req((vals$gecco_data_input == TRUE) & ((vals$anti_data_input == TRUE) | (vals$reference_data_input == TRUE) | (vals$ripp_data_input == TRUE) | (vals$emerald_data_input == TRUE) | (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE)))
 
             # Create empty dataframe to populate later
             fullnes_of_annotation <- data.frame(NA, NA, NA)
@@ -122,6 +122,14 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
                   anti_inter <- vals$ripp_data %>%
                       dplyr::select(Start, Stop)
                     anti_inter$seqnames <-"chr"
+                } else if(input$ref_comparison_emerald == "Emerald/SanntiS") {
+                  anti_inter <- vals$emerald_data %>%
+                    dplyr::select(Start, Stop)
+                  anti_inter$seqnames <-"chr"
+                } else if(input$ref_comparison_reference == "Reference") {
+                  anti_inter <- vals$reference_data %>%
+                    dplyr::select(Start, Stop)
+                  anti_inter$seqnames <-"chr"
                 }
 
 
@@ -152,9 +160,17 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
                     cols <- c("Only SEMPI", "GECCO+SEMPI", "Only GECCO")
                     title <- ggplot2::ggtitle("Comparison of SEMPI and GECCO annotations at given score threshold")
                 } else if (input$ref_comparison_gecco == "RippMiner") {
-                    used_antismash <- lenghth(vals$anti_data$Cluster) - inter_bgc
+                    used_antismash <- lenghth(vals$ripp_data$Cluster) - inter_bgc
                     cols <- c("Only RippMiner", "GECCO+RippMiner", "Only RippMiner")
                     title <- ggplot2::ggtitle("Comparsion of RippMiner-genome  and GECCO annotations at given score threshold")
+                } else if (input$ref_comparison_gecco == "Emerald/SanntiS") {
+                  used_antismash <- lenghth(vals$emerald_data$Cluster) - inter_bgc
+                  cols <- c("Only Emerald/SanntiS", "GECCO+Emerald/SanntiS", "Only Emerald/SanntiS")
+                  title <- ggplot2::ggtitle("Comparsion of Emerald/SanntiS  and GECCO annotations at given score threshold")
+                } else if (input$ref_comparison_gecco == "Reference") {
+                  used_antismash <- lenghth(vals$reference_data$Cluster) - inter_bgc
+                  cols <- c("Only Reference", "GECCO+Reference", "Only Reference")
+                  title <- ggplot2::ggtitle("Comparsion of Reference  and GECCO annotations at given score threshold")
                 }
 
                 # Combine all vectors into one dataframe
@@ -230,7 +246,7 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
                         # Skip rate = clusters, annotated only by antismash/ all antismash clusters. Points to how much clusters DeepBGC missed
                         Skip_rate = test$`Only SEMPI` / length(data$Cluster)
                     )
-            } else if (input$ref_comparison_ripp == "RippMiner"){
+            } else if (input$ref_comparison_gecco == "RippMiner"){
               data <- vals$ripp_data
               title <- ggplot2::ggtitle("Rates of GECCO/RippMinner data annotation")
               test <- test %>%
@@ -240,6 +256,28 @@ mod_gecco_plots_server <- function(id, vals, score_average_gecco, score_cluster_
                   Annotation_rate = test$`GECCO+RippMiner`/ length(data$Cluster),
                   #
                   Skip_rate = test$`Only RippMiner`/length(data$Cluster)
+                )
+            } else if (input$ref_comparison_gecco == "Emerald/SanntiS"){
+              data <- vals$emerald_data
+              title <- ggplot2::ggtitle("Rates of GECCO/Emerald-SanntiS data annotation")
+              test <- test %>%
+                dplyr::mutate(
+                  Novelty_rate = test$`Only GECCO`/ (test$`GECCO+Emerald/SanntiS` + test$`Only Emerald/SanntiS`),
+                  #
+                  Annotation_rate = test$`GECCO+Emerald/SanntiS`/ length(data$Cluster),
+                  #
+                  Skip_rate = test$`Only Emerald/SanntiS`/length(data$Cluster)
+                )
+            }  else if (input$ref_comparison_gecco == "Reference"){
+              data <- vals$reference_data
+              title <- ggplot2::ggtitle("Rates of GECCO/Reference data annotation")
+              test <- test %>%
+                dplyr::mutate(
+                  Novelty_rate = test$`Only Reference`/ (test$`GECCO+Reference` + test$`Only Reference`),
+                  #
+                  Annotation_rate = test$`GECCO+Reference`/ length(data$Cluster),
+                  #
+                  Skip_rate = test$`Only Reference`/length(data$Cluster)
                 )
             }
 

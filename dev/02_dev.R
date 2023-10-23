@@ -81,6 +81,10 @@ usethis::use_data_raw( name = "arts_data", open = FALSE )
 usethis::use_data_raw( name = "deep_data", open = FALSE )
 usethis::use_data_raw( name = "rre_data", open = FALSE )
 usethis::use_data_raw( name = "ripp_data", open = FALSE)
+usethis::use_data_raw( name = "emerald_data", open = FALSE)
+usethis::use_data_raw( name = "reference_data", open = FALSE)
+
+
 ## Tests ----
 ## Add one line by test you want to create
 usethis::use_test("utils_helpers")

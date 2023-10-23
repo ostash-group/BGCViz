@@ -100,11 +100,11 @@ app_server <- function(input, output, session) {
         "ripp_data_input","emerald_data_input","reference_data_input"
     )
     # Universal beginings for variables, used in the app for different data
-    soft_names <- c("anti", "sempi", "prism", "prism_supp", "arts", "deep", "gecco", "rre", "ripp","emerald/sanntis","REF")
+    soft_names <- c("anti", "sempi", "prism", "prism_supp", "arts", "deep", "gecco", "rre", "ripp","emerald","reference")
     # The Namings, meaning how to label the data on the plots
     soft_namings <- c("Antismash", "SEMPI", "PRISM", "PRISM-Supp",
                       "ARTS", "DeepBGC", "GECCO", "RRE-Finder",
-                      "RippMiner","Emerald/SanntiS","REF")
+                      "RippMiner","Emerald/SanntiS","Reference")
     # Dataframes undes vals$list, that stored the data
     data_to_use <- c("anti_data", "sempi_data", "prism_data", "prism_supp_data",
                      "arts_data_filtered", "deep_data_filtered", "gecco_data_filtered",
@@ -172,7 +172,7 @@ app_server <- function(input, output, session) {
       if (example_data == TRUE) {
         reference_data <- data
       } else {
-        reference_data <- read_emerald(data)
+        reference_data <- read_reference(data)
       }
       vals$reference_type <- reference_data$Type2
       vals$reference_data <- reference_data
@@ -211,7 +211,7 @@ app_server <- function(input, output, session) {
         emerald_data <- read_emerald(data)
       }
       vals$emerald_type <- emerald_data$Type2
-      vals$emerald_dat <- emerald_data
+      vals$emerald_data <- emerald_data
       vals$emerald_data_input <- TRUE
       vals$data_upload_count <- vals$data_upload_count + 1
       vals$choices$ref <- c(vals$choices$ref, "Emerald/SanntiS" = "Emerald/SanntiS")
@@ -559,9 +559,9 @@ app_server <- function(input, output, session) {
     ##            Loading and processing of example data             -
     ## ----------------------------------------------------------------
     
-    shiny::observeEvent(input$emerald_sco, {
-      process_emerald(BGCViz:::emerald_data, example_data = TRUE)
-    })
+    # shiny::observeEvent(input$emerald_sco, {
+    #   process_emerald(BGCViz:::emerald_data, example_data = TRUE)
+    # })
     
     shiny::observeEvent(input$ripp_sco, {
       process_rippminer(BGCViz:::ripp_data, example_data = TRUE)
@@ -1207,7 +1207,9 @@ app_server <- function(input, output, session) {
         }
         if (vals$emerald_data_input == TRUE) {
           emerald_data <- vals$emerald_data
+          print('here it is')
           res <- rename_vector(emerald_data, rename_data, vals$renaming_notification)
+          print('here also')
           vals$emerald_emerald <- res[[1]]
           vals$renaming_notification <-res[[2]]
           emerald_data["Type2"] <- vals$emerald_data
@@ -1748,7 +1750,7 @@ app_server <- function(input, output, session) {
             }
             index <- index + 1
         }
-
+        
         lett <- rev(LETTERS)[1:(length(data_uploads)+1)]
         
 

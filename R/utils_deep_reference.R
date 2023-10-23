@@ -17,6 +17,30 @@ geom_anti <- function(data, rre_more) {
 }
 #' geom_anti
 #'
+#'#' @description A function, that return Emerald/SanntiS geom with the legend,
+#' specific to this software (to show on mouse hover).
+#'
+#' @return geom_segment with specific fields
+#'
+#' @noRd
+geom_emerald <- function(data, rre_more) {
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type2 <-
+    Software <- ID <- Start <- Stop <- Type <- NULL
+  ggplot2::geom_segment(data = data, ggplot2::aes(x, y,
+                                                  xend = xend, yend = yend, color = Type2, Software = Software,
+                                                  ID = ID, Start = Start, Stop = Stop, Type = Type
+  ), size = 3)
+}
+geom_ref <- function(data, rre_more) {
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type2 <-
+    Software <- ID <- Start <- Stop <- Type <- NULL
+  ggplot2::geom_segment(data = data, ggplot2::aes(x, y,
+                                                  xend = xend, yend = yend, color = Type2, Software = Software,
+                                                  ID = ID, Start = Start, Stop = Stop, Type = Type
+  ), size = 3)
+}
 #' @description A function, that returns rippminer-genome geom with the legend,
 #' specific to this software (to show on mouse hover).
 #'
@@ -197,6 +221,10 @@ add_more_annot <- function(seg_df, plot, soft_names, index, rre_more) {
             plot <- plot + geom_gecco(seg_df)
         } else if (soft_names[index] == "ripp"){
             plot <- plot + geom_gecco(seg_df)
+        } else if (soft_names[index] == "emerald/sanntis"){
+          plot <- plot + geom_gecco(seg_df)
+        } else if (soft_names[index] == "reference"){
+          plot <- plot + geom_gecco(seg_df)
         }
         return(plot)
     } else {

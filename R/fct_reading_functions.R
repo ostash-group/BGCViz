@@ -17,10 +17,10 @@ read_reference <- function(data){
   }
   reference_data$chromosome <- rep("GF", length(ripp_data$Cluster))
   #Type magic
-  reference_data$Type <- stringr::str_trim(tolower(ripp_data$Type))
-  reference_data["Type2"] <- stringr::str_trim(tolower(ripp_data$Type))
+  reference_data$Type <- stringr::str_trim(tolower(reference_data$Type))
+  reference_data["Type2"] <- stringr::str_trim(tolower(reference_data$Type))
   #Mutate NAs
-  reference_data <- dplyr::mutate(ripp_data, Cluster = 1:length(ripp_data$Type))
+  reference_data <- dplyr::mutate(reference_data, Cluster = 1:length(reference_data$Type))
   
   return(reference_data)
 }
@@ -29,21 +29,24 @@ read_emerald <- function(data) {
   # get rid off unneeded rows
   all <- readLines(data)
   filtered_lines <- all[!grepl("^#|^$", all)]
-  data <- paste(filtered_lines, collapse = "\n")
-  data_connection <- textConnection(data)
+  emerald_data <- paste(filtered_lines, collapse = "\n")
+  data_connection <- textConnection(emerald_data)
+
   # create  dataframe
-  emerald_data <- read.table(data_connection, header = FALSE, sep = "\t", col.names = c("seqname", "source", "feature", "start", "end", "score", "strand", "frame", "attributes"))
-  attributes_split <- strsplit(emerald_data$attributes, ";")
-  attribute_list <- vector("list", length(attributes_split))
-  key_value_pairs <- strsplit(attributes_split[[1]], "=")
-  key <- lapply(key_value_pairs, function(x) x[1])
-  for (i in 1:length(attributes_split)) {
-    value <- lapply(key_value_pairs, function(x) x[2])
-    attribute_list[[i]] <- setNames(as.list(value), unlist(key))
-  }
-  
-  attributes_df <- do.call(rbind, attribute_list)
-  emerald_data <- cbind(emerald_data, attributes_df)
+  emerald_data <- read.table(data_connection, header = FALSE, sep = "\t", col.names = c("seqname", "source", "Cluster", "Start",
+                                                                                        "Stop", "score", "strand", "frame",
+                                                                                        "Type"))
+  close(data_connection)
+  emerald_data$chromosome <- rep("EM",length(emerald_data$Cluster))
+  pattern <- "nearest_MiBIG_class=([^;]+)"
+  emerald_data$Type <- sapply(emerald_data$Type, function(x) {
+    substring <- regmatches(x, regexec(pattern, x))[[1]][2]
+    return(substring)
+  })
+  emerald_data$Type <- stringr::str_trim(tolower(emerald_data$Type))
+  emerald_data$Type2 <- emerald_data$Type
+  emerald_data$Cluster <- 1:length(emerald_data$Cluster)
+  print(emerald_data$Cluster)
   return (emerald_data)
 }
 
@@ -58,7 +61,6 @@ read_ripp <- function(data) {
     data_connection <- textConnection(data)
     ripp_data <- read.table(data_connection, header = FALSE, sep = "\t", col.names = c("Cluster", "Type", "Start", "Stop"))
     close(data_connection)
-    print(ripp_data)
     #Validation of input
     res_validation <- validate_basic_input(ripp_data)
     if (!(res_validation[[1]])) {
