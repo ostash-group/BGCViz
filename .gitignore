@@ -2,6 +2,8 @@
 # History files
 .Rhistory
 .Rapp.history
+.result_for_antismash.json
+.data_all.csv
 
 # Session Data files
 .RData

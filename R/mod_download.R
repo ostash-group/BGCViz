@@ -24,6 +24,32 @@ mod_download_ui <- function(id) {
     )
 }
 
+mod_download_anti_ui <- function(id) {
+    ns <- NS(id)
+    tagList(
+        div(
+          shinydashboard::menuItem(
+            tabName = "download_data_anti",
+            actionButton(ns("download_data_anti"), "Download data for AntiSMASH", class = "bg-success")
+          )
+            )
+        )
+
+}
+
+mod_download_anti_server <- function(id){
+  moduleServer(id, function(input, output, session) {
+    ns <- session$ns
+    output$download_data_anti <- shiny::downloadHandler(
+      filename = function() {
+        paste('antiSMASH_data.json')
+      },
+      print(vals$tracklist)
+    )
+  })
+  
+}
+
 #' download Server Functions
 #'
 #' @noRd
@@ -56,6 +82,7 @@ mod_download_server <- function(id) {
         )
     })
 }
+
 
 ## To be copied in the UI
 # mod_download_ui("download_ui_1")

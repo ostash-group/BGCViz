@@ -46,7 +46,6 @@ read_emerald <- function(data) {
   emerald_data$Type <- stringr::str_trim(tolower(emerald_data$Type))
   emerald_data$Type2 <- emerald_data$Type
   emerald_data$Cluster <- 1:length(emerald_data$Cluster)
-  print(emerald_data$Cluster)
   return (emerald_data)
 }
 

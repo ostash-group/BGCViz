@@ -124,6 +124,6 @@ add_biocircos_data <- function(data1_inter, data2_inter, data1, data2, data1_lab
     }
     return(list(
         inter_s_rre_n, inter_s_rre_n, chromosomes_start, chromosomes_end, link_pos_start, link_pos_start_1, link_pos_end,
-        link_pos_end_2, label_1, label_2, label_color
+        link_pos_end_2, label_1, label_2, label_color, data2
     ))
 }

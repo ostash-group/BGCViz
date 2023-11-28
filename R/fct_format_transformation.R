@@ -12,6 +12,9 @@
 #' sempi_to_csv(<zip-file>)
 #' }
 #' @export
+#' 
+
+
 sempi_to_csv <- function(project_archive, write_to = getwd()) {
     trackid <- NULL # Silence R CMD note
     utils::unzip(project_archive, files = "genome_browser/main/Tracks.db", exdir = paste0(write_to, "/SEMPI_TracksDB"), junkpaths = TRUE)
@@ -239,5 +242,92 @@ arts_to_nevik <- function(file, write_to = getwd())
   utils::unzip(project_archive, files = c("trees/*"), exdir = paste0(write_to, "/ARTS_tables"), junkpaths = TRUE)
   lists <- list.files("/ARTS_tables", full.names = TRUE, recursive = TRUE)
   return(lists)
+}
+
+
+#' all data to json
+#'
+#' @description Function, function that takes csv file and converts it to json
+#'
+#' @param csv_file path to csv 
+#'
+#' @return json
+
+
+data_to_json <- function(csv_file) {
+  
+  # Read CSV file 
+  data <- utils::read.csv(csv_file)
+  
+  # Group by label
+  grouped_data <- dplyr::group_by(data, label)
+  
+  # Build records list
+  records <- list()
+  
+  # Iterate through each label
+  for (name in unique(grouped_data$label)) {
+    
+    # Truncate the name to a specific length (e.g., 20 characters)
+    truncated_name <- strtrim(name, width = 20)
+    
+    # Filter rows for this label
+    group <- dplyr::filter(grouped_data, label == name)
+    
+    # Create features 
+    subregions <- lapply(1:nrow(group), function(i) {
+      list(
+        start = group$start[i],
+        end = group$end[i],
+        label = truncated_name,  # Use truncated name
+        details = list(
+          score = "group" # use actual score  
+        )
+      )
+    })
+    
+    protoclusters <- lapply(1:nrow(group), function(i) {
+      list(
+        core_start = group$start[i],
+        core_end = group$end[i], 
+        product = "bht",
+        details = list(
+          some_detail = "value" # add actual details  
+        ) 
+      )
+    })
+    
+    # Build record
+    record <- list(
+      name = truncated_name,  # Use truncated name
+      subregions = subregions,
+      protoclusters = protoclusters
+    )
+    
+    # Append 
+    records <- base::c(records, list(record))
+    
+  }
+  
+  # Build top level
+  # Build top level
+  result <- list(
+    tool = list(
+      name = as.character("Example tool"),
+      version = as.character("1.2.3"),
+      description = as.character("Example of external result sideloading in antiSMASH"),
+      configuration = list(
+        verbose = as.character("true"),
+        multisetting = c("first", "second")
+      )
+    ),
+    records = records
+  )
+  
+  # Convert to JSON 
+  json <- jsonlite::toJSON(result, pretty = TRUE, auto_unbox = TRUE)
+  writeLines(json,"result_for_antismash.json")
+  
+  return(json)
 }
 

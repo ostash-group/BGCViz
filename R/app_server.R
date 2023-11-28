@@ -56,7 +56,7 @@ app_server <- function(input, output, session) {
     # Some dataframes that are used through the app + some vectors of untercepted values
     vals <- shiny::reactiveValues(
         deep_data = NULL, anti_data = NULL, rre_data = NULL, prism_data = NULL, chr_len = NULL, fullness_deep = NULL,
-        biocircos_deep = NULL, deep_data_input = FALSE, tracklist = NULL, chromosomes = NULL, fullness_gecco = NULL,
+        biocircos_deep = NULL, deep_data_input = FALSE, tracklist = NULL, json_for_anti = NULL, chromosomes = NULL, fullness_gecco = NULL,
         anti_data_input = FALSE, rre_data_input = FALSE, prism_data_input = FALSE, seg_df_ref_a = NULL,
         seg_df_ref_d = NULL, seg_df_ref_r = NULL, seg_df_ref_p = NULL, deep_data_chromo = NULL,
         data_upload_count = 0, anti_type = NULL, prism_type = NULL, sempi_data = NULL, sempi_data_input = FALSE,
@@ -141,6 +141,9 @@ app_server <- function(input, output, session) {
     # Iterate over those files and if found "_biocircos.csv" add remove them
     for (file_names in files_in_dir) {
         if (grepl("_biocircos.csv", file_names, fixed = TRUE)) {
+            file.remove(file_names)
+        }
+        if (file_names == "all_data.csv") {
             file.remove(file_names)
         }
     }
@@ -1110,8 +1113,15 @@ app_server <- function(input, output, session) {
             shinydashboardPlus::updateBox(id, action = "restore")
         }
     })
-
-
+    
+    shiny::observeEvent(mod_download_ui('download_anti_data_2'), {
+## display something on screen
+        if (!is.null(vals$tracklist)) {
+            shiny::showNotification("Downloading data...", duration = 5, type = "message")
+        }
+    })
+    
+    
     # Logic show/hide selectinput in Link coloring in
     # Biocircos
     shiny::observeEvent(input$label_color_class, {
@@ -1653,6 +1663,7 @@ app_server <- function(input, output, session) {
         label_1 <- c()
         label_2 <- c()
         label_color <- c()
+        
 
         # CALCULATIONS
         # -----------------------------------------
@@ -1671,6 +1682,7 @@ app_server <- function(input, output, session) {
             index2 <- 1
             if (vals[[upload]] == TRUE) {
                 for (upload2 in data_uploads_2) {
+                    # vals$json_for_anti$start <- data_uploads
                     if ((vals[[upload2]] == TRUE) & (length(data_uploads_2) > 0) & (soft_namings[index] != soft_2[index2])) {
                         output <- add_biocircos_data(inters[[soft_names[index]]][[soft_names_2[index2]]]$from, inters[[soft_names[index]]][[soft_names_2[index2]]]$to, vals[[data_to_use_2[index2]]], vals[[data_to_use[index]]], soft_2[index2], soft_namings[index], rename_data, input$label_color_class, input$ref_col_biocircos, coloring_datatable)
                         chromosomes_start <- c(chromosomes_start, output[[3]])
@@ -1687,17 +1699,56 @@ app_server <- function(input, output, session) {
                         label_1 <- c(label_1, output[[9]])
                         label_2 <- c(label_2, output[[10]])
                         label_color <- c(label_color, output[[11]])
+                        
+                        
                     }
                     index2 <- index2 + 1
                 }
                 utils::write.csv(vals[[data_to_use[index]]], paste0(soft_names[index], "_biocircos.csv"), row.names = FALSE)
+                
             }
+
             index <- index + 1
         }
+    
+        
+        ####      made for json antismash      ####
+        # -----------------------------------------
+        json_start = c()
+        json_end = c()
+        json_lable = c()
+        json_description = c()
+        
+        ### list dir for appropriate files of biocircos to create json
+        
+        files_in_dir <- list.files()
+        # Iterate over those files and if found "_biocircos.csv" add remove them
+        for (file_names in files_in_dir) {
+          if (grepl("_biocircos.csv", file_names, fixed = TRUE)) {
+            df_read <- read.csv(file_names)
+            if (file_names != "arts_biocircos.csv" & file_names != "prism_supp_biocircos.csv"){
+              df_read <- read.csv(file_names)
+              df_read$Description <- strsplit(file_names, '_', fixed = TRUE)[[1]][1]
+              json_start <- c(json_start, df_read$Start)
+              json_end <- c(json_end, df_read$Stop)
+              json_lable <- c(json_lable, df_read$Type)
+              json_description <- c(json_description, df_read$Description)
+            }
 
+            # json_description <- c(json_description, df_read$Description)
+          }}
+        
+        vals$json_for_anti$start <- json_start
+        vals$json_for_anti$end <- json_end
+        vals$json_for_anti$label <- json_lable
+        vals$json_for_anti$description <- json_description
+        utils::write.csv(vals$json_for_anti, "data_all.csv", row.names = FALSE)
 
+        print(data_to_json("data_all.csv"))
+         # THE END OF JSON ANTISMASH
+        # -----------------------------------------
 
-
+        
         # Combine labels with mapply to one list
         link_labels <- mapply(function(x, y) paste(x, y, sep = " | "), label_1, label_2)
 
@@ -1826,6 +1877,15 @@ app_server <- function(input, output, session) {
     })
 
 
+    
+
+    
+    
+    
+    
+    
+    
+    
     ############################################################################
     ############################################################################
     ###                                                                      ###
@@ -1883,6 +1943,7 @@ app_server <- function(input, output, session) {
 
     # Download used datasets (as for BioCircos)
     mod_download_server("download_ui_1")
+    mod_download_server("download_anti_ui_1")
 
     shiny::onSessionEnded(function() {
         # List files in directory
