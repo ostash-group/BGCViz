@@ -28,23 +28,29 @@ mod_download_anti_ui <- function(id) {
     ns <- NS(id)
     tagList(
         div(
+          style = "text-align: center",
           shinydashboard::menuItem(
             tabName = "download_data_anti",
-            actionButton(ns("download_data_anti"), "Download data for AntiSMASH", class = "bg-success")
+            shiny::downloadButton(ns("download_data_anti"), "Download JSON for AntiSMASH")
           )
-            )
         )
+      )
 
 }
 
 mod_download_anti_server <- function(id){
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    if (!file.exists('data_all.csv')) {
+      shiny::showNotification("No data to download", type = "warning")}
+
     output$download_data_anti <- shiny::downloadHandler(
-      filename = function() {
-        paste('antiSMASH_data.json')
-      },
-      print(vals$tracklist)
+      filename ='antiSMASH_data.json',
+      content = function(file) {
+        if (file.exists('data_all.csv')) {
+          json <- data_to_json('data_all.csv')
+          write(json, file)}
+      }
     )
   })
   

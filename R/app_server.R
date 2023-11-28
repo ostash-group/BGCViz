@@ -1682,7 +1682,6 @@ app_server <- function(input, output, session) {
             index2 <- 1
             if (vals[[upload]] == TRUE) {
                 for (upload2 in data_uploads_2) {
-                    # vals$json_for_anti$start <- data_uploads
                     if ((vals[[upload2]] == TRUE) & (length(data_uploads_2) > 0) & (soft_namings[index] != soft_2[index2])) {
                         output <- add_biocircos_data(inters[[soft_names[index]]][[soft_names_2[index2]]]$from, inters[[soft_names[index]]][[soft_names_2[index2]]]$to, vals[[data_to_use_2[index2]]], vals[[data_to_use[index]]], soft_2[index2], soft_namings[index], rename_data, input$label_color_class, input$ref_col_biocircos, coloring_datatable)
                         chromosomes_start <- c(chromosomes_start, output[[3]])
@@ -1744,8 +1743,12 @@ app_server <- function(input, output, session) {
         vals$json_for_anti$description <- json_description
         utils::write.csv(vals$json_for_anti, "data_all.csv", row.names = FALSE)
 
-        print(data_to_json("data_all.csv"))
-         # THE END OF JSON ANTISMASH
+
+        
+        mod_download_anti_server('download_anti_ui_1')
+        
+        
+                 # THE END OF JSON ANTISMASH
         # -----------------------------------------
 
         

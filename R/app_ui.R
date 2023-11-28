@@ -28,12 +28,7 @@ app_ui <- function(request) {
                         tabName = "restore_boxes",
                         actionButton("restore_box", "Restore all boxes", class = "bg-success")
                     ),
-                    shinydashboard::menuItem(
-                        tabName = "download_anti_data",
-                        actionButton("download_anti_data_2", "Download Antismash data", class = "bg-success")
-                        )
-                    # ),
-                    # mod_download_anti_ui("download_anti_ui_1")
+                    mod_download_anti_ui("download_anti_ui_1")
                 )
             ),
             shinydashboard::dashboardBody(
