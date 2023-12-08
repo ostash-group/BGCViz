@@ -89,9 +89,7 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
                             g = paste(eval(as.name(excluded_names[7])), collapse = ","),
                             h = paste(eval(as.name(excluded_names[8])), collapse = ","),
                             i = paste(eval(as.name(excluded_names[9])), collapse = ","),
-                            j = paste(eval(as.name(excluded_names[10])), collapse = ","),
-
-                            
+                            j = paste(eval(as.name(excluded_names[10])), collapse = ",")
                         )
                     colnames(data) <- c(abbr[i], excluded_names)
                     for (p in abbr) {
