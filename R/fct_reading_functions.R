@@ -7,21 +7,14 @@
 
 
 read_reference <- function(data){
-  reference_data <- data
-  res_validation <- validate_basic_input(reference_data)
-  if (!(res_validation[[1]])) {
-    reference_data <- NULL
-    return(NULL)
-  } else {
-    reference_data <- res_validation[[2]]
-  }
-  reference_data$chromosome <- rep("GF", length(ripp_data$Cluster))
+  reference_data <- read.csv(data)
+  reference_data$chromosome <- rep("GF", length(reference_data$Cluster))
   #Type magic
   reference_data$Type <- stringr::str_trim(tolower(reference_data$Type))
   reference_data["Type2"] <- stringr::str_trim(tolower(reference_data$Type))
   #Mutate NAs
   reference_data <- dplyr::mutate(reference_data, Cluster = 1:length(reference_data$Type))
-  
+  print(reference_data)
   return(reference_data)
 }
 
