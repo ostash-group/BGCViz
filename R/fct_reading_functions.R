@@ -6,17 +6,25 @@
 #' #' @noRd
 
 
-read_reference <- function(data){
-  reference_data <- read.csv(data)
-  reference_data$chromosome <- rep("GF", length(reference_data$Cluster))
-  #Type magic
-  reference_data$Type <- stringr::str_trim(tolower(reference_data$Type))
-  reference_data["Type2"] <- stringr::str_trim(tolower(reference_data$Type))
-  #Mutate NAs
-  reference_data <- dplyr::mutate(reference_data, Cluster = 1:length(reference_data$Type))
-  print(reference_data)
-  return(reference_data)
+read_compare <- function(data){
+  compare_data <- read.csv(data)
+  compare_data <- subset(compare_data, select = c("Type", "Cluster", "Start", "Stop"))
+  compare_data$chromosome <- rep("C", nrow(compare_data))  # Use nrow for clarity
+  # Type magic
+  compare_data$Type <- stringr::str_trim(tolower(compare_data$Type))
+  compare_data$Type2 <- stringr::str_trim(tolower(compare_data$Type))
+  # Mutate NAs
+  compare_data <- dplyr::mutate(compare_data, Cluster = 1:nrow(compare_data))
+  
+  # Convert "Start" and "Stop" to integers
+  compare_data$Cluster <- 1:length(compare_data$Cluster)
+  
+  compare_data$Start <- as.integer(compare_data$Start)
+  compare_data$Stop <- as.integer(compare_data$Stop) + 25000
+  
+  return(compare_data)
 }
+
 
 read_emerald <- function(data) {
   # get rid off unneeded rows

@@ -169,10 +169,10 @@ app_ui <- function(request) {
                                   id = "id6",
                                   shinydashboardPlus::box(
                                     title = "Upload reference data",
-                                    id = "upload_reference_box",
+                                    id = "upload_compare_box",
                                     collapsible = TRUE,
                                     closable = TRUE,
-                                    shiny::fileInput("reference_data",
+                                    shiny::fileInput("compare_data",
                                                      "Upload reference data",
                                                      accept = ".csv"
                                     )

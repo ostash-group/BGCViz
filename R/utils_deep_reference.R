@@ -15,6 +15,15 @@ geom_anti <- function(data, rre_more) {
         ID = ID, Start = Start, Stop = Stop, Type = Type
     ), size = 3)
 }
+geom_compare <- function(data, rre_more) {
+  # Silence R CMD note
+  x <- y <- xend <- yend <- Type2 <-
+    Software <- ID <- Start <- Stop <- Type <- NULL
+  ggplot2::geom_segment(data = data, ggplot2::aes(x, y,
+                                                  xend = xend, yend = yend, color = Type2, Software = Software,
+                                                  ID = ID, Start = Start, Stop = Stop, Type = Type
+  ), size = 3)
+}
 #' geom_anti
 #'
 #'#' @description A function, that return Emerald/SanntiS geom with the legend,
@@ -223,7 +232,7 @@ add_more_annot <- function(seg_df, plot, soft_names, index, rre_more) {
             plot <- plot + geom_gecco(seg_df)
         } else if (soft_names[index] == "emerald/sanntis"){
           plot <- plot + geom_gecco(seg_df)
-        } else if (soft_names[index] == "reference"){
+        } else if (soft_names[index] == "compare"){
           plot <- plot + geom_gecco(seg_df)
         }
         return(plot)

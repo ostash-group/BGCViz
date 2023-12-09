@@ -82,7 +82,7 @@ usethis::use_data_raw( name = "deep_data", open = FALSE )
 usethis::use_data_raw( name = "rre_data", open = FALSE )
 usethis::use_data_raw( name = "ripp_data", open = FALSE)
 usethis::use_data_raw( name = "emerald_data", open = FALSE)
-usethis::use_data_raw( name = "reference_data", open = FALSE)
+# usethis::use_data_raw( name = "reference_data", open = FALSE)
 
 
 ## Tests ----

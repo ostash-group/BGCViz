@@ -44,6 +44,9 @@ mod_barplot_rank_server <- function(id, vals, data_uploads, soft_names, soft_nam
             shiny::req(vals$can_plot_barplot_rank == TRUE)
 
             antismash_count <- NULL
+            compare_count <- NULL
+            emerald_count <- NULL
+            ripp_count <- NULL
             prism_count <- NULL
             deep_count <- NULL
             rre_count <- NULL

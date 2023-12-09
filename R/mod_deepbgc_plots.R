@@ -80,7 +80,7 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
             Annotation_rate <- Skip_rate <- Rates_data <-
             Rates <- NULL
         output$deep_barplot <- shiny::renderPlot({
-            shiny::req((vals$deep_data_input == TRUE) & ((vals$anti_data_input == TRUE) | (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE) | (vals$ripp_data_input == TRUE) | (vals$emerald_data_input == TRUE) | (vals$reference_data_input == TRUE) ))
+            shiny::req((vals$deep_data_input == TRUE) & ((vals$anti_data_input == TRUE) | (vals$prism_data_input == TRUE) | (vals$sempi_data_input == TRUE) | (vals$ripp_data_input == TRUE) | (vals$emerald_data_input == TRUE) | (vals$compare_data_input == TRUE) ))
 
 
             # Create empty dataframe to populate later
@@ -121,20 +121,18 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                         dplyr::select(Start, Stop)
                     anti_inter$seqnames <- "chr"
                 } else if (input$ref_comparison == "RippMiner"){
-                    ripp_inter <- shiny::isolate(vals$ripp_data) %>%
+                    anti_inter <- shiny::isolate(vals$ripp_data) %>%
                         dplyr::select(Start, Stop)
-                    ripp_inter$seqnames <- "chr"
+                    anti_inter$seqnames <- "chr"
                 } else if (input$ref_comparison == "Emerald/SanntiS"){
-                  emerald_inter <- shiny::isolate(vals$emerald_data) %>%
+                  anti_inter <- shiny::isolate(vals$emerald_data) %>%
                     dplyr::select(Start, Stop)
-                  emerald_inter$seqnames <- "chr"
-                } else if (input$ref_comparison == "Reference"){
-                  reference_inter <- shiny::isolate(vals$reference_data) %>%
+                  anti_inter$seqnames <- "chr"
+                } else if (input$ref_comparison == "Compare"){
+                  anti_inter <- shiny::isolate(vals$compare_data) %>%
                     dplyr::select(Start, Stop)
-                  reference_inter$seqnames <- "chr"
+                  anti_inter$seqnames <- "chr"
                 }
-                
-
 
                 # Get the interception of two matrices
                 if (length(deep_inter$Start) > 0) {
@@ -159,17 +157,17 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                     used_antismash <- length(shiny::isolate(vals$sempi_data$Cluster)) - inter_bgc
                     cols <- c("Only SEMPI", "DeepBGC+SEMPI", "Only DeepBGC")
                     title <- ggplot2::ggtitle("Comparison of SEMPI and DeepBGC annotations at given score threshold")
-                } else if (input$ref_comparsion == "RipMiner"){
+                } else if (input$ref_comparison == "RipMinner"){
                     used_antismash <- length(shiny::isolate(vals$ripp_data$Cluster)) - inter_bgc
                     cols <-c("Only RippMiner", "DeepBGC+RippMiner", "Only DeepBGC")
-                    title <- ggplot2::ggtitle("Comparsion of RIPP and DeepBGC annotations at given score threshold")
-                } else if (input$ref_comparison_gecco == "Emerald/SanntiS") {
-                  used_antismash <- lenghth(vals$emerald_data$Cluster) - inter_bgc
+                    title <- ggplot2::ggtitle("Comparsion of RippMiner and DeepBGC annotations at given score threshold")
+                } else if (input$ref_comparison == "Emerald/SanntiS") {
+                  used_antismash <- length(shiny::isolate(vals$emerald_data$Cluster)) - inter_bgc
                   cols <- c("Only Emerald/SanntiS", "GECCO+Emerald/SanntiS", "Only Emerald/SanntiS")
                   title <- ggplot2::ggtitle("Comparsion of Emerald/SanntiS  and GECCO annotations at given score threshold")
-                } else if (input$ref_comparison_gecco == "Reference") {
-                  used_antismash <- lenghth(vals$reference_data$Cluster) - inter_bgc
-                  cols <- c("Only Reference", "GECCO+Reference", "Only Reference")
+                } else if (input$ref_comparison == "Compare") {
+                  used_antismash <- length(shiny::isolate(vals$compare_data$Cluster)) - inter_bgc
+                  cols <- c("Only compare", "GECCO+compare", "Only compare")
                   title <- ggplot2::ggtitle("Comparsion of RippMiner-genome  and GECCO annotations at given score threshold")
                 }
 
@@ -257,7 +255,7 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                     
                     Annotation_rate = test$`DeepBGC+RippMiner` / length(data$Cluster),
                     
-                    Skip_rate = test$`Only RippMiner`/ length(data$CLuster)
+                    Skip_rate = test$`Only RippMiner`/ length(data$Cluster)
                   )
             } else if (input$ref_comparsion == "Emerald/SanntiS"){
               data <- vals$emerald_data
@@ -268,18 +266,18 @@ mod_deepbgc_plots_server <- function(id, vals, score_a, score_d, score_c) {
                   
                   Annotation_rate = test$`DeepBGC+Emerald/SanntiS` / length(data$Cluster),
                   
-                  Skip_rate = test$`Only Emerald/SanntiS`/ length(data$CLuster)
+                  Skip_rate = test$`Only Emerald/SanntiS`/ length(data$Cluster)
                 )
-            } else if (input$ref_comparsion == "Reference"){
-              data <- vals$reference_data
-              title <- ggplot2::ggtitle("Rates of DeepBGC/Reference data annotation")
+            } else if (input$ref_comparsion == "Compare"){
+              data <- vals$compare_data
+              title <- ggplot2::ggtitle("Rates of DeepBGC/Compare data annotation")
               test <- test %>% 
                 dplyr::mutate(
-                  Novelty_rate = test$`Only DeepBGC` / (test$`DeepBGC+Reference` + test$`Only Reference`),
+                  Novelty_rate = test$`Only DeepBGC` / (test$`DeepBGC+Compare` + test$`Only Compare`),
                   
-                  Annotation_rate = test$`DeepBGC+Reference` / length(data$Cluster),
+                  Annotation_rate = test$`DeepBGC+Compare` / length(data$Cluster),
                   
-                  Skip_rate = test$`Only Reference`/ length(data$CLuster)
+                  Skip_rate = test$`Only Compare`/ length(data$Cluster)
                 )
             } 
             

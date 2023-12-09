@@ -14,8 +14,8 @@ app_server <- function(input, output, session) {
     check_to_rename <- shiny::reactive({
         list(
             input$sempi_data, input$anti_data, input$prism_data,
-            input$sempi_sco, input$anti_sco, input$prism_sco,
-            input$ripp_sco, input$ripp_data, input$emerald_data, input$reference_data
+            input$sempi_sco, input$anti_sco, input$prism_sco, input$compare_sco,
+            input$ripp_sco, input$ripp_data, input$emerald_data, input$compare_data
         )
     })
     biocircos_listen <- shiny::reactive({
@@ -24,14 +24,14 @@ app_server <- function(input, output, session) {
             input$ref_col_biocircos, vals$inters_filtered, input$prism_supp_data_input_width, vals$prism_supp_data_input,
             input$arts_width, input$sempi_width, input$rre_width, vals$anti_data, vals$sempi_data, vals$prism_data,
             vals$coloring_datatable,
-            vals$ripp_data, vals$emerald_data, vals$reference_data
+            vals$ripp_data, vals$emerald_data, vals$compare_data
         )
     })
     inputData <- shiny::reactive({
         list(
             vals$sempi_data_input, vals$rre_data_input, vals$anti_data_input, vals$prism_data_input,
             vals$prism_supp_data_input, vals$deep_data_input, vals$gecco_data_input, vals$arts_data_input,
-            vals$ripp_data_input, vals$emerald_data_input, vals$reference_data_input
+            vals$ripp_data_input, vals$emerald_data_input, vals$compare_data_input
         )
     })
     dynamicInput <- shiny::reactive({
@@ -41,7 +41,7 @@ app_server <- function(input, output, session) {
         list(
             vals$inters_filtered, vals$rre_more, input$ref, input$arts_width, input$sempi_width, input$rre_width,
             input$prism_supp_data_input_width, vals$anti_data, vals$prism_data, vals$sempi_data, vals$arts_data,
-            vals$ripp_data, vals$arts_tree_data, vals$emerald_data, vals$reference_data
+            vals$ripp_data, vals$arts_tree_data, vals$emerald_data, vals$compare_data
         )
     })
 
@@ -72,13 +72,13 @@ app_server <- function(input, output, session) {
         can_plot_biocircos = FALSE, can_plot_barplot_rank = FALSE, can_plot_group_table = FALSE, prism_supp_plot = FALSE,
         ripp_data = NULL, ripp_data_input = FALSE, ripp_type = NULL, ripp_interact = NULL, seg_df_ref_ri = NULL,
         emerald_data = NULL, emerald_data_input = FALSE, emerald_type = NULL, emerald_interact = NULL, seg_df_ref_emer = NULL,
-        reference_data = NULL, reference_data_input = FALSE, reference_type = NULL, reference_interact = NULL, seg_df_ref_refer = NULL
+        compare_data = NULL, compare_data_input = FALSE, compare_type = NULL, compare_interact = NULL, seg_df_ref_compare = NULL
     )
 
     vals$computed <- list(
         anti = FALSE, deep = FALSE, gecco = FALSE, arts = FALSE,
         prism = FALSE, sempi = FALSE, prism_supp = FALSE, rre = FALSE,
-        ripp = FALSE, emerald = FALSE, reference = FALSE
+        ripp = FALSE, emerald = FALSE, compare = FALSE
     )
     # Making coloring datatable
     rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
@@ -92,29 +92,29 @@ app_server <- function(input, output, session) {
     data_uploads <- c(
         "anti_data_input", "sempi_data_input", "prism_data_input", "prism_supp_data_input",
         "arts_data_input", "deep_data_input", "gecco_data_input", "rre_data_input",
-        "ripp_data_input","emerald_data_input","reference_data_input"
+        "ripp_data_input","emerald_data_input","compare_data_input"
     )
     data_uploads_inter <- c(
         "anti_data_input", "sempi_data_input", "prism_data_input", "prism_json",
         "arts_data_input", "deep_data_input", "gecco_data_input", "rre_data_input",
-        "ripp_data_input","emerald_data_input","reference_data_input"
+        "ripp_data_input","emerald_data_input","compare_data_input"
     )
     # Universal beginings for variables, used in the app for different data
-    soft_names <- c("anti", "sempi", "prism", "prism_supp", "arts", "deep", "gecco", "rre", "ripp","emerald","reference")
+    soft_names <- c("anti", "sempi", "prism", "prism_supp", "arts", "deep", "gecco", "rre", "ripp","emerald","compare")
     # The Namings, meaning how to label the data on the plots
     soft_namings <- c("Antismash", "SEMPI", "PRISM", "PRISM-Supp",
                       "ARTS", "DeepBGC", "GECCO", "RRE-Finder",
-                      "RippMiner","Emerald/SanntiS","Reference")
+                      "RippMiner","Emerald/SanntiS","Compare")
     # Dataframes undes vals$list, that stored the data
     data_to_use <- c("anti_data", "sempi_data", "prism_data", "prism_supp_data",
                      "arts_data_filtered", "deep_data_filtered", "gecco_data_filtered",
-                     "rre_data","ripp_data","emerald_data","reference_data")
+                     "rre_data","ripp_data","emerald_data","compare_data")
     # Used in barplot on summarise tab + Annotation on chromosome plots
-    abbr <- c("A", "S", "P", "P-Supp", "AR", "D", "G", "RRE", "Ripp",'Emer',"REF")
+    abbr <- c("A", "S", "P", "P-Supp", "AR", "D", "G", "RRE", "Ripp",'Emer',"C")
     # Used for deep reference 2 plot
     soft_datafr <- c(
         "seg_df_ref_a", "seg_df_ref_s", "seg_df_ref_p", "seg_df_ref_p_s", "seg_df_ref_ar", "seg_df_ref_d",
-        "seg_df_ref_g", "seg_df_ref_r", "seg_df_ref_ri","seg_df_ref_emer","seg_df_ref_refer"
+        "seg_df_ref_g", "seg_df_ref_r", "seg_df_ref_ri","seg_df_ref_emer","seg_df_ref_compare"
     )
 
     vals$score_a <- 50
@@ -171,38 +171,40 @@ app_server <- function(input, output, session) {
     # TODO Make tidyr::separate functions for different data types.
     # For now you just have duplicated the code. Specifically for ARTS!
     # Reading functions:
-    process_reference <- function(data, example_data = FALSE) {
+    process_compare <- function(data, example_data = FALSE) {
       if (example_data == TRUE) {
-        reference_data <- data
+        compare_data <- data
       } else {
-        reference_data <- read_reference(data)
+        compare_data<- read_compare(data)
       }
-      vals$reference_type <- reference_data$Type2
-      vals$reference_data <- reference_data
-      vals$reference_data_input <- TRUE
+      vals$compare_type <- compare_data$Type2
+      vals$compare_data <- compare_data
+      vals$compare_data$chromosome <- rep("C", length(vals$compare_data$Cluster))
+      
+      vals$compare_data_input <- TRUE
       vals$data_upload_count <- vals$data_upload_count + 1
-      vals$choices$ref <- c(vals$choices$ref, "Reference" = "Reference")
-      vals$choices$group_by <- c(vals$choices$group_by, "Reference" = "Reference")
-      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "Reference" = "Reference")
-      vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Reference" = "Reference")
-      vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "Reference" = "Reference")
+      vals$choices$ref <- c(vals$choices$ref, "Compare" = "Compare")
+      vals$choices$group_by <- c(vals$choices$group_by, "Compare" = "Compare")
+      vals$choices$ref_col_biocircos <- c(vals$choices$ref_col_biocircos, "Compare" = "Compare")
+      vals$choices$ref_comparison_gecco <- c(vals$choices$ref_comparison_gecco, "Compare" = "Compare")
+      vals$choices$ref_comparison <- c(vals$choices$ref_comparison, "Compare" = "Compare")
       update_ui_with_data()
       disable_event_logic()
       if (vals$data_upload_count == 1) {
         shiny::updateSelectInput(session, "ref",
-                                 selected = "Reference"
+                                 selected = "Compare"
         )
         shiny::updateSelectInput(session, "group_table_ui_1-group_by",
-                                 selected = "Reference"
+                                 selected = "Compare"
         )
         shiny::updateSelectInput(session, "deep_barplot_ui_1-ref_comparison",
-                                 selected = "Reference"
+                                 selected = "Compare"
         )
         shiny::updateSelectInput(session, "ref_col_biocircos",
-                                 selected = "Reference"
+                                 selected = "Compare"
         )
         shiny::updateSelectInput(session, "gecco_plots_ui_1-ref_comparison_gecco",
-                                 selected = "Reference"
+                                 selected = "Compare"
         )
       }
     }
@@ -602,8 +604,8 @@ app_server <- function(input, output, session) {
     ##                Loading and processing user data               -
     ## ----------------------------------------------------------------
     
-    shiny::observeEvent(input$reference_data, {
-      process_reference(input$reference_data$datapath)
+    shiny::observeEvent(input$compare_data, {
+      process_compare(input$compare_data$datapath)
     })
     
     shiny::observeEvent(input$emerald_data, {
@@ -788,11 +790,11 @@ app_server <- function(input, output, session) {
       }
     })
     
-    shiny::observeEvent(vals$reference_data_input, {
-      if (vals$reference_data_input == TRUE){
-        shinyjs::showElement(selector = "#reference_hybrid")
+    shiny::observeEvent(vals$compare_data_input, {
+      if (vals$compare_data_input == TRUE){
+        shinyjs::showElement(selector = "#compare_hybrid")
       } else {
-        shinyjs::hideElement(selector = "#reference_hybrid")
+        shinyjs::hideElement(selector = "#compare_hybrid")
       }
     })
     # Show prism options if data is available
@@ -1104,7 +1106,7 @@ app_server <- function(input, output, session) {
             "deep_comparison_box", "deep_rate_box", "deep_comparison_controls_box", "gecco_comparison_box",
             "gecco_rate_box", "gecco_comparison_controls_box", "annotation_reference_box", "annotation_reference_comparison_box",
             "annotation_reference_comparison_controls_box", "biocircos_plot_box", "biocircos_controls_box",
-            "ranking_barplot_box", "group_table_box", "upload_anti_box","upload_ripp_box", "upload_emerald_box", "upload_reference_box",
+            "ranking_barplot_box", "group_table_box", "upload_anti_box","upload_ripp_box", "upload_emerald_box", "upload_compare_box",
             "upload_prism_box","upload_sempi_box", "upload_deep_box", "upload_gecco_box", "upload_rre_box", "upload_arts_box",
             "use_example_data_box", "rename_box", "prism_supplement_arts_box", "improve_visualization_box",
             "download_data_box", "gecco_filtering_box", "deep_filtering_box", "arts_tree_box"
@@ -1134,11 +1136,11 @@ app_server <- function(input, output, session) {
     # Make hybrids from the data, if checkbox is checked
     # TODO Put the function to the root.
     # Tou have duplicated code
-    shiny::observeEvent(input$reference_hybrid, ignoreInit = TRUE, {
-      if (input$reference_hybrid == TRUE) {
-        vals$reference_data$Type2 <- hybrid_col(vals$reference_data)
+    shiny::observeEvent(input$compare_hybrid, ignoreInit = TRUE, {
+      if (input$compare_hybrid == TRUE) {
+        vals$compare_data$Type2 <- hybrid_col(vals$compare_data)
       } else {
-        vals$reference_data$Type2 <- vals$reference_type
+        vals$compare_data$Type2 <- vals$compare_type
       }
     })
     
@@ -1217,21 +1219,19 @@ app_server <- function(input, output, session) {
         }
         if (vals$emerald_data_input == TRUE) {
           emerald_data <- vals$emerald_data
-          print('here it is')
           res <- rename_vector(emerald_data, rename_data, vals$renaming_notification)
-          print('here also')
-          vals$emerald_emerald <- res[[1]]
+          vals$emerald_type <- res[[1]]
           vals$renaming_notification <-res[[2]]
           emerald_data["Type2"] <- vals$emerald_data
           vals$emerald_data <- emerald_data
         }
-        if (vals$reference_data_input == TRUE) {
-          reference_data <- vals$reference_data
-          res <- rename_vector(reference_data, rename_data, vals$renaming_notification)
-          vals$reference_type <- res[[1]]
+        if (vals$compare_data_input == TRUE) {
+          compare_data <- vals$compare_data
+          res <- rename_vector(compare_data, rename_data, vals$renaming_notification)
+          vals$compare_type <- res[[1]]
           vals$renaming_notification <-res[[2]]
-          reference_data["Type2"] <- vals$reference_data
-          vals$reference_data <- reference_data
+          compare_data["Type2"] <- vals$compare_data
+          vals$compare_data <- compare_data
         }
         shinyjs::showElement(selector = "#reset_name")
         shinyjs::hideElement(selector = "#rename")
@@ -1286,13 +1286,13 @@ app_server <- function(input, output, session) {
           emerald_data["Type2"] <- vals$emerald_data
           vals$emerald_data <- emerald_data
         }
-        if (vals$reference_data_input == TRUE) {
-          reference_data <- vals$reference_data
-          res <- rename_vector(reference_data, rename_data, vals$renaming_notification)
-          vals$reference_type <- res[[1]]
+        if (vals$compare_data_input == TRUE) {
+          compare_data <- vals$compare_data
+          res <- rename_vector(compare_data, rename_data, vals$renaming_notification)
+          vals$compare_type <- res[[1]]
           vals$renaming_notification <-res[[2]]
-          reference_data["Type2"] <- vals$reference_data
-          vals$reference_data <- reference_data
+          compare_data["Type2"] <- vals$compare_data
+          vals$compare_data <- compare_data
         }
     }
 
@@ -1304,10 +1304,10 @@ app_server <- function(input, output, session) {
         vals$prism_data["Type2"] <- vals$prism_data["Type"]
         vals$ripp_data["Type2"] <- vals$ripp_data["Type"]
         vals$emerald_data["Type2"] <- vals$emerald_data["Type"]
-        vals$reference_data["Type2"] <- vals$reference_data["Type"]
-        if (input$reference_hybrid == TRUE) {
+        vals$compare_data["Type2"] <- vals$compare_data["Type"]
+        if (input$compare_hybrid == TRUE) {
           shiny::showNotification(paste("Reference cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration = 10 )
-          shiny::showNotification(inputId ="reference_hybrid", value = FALSE)
+          shiny::showNotification(inputId ="compare_hybrid", value = FALSE)
         }
         if (input$emerald_hybrid == TRUE) {
           shiny::showNotification(paste("Emerald/SanntiS cluster types are NOT visualized as hybrid anymore. You should check the option one more time"), type = "warning", duration = 10 )
@@ -1380,11 +1380,11 @@ app_server <- function(input, output, session) {
     # dplyr::filter while ploting then.
     shiny::observeEvent(inputData(), ignoreInit = TRUE, priority = 5, {
         # GENERATE DATA
-        if (vals$reference_data_input == TRUE) {
-          reference_data <- vals$reference_data
-          reference_inter <- vals$reference_data %>%
+        if (vals$compare_data_input == TRUE) {
+          compare_data <- vals$compare_data
+          compare_inter <- vals$compare_data %>%
             dplyr::select(Start, Stop)
-          reference_inter$seqnames <- "chr"
+          compare_inter$seqnames <- "chr"
         }
         if (vals$emerald_data_input == TRUE) {
           emerald_data <- vals$emerald_data
@@ -1806,6 +1806,7 @@ app_server <- function(input, output, session) {
         }
         
         lett <- rev(LETTERS)[1:(length(data_uploads)+1)]
+
         
 
         tooltip <- c(
@@ -1813,7 +1814,7 @@ app_server <- function(input, output, session) {
             "P_value", "RRE_start", "RRE_stop", "Probability", "Name", "Full_name", "Hit", "Core", "Count", "Bitscore", "Model",
             "Num_domains", "Num_proteins", "Average_p", "Max_p"
         )
-
+  
         # MAKE COMPUTATIONS
         sup_index <- 1
         soft_lttrs <- lett
@@ -1830,17 +1831,20 @@ app_server <- function(input, output, session) {
                 seg_ref_g <- simple_seg(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), "Z", soft_namings[sup_index], soft_names[sup_index], soft_major, inter = FALSE, inters)
                 seg_ref_g <- define_spec_seg_df(soft_names, sup_index, seg_ref_g, soft_major, eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), inter = FALSE, vals$rre_more, inters)
                 seg_ref <- seg_ref_g
-
                 if (input$ref == soft_namings[sup_index]) {
                     shiny::validate(need(nrow(eval(as.name(paste(soft_names[sup_index], "_data", sep = "")))) > 0, "Reference data is empty, and so, insufficient for plotting. Please select another one"))
-                    plot <- ggplot2::ggplot(eval(as.name(paste(soft_names[sup_index], "_data", sep = ""))), ggplot2::aes(x = vals$chr_len, y = Chr)) +
-                        suppressWarnings(eval(as.name(paste0("geom_", soft_names[sup_index])))(seg_ref, vals$rre_more))
+
+                  plot <- ggplot2::ggplot(eval(as.name(paste(soft_names[sup_index], "_data", sep = "")))) +
+                      suppressWarnings(eval(as.name(paste0("geom_", soft_names[sup_index])))(seg_ref, vals$rre_more))
                     soft_let <- abbr[sup_index]
                     lettrs <- lett[2:length(lett)]
                     labels_1 <- list()
                     index <- 1
+
                     for (i in data_uploads) {
+                      
                         if ((vals[[i]] == TRUE) & (soft_names[index] != soft_major)) {
+                          
                             df <- eval(as.name(paste(soft_names[index], "_data", sep = "")))
                             seg_df <- simple_seg(df, lettrs[index], soft_namings[index], soft_names[index], soft_major, inter = TRUE, inters)
                             seg_df <- define_spec_seg_df(soft_names, index, seg_df, soft_major, df, inter = TRUE, vals$rre_more, inters)
@@ -1869,9 +1873,12 @@ app_server <- function(input, output, session) {
                             title = list(text = "<b> Cluster Types </b>")
                         ))
                 }
+
                 seg_ref$yend <- rep(soft_lttr, length(eval(as.name(paste(soft_names[sup_index], "_data", sep = "")))$Cluster))
                 seg_ref$y <- rep(soft_lttr, length(eval(as.name(paste(soft_names[sup_index], "_data", sep = "")))$Cluster))
                 vals[[soft_datafr[sup_index]]] <- seg_ref
+
+                
             }
             sup_index <- sup_index + 1
         }
