@@ -1,0 +1,10 @@
+name: bgcviz
+title:
+username: tsrnlv
+account: tsrnlv
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10154357
+bundleId: 7787758
+url: https://tsrnlv.shinyapps.io/bgcviz/
+version: 1

@@ -16,3 +16,7 @@ csv file in specified location
 Function, which downloads default options csv file into provided location.
 Then can be used with `set_defaults` function to change the default behaviour
 }
+\examples{
+get_defaults()
+
+}

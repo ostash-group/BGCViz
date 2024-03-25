@@ -1,4 +1,4 @@
-#' group_table UI Function
+#'#' group_table UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -39,8 +39,8 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
     ns <- session$ns
     output$group_table <- shiny::renderTable({
       shiny::req(vals$data_upload_count > 1)
-      shiny::req(vals$need_filter == F)
-      shiny::req(vals$can_plot_group_table == T)
+      shiny::req(vals$need_filter == FALSE)
+      shiny::req(vals$can_plot_group_table == TRUE)
       if (is.null(vals$inters_filtered)) {
         inters <- vals$inters
       } else {
@@ -50,7 +50,7 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
       colnames(df_test) <- abbr
       added_inters <- c(soft_names[match(input$group_by, soft_namings)])
       add_inters <- list()
-      if (input$count_all == F) {
+      if (input$count_all == FALSE) {
         df_test[nrow(df_test) + 1, ] <- NA
       } else {
         selected_dataframe <- data_to_use[match(input$group_by, soft_namings)]
@@ -70,10 +70,10 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
             for (h in seq(1:length(soft_n))) {
               if (name == soft_names[match(soft_n, soft_names)][h]) {
                 colnames(df_tmp) <- c(abbr[i], abbr[match(soft_n, soft_names)][h])
-                df_test <- merge(df_test, df_tmp, all = T)
+                df_test <- merge(df_test, df_tmp, all = TRUE)
               }
             }
-
+            
             index <- index + 1
           }
           excluded_names <- abbr[abbr != as.name(abbr[i])]
@@ -86,7 +86,10 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
               d = paste(eval(as.name(excluded_names[4])), collapse = ","),
               e = paste(eval(as.name(excluded_names[5])), collapse = ","),
               f = paste(eval(as.name(excluded_names[6])), collapse = ","),
-              g = paste(eval(as.name(excluded_names[7])), collapse = ",")
+              g = paste(eval(as.name(excluded_names[7])), collapse = ","),
+              h = paste(eval(as.name(excluded_names[8])), collapse = ","),
+              i = paste(eval(as.name(excluded_names[9])), collapse = ","),
+              j = paste(eval(as.name(excluded_names[10])), collapse = ",")
             )
           colnames(data) <- c(abbr[i], excluded_names)
           for (p in abbr) {
@@ -104,7 +107,7 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
         } else {
           if (!(soft_names[i] %in% added_inters)) {
             matched_v <- match(added_inters, names(inters[[soft_names[i]]]))
-            soft_n <- soft_names[ -(matched_v[!is.na(matched_v)])]
+            soft_n <- soft_names[-(matched_v[!is.na(matched_v)])]
             for (inter in names(inters[[soft_names[i]]])) {
               if (!(inter %in% added_inters)) {
                 add_inters[[soft_names[i]]] <- c(add_inters[[soft_names[i]]], inters[[soft_names[i]]][[inter]]$to)
@@ -115,14 +118,14 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
           }
         }
       }
-
+      
       for (name in names(add_inters)) {
         data_to_add <- sort(unique(add_inters[[name]]))
-        data[nrow(data), soft_namings[match(name, soft_names)]] <- 
-          paste(data_to_add[!(data_to_add %in% 
+        data[nrow(data), soft_namings[match(name, soft_names)]] <-
+          paste(data_to_add[!(data_to_add %in%
                                 unique(unlist(c(data[soft_namings[match(name, soft_names)]]))))], collapse = ",")
       }
-      utils::write.csv(data, "group_by.csv", row.names = F)
+      utils::write.csv(data, "group_by.csv", row.names = FALSE)
       data
     })
   })
@@ -132,5 +135,5 @@ mod_group_table_server <- function(id, vals, data_uploads, soft_names, soft_nami
 # mod_group_table_ui("group_table_ui_1")
 
 ## To be copied in the server
-# mod_group_table_server("group_table_ui_1", vals=vals, data_uploads = data_uploads, 
-#soft_names = soft_names, soft_namings = soft_namings, data_to_use = data_to_use, abbr = abbr)
+# mod_group_table_server("group_table_ui_1", vals=vals, data_uploads = data_uploads,
+# soft_names = soft_names, soft_namings = soft_namings, data_to_use = data_to_use, abbr = abbr)

@@ -44,6 +44,7 @@ pip install biopython pandas clinker
 
 Pip should be already installed if you have [Python](https://www.python.org) installed in your system
 # Step 1. Group the GenBank records
+
 ## Inputs
 
 There is one input -> genome sequence, which was used for BCG annotations in GenBank format. 
@@ -52,11 +53,19 @@ There is one input -> genome sequence, which was used for BCG annotations in Gen
 The usage is pretty straightforward - you need to specify only one input - master GenBank file :
 
 ```bash
-python group.py <location-of-your-gb-file>
+python group.py -i <location-of-your-gb-file>
 ```
+Or if you would like to run clinker as well:
+
+```bash
+python group.py -i <location-of-your-gb-file> -cl
+```
+The last will run clinker automatically. 
+
+**Note** It can take a while for clinker to run. Also all results will be saved into `clinker_plots` folder as `.html` files.
 
 ## Results
-The script is working rather slow. The grouping can take up to 20-30 min. The result of the grouping is several folders, which are named as "group_1", "group_2", etc. These folders hold extracted records in GenBank format.
+The result of the grouping is several folders, which are named as "group_1", "group_2", etc. These folders hold extracted records in GenBank format.
 
 # Step 2. Run clinker
 
@@ -74,10 +83,78 @@ clinker <Group-folder/*.gb> --plot
 
 Then, after the analysis is done, the default browser will open with the interactive visualization. For example, for the default S.coelicolor data, results for group 3 (grouped by antismash data) can be viewed as follows (while using antismash results GenBank file) :
 
+
 ![clinker](/images/clinker_example.png)
+
 
 This is a result of running clinker with the following command:
 
 ```bash
 clinker group_3/*.gb --plot
+```
+
+**You can also generate clinker plots automatically in group.py script for all groups. See Step 1**
+
+# Group_by.py options
+Script options:
+```bash
+ $ python group.py -h
+usage: group.py [-h] -i INPUT [--force | --no-force] [--quiet | --no-quiet]
+                [-cl | --run_clinker | --no-run_clinker] [-j JOBS]
+
+Small helper script for BGCViz
+
+options:
+  -h, --help            show this help message and exit
+  --force, --no-force   Force overwrite calculated results. [default = False]
+  --quiet, --no-quiet   Run silently. Clinker will run as usual. [default = False]
+  -cl, --run_clinker, --no-run_clinker
+                        Automatically runs clinker on groups. Results are stored in 'clinker_plots'
+                        folder. [default = False]
+  -j JOBS, --jobs JOBS  Number of threads for clinker analysis (0=all). [default = 0]
+
+Required arguments:
+  -i INPUT, --input INPUT
+                        Input .gb/.gbk/.gbff file. One record per file will be used (as one genome)
+```
+
+
+# Step 3. Separate Antismash regions into separate clusters
+
+Often, antiSMASH annotates closely related clusters as one region. Therefore, if you would like to re-analyse those regions as separate clusters, you can separate them using our `dissect.py` scriptinto separate GenBank files.
+
+## Input
+Script takes as input a csv file with the following format:
+
+group|separate_before|by_software
+| ----------- | ----------- |  ----------- |
+1|locus_tag_1 (will separate cluster into 2, locus_tag_1 will go into second half)|antismash, gecco, deepbgc, prism, sempi (select one of the following)
+3|locus_tag_1, locus_tag_2 (will separate cluster into 3, specified genes goes to next cluster (2nd and 3rd in this example))|antismash
+
+This exact example can be downloaded as a csv file, using `BGCViz::get_dissect_example(<write_to>)` command, which takes one argument - where to write csv file.
+
+## Usage
+
+The script should be run after `group_by.py` (See [Step # 1](#step-1-group-the-genbank-records)) in the folder it was downloaded to.
+
+```
+python dissect.py -i dissect.csv
+```
+## Output
+
+Script output are GenBank files in `dessected` folder.
+
+## Dissect.py options
+
+```bash
+usage: dissect.py [-h] -i INPUT
+
+Small helper script for BGCViz
+
+options:
+  -h, --help            show this help message and exit
+
+Required arguments:
+  -i INPUT, --input INPUT
+                        .csv file with clusters to separate
 ```

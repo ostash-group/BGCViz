@@ -45,7 +45,9 @@ BGCViz::sempi_to_csv(project_archive="project.zip")
 ```
 SEMPI project archive can be downloaded from the site with "Project" button:
 
+
 ![sempi_res_export](/images/sempi_res_web.png)
+
 
 **This field supports the csv file upload. It can be any csv file, as long as the format is the satisfied. Therefore you can upload any results in this field, in place of SEMPI, but the result plot will label these as "SEMPI"**
 # DeepBGC
@@ -79,6 +81,9 @@ BGCViz::arts_to_csv(project_archive="arts.zip")
 ```
 Zip archive should be downloaded from ARTS Export tab (Zip all files):
 
+
 ![arts_res_server.png](/images/arts_res_server.png)
+
+
 # GECCO
 We are expecting the default GECCO tsv output file. Please see the example [here](https://github.com/pavlohrab/BGCViz-datasets/tree/main/example_data).

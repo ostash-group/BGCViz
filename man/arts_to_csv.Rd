@@ -17,3 +17,9 @@ csv file in specified location
 \description{
 Function, which extracts tables from arts result zip archive and transforms them into BGCViz input
 }
+\examples{
+\dontrun{
+arts_to_csv(<zip-file>)
+}
+
+}

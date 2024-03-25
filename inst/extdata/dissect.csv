@@ -1,0 +1,3 @@
+group,separate_before,by_software
+1,"locus_tag_1 (will separate cluster into 2, locus_tag_1 will go into second half)","antismash, gecco, deepbgc, prism, sempi (select one of the following)"
+3,"locus_tag_1, locus_tag_2 (will separate cluster into 3, specified genes goes to next cluster (2nd and 3rd in this example))",antismash

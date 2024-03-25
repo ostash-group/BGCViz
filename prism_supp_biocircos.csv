@@ -1,0 +1,126 @@
+"Start","Stop","Type","Type2","Score","Name","Full_name","ID","Cluster"
+45266,46073,"resistance","resistance","247.3","AMR<sub>116</sub>","Puromycin MFS transporter",1,1
+192879,194637,"regulatory","regulatory","1326.1","SCO0203","Two-component <br> Sensor kinase in S. coelicolor. ",2,2
+194759,195461,"regulatory","regulatory","524.5","SCO0204","Two-component <br> Response regulator in S. coelicolor. Negative regulator of ACT: SCO0203",3,3
+242202,242766,"regulatory","regulatory","433.5","SCO0253","TetR-type regulator <br> Regulator of SCO0252 of Streptomyces coelicolor: Tetracycline",4,4
+288986,290456,"resistance","resistance","278.5","AMR<sub>261</sub>","EmrB: drug resistance MFS transporter",5,5
+291314,292592,"regulatory","regulatory","459.1","MmyR","TetR-type regulator <br> Represses methylenomycin through inhibition of mmyB in S. coelicolor: (+) riggered by either of two environmental signals: alanine growth-rate-limiting conditions and/or an acidic pH shock.",6,6
+322243,323938,"resistance","resistance","965","AMR<sub>139</sub>","Tylosin ABC transporters",7,7
+333528,334149,"regulatory","regulatory","478","SCO0332","TetR-type regulator <br> Regulator of SCO0330 of Streptomyces coelicolor",8,8
+373044,374001,"resistance","resistance","247.3","AMR<sub>116</sub>","Puromycin MFS transporter",9,9
+389530,391123,"resistance","resistance","207.4","AMR<sub>116</sub>","Puromycin MFS transporter",10,10
+662372,663014,"regulatory","regulatory","250.1","EsmT4","TetR-type regulator <br> Located in the esmeraldin biosynthesis cluster of Streptomyces antibioticus Tu 2706",11,11
+663066,664686,"resistance","resistance","244.9","AMR<sub>224</sub>","Multidrug: subunit of efflux pump conferring antibiotic resistance",12,12
+677226,678861,"resistance","resistance","1018.9","AMR<sub>297</sub>","Lukacidin ABC transporter",13,13
+721494,722964,"resistance","resistance","235.3","AMR<sub>116</sub>","Puromycin MFS transporter",14,14
+740313,742083,"resistance","resistance","245.8","AMR<sub>201</sub>","Multidrug ABC antibiotic efflux pump",15,15
+1193397,1193988,"regulatory","regulatory","446.6","XdhR","TetR-type regulator <br> Regulator of xanthine dehydrogenase of Streptomyces coelicolor",16,16
+1202479,1204282,"resistance","resistance","270.4","AMR<sub>201</sub>","Multidrug ABC antibiotic efflux pump",17,17
+1262508,1264110,"resistance","resistance","614.3","AMR<sub>196</sub>","Tetracenomycin MFS transporter",18,18
+1265840,1267331,"resistance","resistance","291.5","AMR<sub>261</sub>","EmrB: drug resistance MFS transporter",19,19
+1636965,1638942,"resistance","resistance","764","AMR<sub>100</sub>","Borrelidin target isoform: threonyl-tRNA synthetase",20,20
+1677148,1678681,"resistance","resistance","375.6","AMR<sub>271</sub>","Multidrug MFS transporter",21,21
+1818350,1818878,"resistance","resistance","248.7","AMR<sub>264</sub>","Redox-sensitive transcriptional activator SoxR",22,22
+1834288,1834906,"regulatory","regulatory","460.6","SCO1712","TetR-type regulator <br> Regulator of antibiotic production of Streptomyces coelicolor",23,23
+1863881,1865048,"regulatory","regulatory","874.8","AbrA1","Two-component <br> Sensor kinase in S. coelicolor: Iron",24,24
+1865044,1865710,"regulatory","regulatory","490.5","AbrA2","Two-component <br> Response regulator of S. coelicolor. Negative regulator of RED, ACT and CDA: AbrA1",25,25
+1871316,1872921,"resistance","resistance","307.3","AMR<sub>271</sub>","Multidrug MFS transporter",26,26
+1967793,1969392,"resistance","resistance","262","AMR<sub>286</sub>","Oxazolidinone ABC transporter",27,27
+2059303,2060092,"resistance","resistance","261","AMR<sub>176</sub>","Aminoglycoside 3-N-acetyltransferase",28,28
+2326326,2329452,"resistance","resistance","707.4","AMR<sub>211</sub>","AcrB/AcrD/AcrF family",29,29
+2424358,2425390,"resistance","resistance","403.5","AMR<sub>263</sub>","Daunorubicin resistance ABC transporter",30,30
+2453706,2454993,"resistance","resistance","326.3","AMR<sub>260</sub>","Efflux Bcr CflA: drug resistance transporter",31,31
+2478171,2479632,"resistance","resistance","350.9","AMR<sub>116</sub>","Puromycin MFS transporter",32,32
+2512482,2514552,"resistance","resistance","442","AMR<sub>150</sub>","Tetracycline MFS",33,33
+2543006,2544617,"resistance","resistance","974.7","AMR<sub>196</sub>","Tetracenomycin MFS transporter",34,34
+2544732,2545416,"regulatory","regulatory","180","TcmR","TetR-type regulator <br> Located in the tetracenomycin C biosynthesis cluster of Streptomyces glaucescens",35,35
+2651102,2653031,"resistance","resistance","317.8","AMR<sub>201</sub>","Multidrug ABC antibiotic efflux pump",36,36
+2691804,2693250,"resistance","resistance","284.5","AMR<sub>261</sub>","EmrB: drug resistance MFS transporter",37,37
+2712739,2713435,"regulatory","regulatory","490.7","EcrA2","Two-component <br> Response regulator in S. coelicolor. Positive reg. in RED production.",38,38
+2713431,2714784,"regulatory","regulatory","1014.6","EcrA1","Two-component <br> Sensory kinase in S. coelicolor.",39,39
+2733654,2735148,"resistance","resistance","221.2","AMR<sub>116</sub>","Puromycin MFS transporter",40,40
+2738851,2740243,"resistance","resistance","176.4","AMR<sub>246</sub>","Multidrug MFS transporter",41,41
+2916747,2918412,"resistance","resistance","277.3","AMR<sub>286</sub>","Oxazolidinone ABC transporter",42,42
+3010976,3014708,"resistance","resistance","278.8","AMR<sub>201</sub>","Multidrug ABC antibiotic efflux pump",43,43
+3116520,3116931,"resistance","resistance","273.2","AMR<sub>298</sub>","Rifampin ADP ribosyl transferase",44,44
+3354680,3355955,"regulatory","regulatory","932.8","DraK","Two-component <br> Histidine kinase of S. coelicolor. ",45,45
+3355989,3356667,"regulatory","regulatory","517.3","DraR(CheY)","Two-component <br>  Response regulator in S. coelicolor. Positive regulator of ACT, negative of RED and yCPK: DraK",46,46
+3467221,3469459,"resistance","resistance","1218.7","AMR<sub>311</sub>","Calcimycin ABC transporter",47,47
+3506389,3507907,"resistance","resistance","273.2","AMR<sub>116</sub>","Puromycin MFS transporter",48,48
+3509243,3509852,"regulatory","regulatory","452.7","SCO3201","TetR-type regulator <br> Regulator of antibiotic production of Streptomyces coelicolor",49,49
+3513615,3515160,"resistance","resistance","715.9","AMR<sub>116</sub>","Puromycin MFS transporter",50,50
+3529271,3531188,"regulatory","regulatory","1500.3","CdaR","Pathway-specific <br> CDA production in S. coelicolor",51,51
+3536944,3538660,"regulatory","regulatory","1331.7","AbsA1","Sensor kinase. Global negative regulation of Streptomyces coelicolor antibiotic synthesis",52,52
+3538678,3539347,"regulatory","regulatory","498.4","AbsA2","Response regulator. Global negative regulation of Streptomyces coelicolor antibiotic synthesis",53,53
+3584821,3585724,"resistance","resistance","680.4","AMR<sub>15</sub>","Calcium-dependent antibiotic phosphotransferase",54,54
+3704767,3705382,"regulatory","regulatory","105.4","Tsn22","TetR-type regulator <br> Located in the tetronasin biosynthesis cluster of Streptomyces longisporoflavus",55,55
+3723843,3725439,"resistance","resistance","272.5","AMR<sub>261</sub>","EmrB: drug resistance MFS transporter",56,56
+3725585,3726185,"regulatory","regulatory","213","SaqK","TetR-type regulator <br> Located in the saquayamycin Z biosynthesis cluster of Micromonospora sp. strain Tu 6368",57,57
+3751836,3752478,"resistance","resistance","247.5","AMR<sub>190</sub>","Tunicamycin resistance protein ",58,58
+3924250,3924592,"regulatory","regulatory","76.9","RsbV","Two-component <br> Positive regulator of sigma-B activity in Bacillus subtilis. Non-phosphorylated RsbV binds to RsbW, preventing its association with sigma-B: RsbW",59,59
+3950325,3951000,"regulatory","regulatory","490.9","Crp","DNA transcription regulator - cAMP Kinase in ACT, RED and CDA biosynthesis in S. coelicolor",60,60
+3966834,3967929,"resistance","resistance","295.4","AMR<sub>84</sub>","VanS: transcriptional regulator of glycopeptide resistance genes",61,61
+3967921,3968617,"resistance","resistance","273.2","AMR<sub>83</sub>","VanR: transcriptional activator regulating VanA",62,62
+3967921,3968617,"regulatory","regulatory","264.6","CutR","Two-component <br> Response regulator. neg. reg. of ACT production in S. lividans & coelicolor. Alters copper metabolism",63,63
+3971388,3972306,"resistance","resistance","574.9","AMR<sub>73</sub>","Glycopeptide Resistance: D-lactate dehydrogenase",64,64
+3972298,3973357,"resistance","resistance","660","AMR<sub>74</sub>","Glycopeptide: D-ala-D-lactate ligase",65,65
+3973353,3973962,"resistance","resistance","384.8","AMR<sub>72</sub>","Glycopeptide resistance: D-Ala-D-Ala dipeptidases",66,66
+4026216,4027671,"resistance","resistance","274.8","AMR<sub>261</sub>","EmrB: drug resistance MFS transporter",67,67
+4197501,4198176,"regulatory","regulatory","477.9","SCO3818","Two-component <br> Response regulator in S. coelicolor. Negative regulator of ACT: SCO0203",68,68
+4231927,4233400,"resistance","resistance","792","AMR<sub>25</sub>","Cephamycin penicillin-binding protein",69,69
+4268712,4269843,"resistance","resistance","764.3","AMR<sub>314</sub>","Griselimycin Resistance - DNA polymerase III Beta Subunit",70,70
+4305059,4306397,"resistance","resistance","367.6","AMR<sub>262</sub>","matE: MATE efflux family protein",71,71
+4421135,4422659,"resistance","resistance","807.5","AMR<sub>305</sub>","Virginamycin MFS transporter",72,72
+4422720,4423479,"regulatory","regulatory","374.7","Ecm10","TetR-type regulator <br> Located in the echinomycin biosynthesis cluster of Streptomyces lasaliensis",73,73
+4427068,4429648,"resistance","resistance","233.9","AMR<sub>224</sub>","Multidrug: subunit of efflux pump conferring antibiotic resistance",74,74
+4633204,4634479,"regulatory","regulatory","964.2","PhoRs","Two-component <br> Sensor kinase of S. coelicolor: Phosphate",75,75
+4634475,4635156,"regulatory","regulatory","516.9","PhoPs","Two-component <br> Response regulator of S. coelicolor. OmpR-type. Positively regulates RED and ACT through ofsS+ropZ: PhoR, Mg2+",76,76
+4679363,4680245,"resistance","resistance","326.5","AMR<sub>141</sub>","Streptomycin phosphotransferase",77,77
+4680294,4681728,"resistance","resistance","891.5","AMR<sub>116</sub>","Puromycin MFS transporter",78,78
+4842786,4845768,"regulatory","regulatory","2193.1","AsfR","DNA transcription regulator - LysR-type",79,79
+4872767,4874393,"resistance","resistance","209","AMR<sub>224</sub>","Multidrug: subunit of efflux pump conferring antibiotic resistance",80,80
+5019698,5020457,"regulatory","regulatory","494.5","AbrC3","Response regulator of S. coelicolor. Positive regulator of RED, CDA, ACT and morphological change.",81,81
+5020677,5022045,"regulatory","regulatory","995.1","AbrC2","Sensory kinase of S. coelicolor.  Coexpressed with AbrC1",82,82
+5022158,5023382,"regulatory","regulatory","915.6","AbrC1","Sensory kinase of S. coelicolor.  Coexpressed with AbrC2. Have negative affect on antibiotic production. Might have phosphatase activity. ",83,83
+5065113,5066586,"resistance","resistance","302.9","AMR<sub>261</sub>","EmrB: drug resistance MFS transporter",84,84
+5092129,5093323,"resistance","resistance","864","AMR<sub>110</sub>","Kirromycin target isoform: Ef-Tu Isoform",85,85
+5179006,5179345,"resistance","resistance","103.1","AMR<sub>267</sub>","Multidrug transcription factor WhiB",86,86
+5337920,5339528,"regulatory","regulatory","1204.4","AfsQ2","Histidine kinase in S. coelicolor",87,87
+5339524,5340349,"regulatory","regulatory","504","AfsQ1","Response regulator for S. coelicolor. Positive regulator of RED, ACT, CDA and yCPK",88,88
+5517893,5519495,"resistance","resistance","226","AMR<sub>116</sub>","Puromycin MFS transporter",89,89
+5523182,5523935,"regulatory","regulatory","573.7","ActR","TetR-like protein that represses the adjacent actA operon, encoding the ACT export system (Actinorhodin)",90,90
+5524072,5525809,"resistance","resistance","236.6","AMR<sub>116</sub>","Puromycin MFS transporter",91,91
+5528093,5528861,"regulatory","regulatory","593.8","ActII-orf4","Pathway specific activator of actinorhodin biosynthesis in Streptomyces coelicolor",92,92
+5875297,5875966,"regulatory","regulatory","491.2","RapA1","Two-component <br> Response regulator in S. coelicolor. Positive regulator in ACT and yCPK biosynthesis",93,93
+5875962,5877399,"regulatory","regulatory","1042.9","RapA2","Two-component <br> Sensory kinase in S. coelicolor.",94,94
+5940592,5941267,"regulatory","regulatory","354.6","SamR0468","Response regulator- LuxR-type (CheY superfamily)",95,95
+6008514,6010062,"resistance","resistance","360.4","AMR<sub>271</sub>","Multidrug MFS transporter",96,96
+6058384,6059554,"resistance","resistance","339.7","AMR<sub>77</sub>","D-alanine--D-alanine ligase",97,97
+6321290,6322367,"regulatory","regulatory","781.2","Sco5784","Histidine kinase",98,98
+6322366,6323026,"regulatory","regulatory","483.1","Sco5785","Response regulator- LuxR-type (CheY superfamily)",99,99
+6354011,6355559,"resistance","resistance","442","AMR<sub>116</sub>","Puromycin MFS transporter",100,100
+6419307,6419961,"regulatory","regulatory","493.6","CutR","Two-component <br> Response regulator. neg. reg. of ACT production in S. lividans & coelicolor. Alters copper metabolism",101,101
+6419967,6421212,"regulatory","regulatory","939.4","CutS","Two-component <br> Sensor kinase in S. lividans & coelicolor",102,102
+6432592,6433618,"regulatory","regulatory","794.1/297.4","RedD/RphD","Activator of undecylprodigiosin in Streptomyces coelicolor/Activator of prodigiosin biosynthesis in Streptomyces griseoviridis",103,103
+6438205,6438859,"regulatory","regulatory","489.2","RedZ","Regulator of undecylprodigiosin in Streptomyces coelicolor",104,104
+6518092,6519544,"resistance","resistance","277.5","AMR<sub>116</sub>","Puromycin MFS transporter",105,105
+6527870,6529472,"resistance","resistance","231.6","AMR<sub>116</sub>","Puromycin MFS transporter",106,106
+6688704,6689961,"resistance","resistance","851.4","AMR<sub>165</sub>","Macrolide glycosyltransferase: Inactivation enzyme",107,107
+6709908,6711471,"resistance","resistance","253.5","AMR<sub>137</sub>","Erythromycin esterase",108,108
+6890527,6891175,"regulatory","regulatory","260.9/502.6","FarA/ScbR","GBL receptor <br> Autoregulator in S. lavendulae showdomycin production/Regulator  in RED prod. in S. coelicolor, SCB1",109,109
+6891292,6892237,"regulatory","regulatory","743.9","ScbA","A-factor biosynthesis enzyme",110,110
+6934506,6936138,"resistance","resistance","377.2","AMR<sub>271</sub>","Multidrug MFS transporter",111,111
+6945704,6946379,"regulatory","regulatory","151.3","SrrB","TetR-type regulator <br> Involved in the regulation of lankacidin and lankamycin biosynthesis along with SSRA, and C in S. rochei",112,112
+7090612,7091761,"regulatory","regulatory","762","EcrE1","Two-component <br> Senory kinase of S. coelicolor: (+) co-cultivation with Corallococcus coralloides, or in inculum of 2.5% (v/v) B. subtilis",113,113
+7091757,7092432,"regulatory","regulatory","469.1","EcrE2","Two-component <br> Response regulator. Positive reg. in RED prod. in S. coelicolor",114,114
+7172393,7174841,"resistance","resistance","272.9","AMR<sub>261</sub>","EmrB: drug resistance MFS transporter",115,115
+7250905,7252420,"resistance","resistance","237.1","AMR<sub>116</sub>","Puromycin MFS transporter",116,116
+7497717,7499361,"resistance","resistance","1121.7","AMR<sub>127</sub>","Hygromycin ABC transporter",117,117
+7499507,7501850,"resistance","resistance","256.1","AMR<sub>161</sub>","Tex-like protein N-terminal domain",118,118
+7586409,7587975,"resistance","resistance","336.4","AMR<sub>196</sub>","Tetracenomycin MFS transporter",119,119
+7736806,7738927,"resistance","resistance","254.8","AMR<sub>224</sub>","Multidrug: subunit of efflux pump conferring antibiotic resistance",120,120
+7782654,7784535,"resistance","resistance","263.5","AMR<sub>201</sub>","Multidrug ABC antibiotic efflux pump",121,121
+7919672,7921208,"resistance","resistance","236.3","AMR<sub>116</sub>","Puromycin MFS transporter",122,122
+8345037,8346285,"resistance","resistance","373.3","AMR<sub>123</sub>","Chloramphenicol efflux pump",123,123
+8488517,8489696,"resistance","resistance","415.1","AMR<sub>123</sub>","Chloramphenicol efflux pump",124,124
+8553427,8554087,"regulatory","regulatory","472.6","KijR","TetR-type regulator <br> Regulator of KijX expression and kijanimicin resistance of Streptomyces coelicolor: Kijanimicin, saccharocarcins A and B",125,125

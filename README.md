@@ -54,6 +54,8 @@ Currently, the app supports annotations from such sources:
 
 6.  ARTS (raw tsv files)
 
+7. RiPPMiner-genome (txt file)
+
 # Contributing
 
 There are no contributing guidelines yet. But feel free to resolve any

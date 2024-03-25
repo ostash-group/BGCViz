@@ -8,53 +8,87 @@
 #'
 #' @importFrom shiny NS tagList
 mod_download_ui <- function(id) {
-  ns <- NS(id)
-  tagList(
-    div(
-      id = "id6",
-      shinydashboardPlus::box(
-        title = "Download data",
-        id = "download_data_box",
-        collapsible = TRUE,
-        closable = TRUE,
-        width = NULL,
-        shiny::downloadButton(ns("download"), "Download currently used datasets (as for Biocircos plot)")
-      )
+    ns <- NS(id)
+    tagList(
+        div(
+            id = "id6",
+            shinydashboardPlus::box(
+                title = "Download data",
+                id = "download_data_box",
+                collapsible = TRUE,
+                closable = TRUE,
+                width = NULL,
+                shiny::downloadButton(ns("download"), "Download currently used datasets (as for Biocircos plot)")
+            )
+        )
     )
-  )
+}
+
+mod_download_anti_ui <- function(id) {
+    ns <- NS(id)
+    tagList(
+        div(
+          style = "text-align: center",
+          shinydashboard::menuItem(
+            tabName = "download_data_anti",
+            shiny::downloadButton(ns("download_data_anti"), "Download JSON for AntiSMASH")
+          )
+        )
+      )
+
+}
+
+mod_download_anti_server <- function(id){
+  moduleServer(id, function(input, output, session) {
+    ns <- session$ns
+    if (!file.exists('data_all.csv')) {
+      shiny::showNotification("No data to download", type = "warning")}
+
+    output$download_data_anti <- shiny::downloadHandler(
+      filename ='antiSMASH_data.json',
+      content = function(file) {
+        if (file.exists('data_all.csv')) {
+          json <- data_to_json('data_all.csv')
+          write(json, file)}
+      }
+    )
+  })
+  
 }
 
 #' download Server Functions
 #'
 #' @noRd
 mod_download_server <- function(id) {
-  moduleServer(id, function(input, output, session) {
-    ns <- session$ns
-    output$download <- shiny::downloadHandler(
-      filename = function() {
-        paste("datasets.zip")
-      },
-      content = function(file) {
-        flst <- c()
-        # List files in directory
-        files_in_dir <- list.files()
-        # Iterate over those files and if found "_biocircos.csv" add to the flst vector
-        for (file_names in files_in_dir) {
-          if (grepl("_biocircos.csv", file_names, fixed = TRUE)) {
-            flst <- c(flst, file_names)
-          } else if (grepl("group_by.csv", file_names, fixed = TRUE)) {
-            flst <- c(flst, file_names)
-          }
-        }
-        # create the zip file from flst vector
-        group_by_script <- system.file("scripts", "group.py", package = "BGCViz")
-        flst <- c(flst, group_by_script)
-        utils::zip(file, flst)
-      },
-      contentType = "application/zip"
-    )
-  })
+    moduleServer(id, function(input, output, session) {
+        ns <- session$ns
+        output$download <- shiny::downloadHandler(
+            filename = function() {
+                paste("datasets.zip")
+            },
+            content = function(file) {
+                flst <- c()
+                # List files in directory
+                files_in_dir <- list.files()
+                # Iterate over those files and if found "_biocircos.csv" add to the flst vector
+                for (file_names in files_in_dir) {
+                    if (grepl("_biocircos.csv", file_names, fixed = TRUE)) {
+                        flst <- c(flst, file_names)
+                    } else if (grepl("group_by.csv", file_names, fixed = TRUE)) {
+                        flst <- c(flst, file_names)
+                    }
+                }
+                # create the zip file from flst vector
+                group_by_script <- system.file("scripts", "group.py", package = "BGCViz")
+                dissect_script <- system.file("scripts", "dissect.py", package = "BGCViz")
+                flst <- c(flst, group_by_script, dissect_script)
+                utils::zip(file, flst, flags = '-r9Xj')
+            },
+            contentType = "application/zip"
+        )
+    })
 }
+
 
 ## To be copied in the UI
 # mod_download_ui("download_ui_1")

@@ -21,8 +21,10 @@ The upload of the files is pretty straightforward - use the properly named file 
 
 After the upload of the first input:
 
+
   
 ![anti_upload](/images/anti_upload.png)
+
 
   
 **Please also enter the length of the contig in the corresponding field under uploads. This length is used for correct representation of Biocircos plot**
@@ -91,6 +93,7 @@ It is a good practice, to rename the type of clusters after uploading. Renaming 
 
 
 To rename the dataset you can press "Rename" button under  "Improve visualization" menu. 
+
 
 ![rename](/images/rename.png)
 

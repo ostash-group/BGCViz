@@ -80,6 +80,10 @@ usethis::use_data_raw( name = "sempi_data", open = FALSE )
 usethis::use_data_raw( name = "arts_data", open = FALSE )
 usethis::use_data_raw( name = "deep_data", open = FALSE )
 usethis::use_data_raw( name = "rre_data", open = FALSE )
+usethis::use_data_raw( name = "ripp_data", open = FALSE)
+usethis::use_data_raw( name = "emerald_data", open = FALSE)
+# usethis::use_data_raw( name = "reference_data", open = FALSE)
+
 
 ## Tests ----
 ## Add one line by test you want to create
@@ -98,7 +102,6 @@ devtools::build_vignettes()
 usethis::use_coverage()
 
 # Create a summary readme for the testthat subdirectory
-covrpage::covrpage()
 
 ## CI ----
 ## Use this part of the script if you need to set up a CI

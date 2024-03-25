@@ -1,4 +1,4 @@
-#' rename_vector
+ #' rename_vector
 #'
 #' @description Function, that given the dataframe, and renaming dataframe, returns renamed vector.
 #'
@@ -46,13 +46,13 @@ rename_vector <- function(data, renamed_dataframe, renaming_notification) {
 #'
 #' @noRd
 correct_width <- function(data, label, sempi_width, prism_supp_data_input_width, arts_width, rre_width) {
-  if ((label == "SEMPI") & (sempi_width == T)) {
+  if ((label == "SEMPI") & (sempi_width == TRUE)) {
     data$Stop <- data$Stop + 30000
-  } else if ((label == "PRISM-Supp") & (prism_supp_data_input_width == T)) {
+  } else if ((label == "PRISM-Supp") & (prism_supp_data_input_width == TRUE)) {
     data$Stop <- data$Stop + 20000
-  } else if ((label == "ARTS") & (arts_width == T)) {
+  } else if ((label == "ARTS") & (arts_width == TRUE)) {
     data$Stop <- data$Stop + 30000
-  } else if ((label == "RRE-Finder") & (rre_width == T)) {
+  } else if ((label == "RRE-Finder") & (rre_width == TRUE)) {
     data$Stop <- data$Stop + 50000
   }
   return(data)
@@ -85,11 +85,14 @@ hybrid_col <- function(data) {
 #'
 #' @return csv file in specified location
 #'
+#' @examples
+#' get_defaults()
+#'
 #' @export
 get_defaults <- function(write_to = getwd()) {
-  rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
-  option_data <- utils::read.csv(rename_file)
-  utils::write.csv(option_data, paste0(write_to, "/BGCViz_options.csv"), row.names = FALSE)
+    rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
+    option_data <- utils::read.csv(rename_file)
+    utils::write.csv(option_data, paste0(write_to, "/BGCViz_options.csv"), row.names = FALSE)
 }
 #' set_defaults
 #'
@@ -98,9 +101,36 @@ get_defaults <- function(write_to = getwd()) {
 #'
 #' @param csv_file - path to csv file with default options.
 #'
+#' @return csv file, written to package settings
+#'
+#' @examples
+#' \dontrun{
+#' set_defaults(<csv-file>)
+#' }
+#'
 #' @export
 set_defaults <- function(csv_file) {
-  rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
-  option_data <- utils::read.csv(csv_file)
-  utils::write.csv(option_data, rename_file, row.names = FALSE)
+    rename_file <- system.file("extdata", "rename.csv", package = "BGCViz")
+    option_data <- utils::read.csv(csv_file)
+    utils::write.csv(option_data, rename_file, row.names = FALSE)
+}
+#' get_dissect_example
+#'
+#' @description Function, which downloads a csv file for dissect.py into specified path.
+#' Use to separate regions into separate clusters
+#'
+#' @param write_to - path to write csv file to.
+#'
+#' @return csv file, written to package settings
+#'
+#' @examples
+#' \dontrun{
+#' get_dissect_example(write_to)
+#' }
+#'
+#' @export
+get_dissect_example <- function(write_to = getwd()) {
+  rename_file <- system.file("extdata", "dissect.csv", package = "BGCViz")
+  option_data <- utils::read.csv(rename_file)
+  utils::write.csv(option_data, paste0(write_to, "/dissect.csv"), row.names = FALSE)
 }
